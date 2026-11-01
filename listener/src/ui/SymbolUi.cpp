@@ -59,6 +59,9 @@ bool isFileClass(const chat::SymbolTable::Entry* e) { return e != nullptr && (e-
 
 void SymbolUi::hover(const chat::Symbol& s) {
     ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+    if (!detailShown(s.display)) {
+        return;
+    }
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(ImGui::CalcTextSize("0").x * 72);
     if (s.kind == chat::SymbolKind::Unresolved) {

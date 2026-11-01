@@ -441,7 +441,8 @@ void Panes::drawModeline(FrameInputs& in) {
             ui::text(ui::Ink::fatal, modelineError);
             ImGui::SameLine();
         }
-        ui::text(ui::Ink::secondary, modelineText);
+        const std::string hint = ui::takeDetailHint();
+        ui::text(hint.empty() ? ui::Ink::secondary : ui::Ink::nav, hint.empty() ? modelineText : hint);
     }
     ImGui::End();
     ImGui::PopStyleVar();

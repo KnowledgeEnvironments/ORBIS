@@ -568,7 +568,8 @@ void HistoryPane::drawEvent(const Event& e, const chat::Chat& chat, const Anim& 
             // the whole event on the rest of the row, unless a link is under the mouse
             const ImVec2 mouse = ImGui::GetIO().MousePos;
             if (ImGui::IsWindowHovered() && mouse.x >= bodyX && mouse.y >= ImGui::GetItemRectMin().y &&
-                mouse.y < ImGui::GetItemRectMax().y && ImGui::GetMouseCursor() != ImGuiMouseCursor_Hand) {
+                mouse.y < ImGui::GetItemRectMax().y && ImGui::GetMouseCursor() != ImGuiMouseCursor_Hand &&
+                detailShown(e.kind + " at seq " + std::to_string(e.seq))) {
                 ImGui::BeginTooltip();
                 ImGui::TextUnformatted(e.body.dump(2).c_str());
                 ImGui::EndTooltip();

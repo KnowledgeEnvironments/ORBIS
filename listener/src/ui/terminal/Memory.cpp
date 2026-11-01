@@ -103,7 +103,7 @@ void TerminalPane::drawMemory(Tab& tab, const model::PrincipalInfo* info, const 
                                principals.nameOf(f.by) + " // " + clockPart(f.at) + " // seq " + std::to_string(f.seq));
         const bool hoveredMeta = ImGui::IsItemHovered();
         drawFieldNews(*info, f, principals);
-        if (hoveredMeta && !f.previous.is_null()) {
+        if (hoveredMeta && !f.previous.is_null() && detailShown(name + " has a previous value")) {
             ImGui::BeginTooltip();
             ImGui::PushTextWrapPos(ch * 72);
             const std::string before = editText(f.previous);

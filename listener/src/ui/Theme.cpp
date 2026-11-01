@@ -780,7 +780,29 @@ void boldText(ImU32 color, std::string_view s) {
     ImGui::GetWindowDrawList()->AddText(ImVec2(at.x + strike, at.y), color, s.data(), s.data() + s.size());
 }
 
+namespace {
+std::string g_detailHint;
+} // namespace
+
+bool detailShown(const std::string& hint) {
+    if (ImGui::GetIO().KeyShift) {
+        return true;
+    }
+    const std::string line = hint.substr(0, hint.find('\n'));
+    g_detailHint = (line.size() > 100 ? line.substr(0, 100) : line) + "  //  hold Shift for more";
+    return false;
+}
+
+std::string takeDetailHint() {
+    std::string out;
+    out.swap(g_detailHint);
+    return out;
+}
+
 void wrappedTooltip(const std::string& text) {
+    if (!detailShown(text)) {
+        return;
+    }
     if (ImGui::BeginTooltip()) {
         ImGui::PushTextWrapPos(ImGui::CalcTextSize("0").x * 64.0f);
         ImGui::TextUnformatted(text.c_str(), text.c_str() + text.size());

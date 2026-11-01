@@ -266,13 +266,17 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             if (!it->second.contradiction.empty()) {
                 tip += "\n\nCONTRADICTION (reply/contradiction): the prose claimed what the kernel record denies\n" + it->second.contradiction;
             }
-            ImGui::SetTooltip("%s", tip.c_str());
+            if (detailShown(tip)) {
+                ImGui::SetTooltip("%s", tip.c_str());
+            }
         } else if (auto ot = view.opTips.find(hp); ot != view.opTips.end()) {
-            ImGui::BeginTooltip();
-            ImGui::PushTextWrapPos(ImGui::CalcTextSize("0").x * 80);
-            ImGui::TextUnformatted(ot->second.dump(2).c_str());
-            ImGui::PopTextWrapPos();
-            ImGui::EndTooltip();
+            if (detailShown("this op's arguments and result")) {
+                ImGui::BeginTooltip();
+                ImGui::PushTextWrapPos(ImGui::CalcTextSize("0").x * 80);
+                ImGui::TextUnformatted(ot->second.dump(2).c_str());
+                ImGui::PopTextWrapPos();
+                ImGui::EndTooltip();
+            }
         } else if (auto ct = view.costTips.find(hp); ct != view.costTips.end()) {
             ImGui::SetTooltip("%s", ct->second.c_str());
         }

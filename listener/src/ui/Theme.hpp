@@ -155,6 +155,11 @@ bool textLink(const char* word, const std::string& name);
 void insetRim(ImDrawList* dl, ImVec2 min, ImVec2 max);
 // A tooltip that wraps: help text from the world can run to a paragraph.
 void wrappedTooltip(const std::string& text);
+// A card is more than a label, and it should not open because the pointer passed. True with Shift held,
+// so the card shows; otherwise false, and the status line says what is here and that there is more.
+bool detailShown(const std::string& hint);
+// What the status line shows in place of the log's latest, for the frame just drawn: "" for nothing.
+std::string takeDetailHint();
 
 // A tree's connector for one row: the vertical guide down from the parent at `x`, and the elbow
 // into the child at the row's middle; a last child stops there (an L), the others run on (a tee).
