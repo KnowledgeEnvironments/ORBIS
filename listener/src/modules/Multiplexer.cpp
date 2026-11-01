@@ -354,8 +354,14 @@ void Multiplexer::open(const FileRef& file) {
 }
 
 bool Multiplexer::pointerOverView(const std::string& view) const {
+    // Called between windows, where ImGui's own hover test clips to nothing: plain arithmetic.
     const auto it = bodies_.find(view);
-    return it != bodies_.end() && hoveredRect(it->second);
+    if (it == bodies_.end()) {
+        return false;
+    }
+    const ImVec2 m = ImGui::GetIO().MousePos;
+    const Rect& b = it->second;
+    return m.x >= b.x && m.x < b.x + b.w && m.y >= b.y && m.y < b.y + b.h;
 }
 
 std::string Multiplexer::takeBringForward() {
@@ -800,6 +806,12 @@ bool Multiplexer::viewOpen(const std::string& v) const { return layout_.contains
 bool Multiplexer::viewInFront(const std::string& v) const { return bodies_.count(v) != 0 || layout_.floating(v); }
 
 void Multiplexer::showView(const std::string& v, const std::string& near, model::Edge edge) {
+    // Asked for by name, a floated view comes home: this is how to get back anything that went astray.
+    if (layout_.floating(v)) {
+        const std::string by = !near.empty() && layout_.contains(near) ? near : layout_.contains("view:chat") ? "view:chat" : focus_;
+        layout_.dock(v, by);
+        saveSoon();
+    }
     if (!viewOpen(v)) {
         const std::string by = !near.empty() && layout_.contains(near) ? near : layout_.contains("view:chat") ? "view:chat" : focus_;
         layout_.place(v, by, edge);
@@ -982,16 +994,22 @@ void Multiplexer::drawFloats(model::LayoutRect area) {
     const std::vector<model::LayoutFloat> floats = layout_.floats();
     const std::string home = layout_.contains("view:panes") ? "view:panes" : layout_.contains("view:chat") ? "view:chat" : focus_;
     for (const model::LayoutFloat& f : floats) {
-        if (view(f.pane) != nullptr) {
-            continue; // its own window, placed below
+        // The other views have windows of their own, placed below. PANES has none: it lives in its tab.
+        if (view(f.pane) != nullptr && f.pane != "view:panes") {
+            continue;
         }
         ImGui::SetNextWindowPos(vec(f.rect.x, f.rect.y), ImGuiCond_Appearing);
         ImGui::SetNextWindowSize(vec(f.rect.w, f.rect.h), ImGuiCond_Appearing);
         bool open = true;
         const model::PaneInfo* p = info(f.pane);
-        const std::string title = (p == nullptr ? f.pane.substr(0, 8) : p->shown()) + "###float" + f.pane;
+        const std::string title = (f.pane == "view:panes" ? std::string("panes") : p == nullptr ? f.pane.substr(0, 8) : p->shown()) +
+                                  "###float" + f.pane;
         if (ImGui::Begin(title.c_str(), &open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings)) {
-            if (Instance* inst = ensure(f.pane)) {
+            if (f.pane == "view:panes") {
+                const ImVec2 at = ImGui::GetCursorScreenPos();
+                const ImVec2 avail = ImGui::GetContentRegionAvail();
+                drawPanesView(Rect{at.x, at.y, avail.x, avail.y});
+            } else if (Instance* inst = ensure(f.pane)) {
                 const ImVec2 at = ImGui::GetCursorScreenPos();
                 const ImVec2 avail = ImGui::GetContentRegionAvail();
                 const bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
