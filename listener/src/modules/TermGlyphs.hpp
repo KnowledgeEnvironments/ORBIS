@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <string>
 #include <string_view>
 
 namespace ke::modules {
@@ -29,6 +30,40 @@ inline std::uint32_t soleCodePoint(std::string_view s) {
         return ((b(0) & 0x0Fu) << 12) | ((b(1) & 0x3Fu) << 6) | (b(2) & 0x3Fu);
     }
     return 0;
+}
+
+// Is this text, to JSON? A terminal's mouse reports need not be.
+inline bool validUtf8(std::string_view s) {
+    for (std::size_t i = 0; i < s.size();) {
+        const auto b = static_cast<unsigned char>(s[i]);
+        const std::size_t n = b < 0x80 ? 1 : (b & 0xE0) == 0xC0 && b >= 0xC2 ? 2 : (b & 0xF0) == 0xE0 ? 3 : (b & 0xF8) == 0xF0 && b <= 0xF4 ? 4 : 0;
+        if (n == 0 || i + n > s.size()) {
+            return false;
+        }
+        for (std::size_t k = 1; k < n; ++k) {
+            if ((static_cast<unsigned char>(s[i + k]) & 0xC0) != 0x80) {
+                return false;
+            }
+        }
+        i += n;
+    }
+    return true;
+}
+
+// Each byte as the character of that number: pane.send {raw} turns them back into the bytes.
+inline std::string bytesAsText(std::string_view s) {
+    std::string out;
+    out.reserve(s.size() * 2);
+    for (const char ch : s) {
+        const auto b = static_cast<unsigned char>(ch);
+        if (b < 0x80) {
+            out.push_back(ch);
+        } else {
+            out.push_back(static_cast<char>(0xC0 | (b >> 6)));
+            out.push_back(static_cast<char>(0x80 | (b & 0x3F)));
+        }
+    }
+    return out;
 }
 
 // Draws cp into the cell if it is one of these. False leaves it to the font.

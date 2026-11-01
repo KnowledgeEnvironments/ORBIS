@@ -275,7 +275,8 @@ Frame decode(std::string_view text) {
 }
 
 std::string encode(const Frame& f) {
-    return toJson(f).dump();
+    // A bad byte in one string must not end the program: it goes as the replacement character.
+    return toJson(f).dump(-1, ' ', false, json::error_handler_t::replace);
 }
 
 Request makeRequest(std::string id, std::string op, json args) {

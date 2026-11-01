@@ -343,14 +343,15 @@
 (def ^:private send-wait-ms "How long a model's send waits for a program to go quiet, by default." 8000)
 
 (defmethod actions/handle! :pane.send
-  [_ world p {:keys [pane text keys wait-ms]} {:keys [session?]}]
+  [_ world p {:keys [pane text keys raw wait-ms]} {:keys [session?]}]
   (let [id (pane! world p pane core/may-read?)
         db (act/db world)]
     (when-not (= :terminal (core/field db id :pane/kind)) (fail! :invalid-args "pane.send is for a terminal"))
     (when-not (core/may-evaluate? db p id) (throw (ex-info "unresolved" {:err (:err act/unresolved)})))
     (when-not (core/terminal-live world id) (fail! :invalid-args "that terminal has exited"))
     (let [s (str text (when keys (keys-text keys)))
-          bs (.getBytes s "UTF-8")]
+          ;; `raw`: each character is one byte. A mouse report past column 94 is not text, and JSON only carries text
+          bs (.getBytes s (if raw "ISO-8859-1" "UTF-8"))]
       (when (empty? s) (fail! :invalid-args "pane.send needs text or keys"))
       ;; a rule read this terminal as a prompt: anything but a whole admitted line leaves that unknown
       (when-not (core/field db id :pane/dirty)

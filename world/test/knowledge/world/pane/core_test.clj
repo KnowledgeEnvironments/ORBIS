@@ -622,6 +622,14 @@
           (is (= "image/png" (:mime r)))
           (is (= 8 (get-in r [:image :blob/size]))))))))
 
+(deftest a-raw-send-is-bytes
+  (fx/with-world [{:keys [root]}]
+    (let [p (open! root)]
+      (type! root p "stty raw -echo; od -An -tx1 -N3; stty sane\n")
+      (Thread/sleep 300)
+      (is (:ok (act! root "pane.send" {:pane (str p) :text "\u00e1\u00ff!" :raw true})))
+      (shows? root p "e1 ff 21"))))
+
 (deftest a-viewer-scrolls-and-renders
   (fx/with-world [{:keys [root world]}]
     (let [dir (mount! root world "tex")

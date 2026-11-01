@@ -12,6 +12,7 @@
 #include "ui/Markdown.hpp"
 
 #include "modules/TermGlyphs.hpp"
+#include "net/Protocol.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -329,6 +330,22 @@ TEST_CASE("text commands read as Markdown", "[modules]") {
     CHECK(texProse("\\section*{The \\texttt{grid} Project}") == "# The `grid` Project");
     CHECK(texProse("`\\textbf{a}` stays") == "`\\textbf{a}` stays");
     CHECK(texProse("\\frac{a}{b}") == "\\frac{a}{b}");
+}
+
+TEST_CASE("a mouse report past column 94 is bytes, and survives as text") {
+    const std::string report = std::string("\x1b[M ") + static_cast<char>(0xE1) + "!";
+    CHECK_FALSE(validUtf8(report));
+    CHECK(validUtf8("plain \xe2\x94\x80 text"));
+    CHECK(bytesAsText(report) == std::string("\x1b[M \xc3\xa1!"));
+    CHECK(validUtf8(bytesAsText(report)));
+}
+
+TEST_CASE("a bad byte in a frame is not the end of the program") {
+    ke::Request r;
+    r.id = "r1";
+    r.op = "act";
+    r.args = ke::json{{"text", std::string("a") + static_cast<char>(0xE1)}};
+    CHECK_NOTHROW(ke::encode(ke::Frame{r}));
 }
 
 TEST_CASE("a terminal cell's one code point") {

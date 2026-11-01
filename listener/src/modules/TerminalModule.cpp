@@ -351,7 +351,13 @@ class TerminalModule final : public Module {
         if (pending_.empty()) {
             return;
         }
-        host_.act("pane.send", {{"pane", id_}, {"text", pending_}}, [this](const Response& r) {
+        // Some mouse reports are bytes and not text: past column 94 the old encoding is not UTF-8.
+        const bool text = validUtf8(pending_);
+        nlohmann::json args{{"pane", id_}, {"text", text ? pending_ : bytesAsText(pending_)}};
+        if (!text) {
+            args["raw"] = true;
+        }
+        host_.act("pane.send", std::move(args), [this](const Response& r) {
             status_ = r.ok ? std::string() : errLine(r);
         });
         pending_.clear();

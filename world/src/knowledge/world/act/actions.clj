@@ -493,7 +493,7 @@
     :hint "type into a terminal by the pane id pane.open answered"
     :handler :pane.send
     :schema [:map [:pane id-string] [:text {:optional true} :string] [:keys {:optional true} [:vector :string]]
-             [:wait-ms {:optional true} :int]]
+             [:raw {:optional true} :boolean] [:wait-ms {:optional true} :int]]
     :instructions (str "Bytes to a terminal: `text`, or `keys` by name (enter, tab, esc, up, down, left, right, pgup, pgdn, "
                        "ctrl-c ...). A command needs its newline. Needs :evaluate on the shell Adapter; from a model it "
                        "passes the approval gate like a shell command, and the result's `screen` is the terminal once "
