@@ -27,7 +27,7 @@ bool noticesChip(const chat::Notifications& notifications, bool open) {
     const bool clicked = bracketButtonNamed(label.c_str(), "notices", true, open,
                                             hot ? Ink::inspected : unread > 0 ? Ink::primary : Ink::secondary);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("what the world's Principals have told you");
+        ke::ui::tip("what the world's Principals have told you");
     }
     return clicked;
 }
@@ -83,7 +83,7 @@ void NotificationsPane::draw(chat::Notifications& notifications, const model::Pr
         ImGui::PopStyleColor();
         ImGui::PopTextWrapPos();
         if (hot && !n.object.empty()) {
-            ImGui::SetTooltip("about %s: click opens it", principals.nameOf(n.object).c_str());
+            ke::ui::tip("about %s: click opens it", principals.nameOf(n.object).c_str());
         }
         if (clicked) {
             if (!n.read) {

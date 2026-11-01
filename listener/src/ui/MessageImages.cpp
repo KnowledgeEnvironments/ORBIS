@@ -144,7 +144,7 @@ int MessageImages::draw(chat::Chat& chat, const std::string& message, const json
         dl->PopClipRect();
         if (hovered) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-            ImGui::SetTooltip("%s\nclick: open it", label.c_str());
+            ke::ui::tip("%s\nclick: open it", label.c_str());
         }
         x += size.x + gap;
         ++index;

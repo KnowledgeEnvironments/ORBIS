@@ -229,7 +229,7 @@ class EditorModule final : public Module {
             }
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("drop these edits and go back to what %s holds now", field_.empty() ? "the file" : field_.c_str());
+            ke::ui::tip("drop these edits and go back to what %s holds now", field_.empty() ? "the file" : field_.c_str());
         }
         // On a narrow pane a conflict takes the row: what decides it matters more than the view.
         const bool room = !conflict_ || r.w > cw * 72.0f;

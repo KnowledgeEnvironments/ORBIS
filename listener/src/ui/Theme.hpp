@@ -158,6 +158,9 @@ void wrappedTooltip(const std::string& text);
 // A card is more than a label, and it should not open because the pointer passed. True with Shift held,
 // so the card shows; otherwise false, and the status line says what is here and that there is more.
 bool detailShown(const std::string& hint);
+// A one-line tooltip. VIEW, TOOLTIPS turns these and the hints off; Shift still opens a card.
+void tip(const char* fmt, ...) IM_FMTARGS(1);
+void setTooltipsOn(bool on);
 // What the status line shows in place of the log's latest, for the frame just drawn: "" for nothing.
 std::string takeDetailHint();
 

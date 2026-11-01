@@ -45,7 +45,7 @@ void activityMarkItem(model::Activity a, double seconds) {
     ImGui::Dummy(ImVec2(s, s));
     activityMark(ImGui::GetWindowDrawList(), at, s, a, seconds);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", model::word(a));
+        ke::ui::tip("%s", model::word(a));
     }
 }
 

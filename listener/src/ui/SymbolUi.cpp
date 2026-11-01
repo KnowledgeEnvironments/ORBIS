@@ -412,7 +412,7 @@ void SymbolUi::drawMenu() {
         }
         drive::hit("menu:rename-label", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("a pretty name for people, on this object; agents keep resolving the bound name");
+            ke::ui::tip("a pretty name for people, on this object; agents keep resolving the bound name");
         }
         if (menuItem("COPY ID")) {
             ImGui::SetClipboardText(s.object.c_str());
@@ -432,7 +432,7 @@ void SymbolUi::drawMenu() {
             want(LinkRequest::Delete);
         }
         if (!blocked.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-            ImGui::SetTooltip("%s", blocked.c_str());
+            ke::ui::tip("%s", blocked.c_str());
         }
         if (menuItem("COPY NAME")) {
             ImGui::SetClipboardText((fold_ ? fold_->nameOf(s.object) : s.display).c_str());

@@ -97,7 +97,7 @@ void drawTitle(ImDrawList* dl, const chat::ViewSpec& v, ViewUiState& st, ImVec2 
             ImGui::TextUnformatted(label.c_str());
             ImGui::PopStyleColor();
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s\nclick: open", a.c_str());
+                ke::ui::tip("%s\nclick: open", a.c_str());
             }
             if (ImGui::IsItemClicked()) {
                 acts.openRef = a;
@@ -223,7 +223,7 @@ void drawTableBody(const chat::ViewSpec& v, ViewUiState& st, ImVec2 min, ImVec2 
                         ImGui::TextUnformatted(label.c_str());
                         ImGui::PopStyleColor();
                         if (ImGui::IsItemHovered()) {
-                            ImGui::SetTooltip("%s\nclick: open", ref.c_str());
+                            ke::ui::tip("%s\nclick: open", ref.c_str());
                         }
                         if (ImGui::IsItemClicked()) {
                             acts.openRef = ref;
@@ -255,7 +255,7 @@ void drawTableBody(const chat::ViewSpec& v, ViewUiState& st, ImVec2 min, ImVec2 
                         }
                         ImGui::PopStyleColor();
                         if (ImGui::IsItemHovered() && s.size() > 24 && ImGui::GetMouseCursor() != ImGuiMouseCursor_Hand) {
-                            ImGui::SetTooltip("%s", s.c_str());
+                            ke::ui::tip("%s", s.c_str());
                         }
                     }
                     if (ImGui::BeginPopupContextItem("cell-menu")) {
@@ -325,7 +325,7 @@ void drawTreeNode(const chat::TreeNode& n, ViewUiState& st, const std::string& p
             ImGui::TextUnformatted(label.c_str());
             ImGui::PopStyleColor();
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s\nclick: open", n.ref.c_str());
+                ke::ui::tip("%s\nclick: open", n.ref.c_str());
             }
             if (ImGui::IsItemClicked()) {
                 acts.openRef = n.ref;
@@ -474,7 +474,7 @@ void drawGraphBody(const chat::ViewSpec& v, ViewUiState& st, ImVec2 min, ImVec2 
         }
     }
     if (!hoveredNode.empty()) {
-        ImGui::SetTooltip("%s", hoveredNode.c_str());
+        ke::ui::tip("%s", hoveredNode.c_str());
     }
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
         st.panning = false;
@@ -531,7 +531,7 @@ void drawImageBody(const chat::ViewSpec& v, ViewUiState& st, ImVec2 min, ImVec2 
     ImGui::Image(ImTextureRef(st.tex.id), fit);
     drive::hit("view:image:" + chat::idPrefix(v.id), ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%dx%d %s\nclick: full size", st.tex.w, st.tex.h, st.image.mime.c_str());
+        ke::ui::tip("%dx%d %s\nclick: full size", st.tex.w, st.tex.h, st.image.mime.c_str());
     }
     if (ImGui::IsItemClicked()) {
         st.expanded = true;

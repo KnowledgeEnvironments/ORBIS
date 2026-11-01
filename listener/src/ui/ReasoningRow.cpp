@@ -27,7 +27,7 @@ std::optional<std::string> drawReasoningRow(const ReasoningRow& row, bool& show)
                 chosen = value;
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s\n%s\none message only: start it with /think or /fast", kCost, row.source.c_str());
+                ke::ui::tip("%s\n%s\none message only: start it with /think or /fast", kCost, row.source.c_str());
             }
         };
         choice("off", "off");
@@ -41,7 +41,7 @@ std::optional<std::string> drawReasoningRow(const ReasoningRow& row, bool& show)
         show = !show;
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("display only: shows or hides reasoning above each reply; it does not change what the model does");
+        ke::ui::tip("display only: shows or hides reasoning above each reply; it does not change what the model does");
     }
     return chosen;
 }

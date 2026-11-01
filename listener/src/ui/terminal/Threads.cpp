@@ -254,9 +254,9 @@ void TerminalPane::drawThreadPanes(Tab& tab, model::Principals& principals, cons
                     if (!it->second.contradiction.empty()) {
                         tip += "\n\nCONTRADICTION: " + it->second.contradiction;
                     }
-                    ImGui::SetTooltip("%s", tip.c_str());
+                    ke::ui::tip("%s", tip.c_str());
                 } else if (auto ct = tu.costTips.find(hp); ct != tu.costTips.end()) {
-                    ImGui::SetTooltip("%s", ct->second.c_str());
+                    ke::ui::tip("%s", ct->second.c_str());
                 }
             }
             if (ImGui::IsKeyPressed(ImGuiKey_Escape) && ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {

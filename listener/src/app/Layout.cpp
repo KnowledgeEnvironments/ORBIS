@@ -290,7 +290,7 @@ LinkTarget Panes::follow(Runtime& rt, ImFont* mono) {
                 }
             }
             if (ImGui::IsItemHovered() && labelText.empty() && hadLabel) {
-                ImGui::SetTooltip("clears the label: asks first; shift-click clears at once");
+                ke::ui::tip("clears the label: asks first; shift-click clears at once");
             }
             ImGui::SameLine();
             if (ui::bracketButtonNamed("CANCEL", "label-cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
@@ -427,7 +427,7 @@ void Panes::drawModeline(FrameInputs& in) {
             drive::hit("modeline:next", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
             if (ImGui::IsItemHovered()) {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-                ImGui::SetTooltip("click: go to the next one");
+                ke::ui::tip("click: go to the next one");
             }
             if (ImGui::IsItemClicked() && !activity.next.empty()) {
                 open(rt, activity.next.front());
@@ -538,7 +538,7 @@ void WorldPicker::drawBody(Runtime& rt, const Options& opts) {
                 ui::chip("CURRENT", ui::Ink::nav);
             }
             if (!w.id.empty() && ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("world %s", w.id.c_str());
+                ke::ui::tip("world %s", w.id.c_str());
             }
             ImGui::TableNextColumn();
             ui::text(ui::Ink::secondary, w.url);
@@ -556,7 +556,7 @@ void WorldPicker::drawBody(Runtime& rt, const Options& opts) {
                 }
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip(current ? "this is the world you are attached to"
+                ke::ui::tip(current ? "this is the world you are attached to"
                                   : canAttach ? "attach with the token saved in worlds.json; the folds reboot from that world's snapshot"
                                               : "no token saved for this world: ADD WORLD with its token");
             }
@@ -566,7 +566,7 @@ void WorldPicker::drawBody(Runtime& rt, const Options& opts) {
                     book.forget(w.url);
                 }
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("drop the saved token (the session entry stays)");
+                    ke::ui::tip("drop the saved token (the session entry stays)");
                 }
             }
             ImGui::PopID();
@@ -598,7 +598,7 @@ void WorldPicker::drawBody(Runtime& rt, const Options& opts) {
             hello.start(addUrl, "hello", json::object(), 6000);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("ask the world who it is before attaching (no token needed)");
+            ke::ui::tip("ask the world who it is before attaching (no token needed)");
         }
         if (hello.running()) {
             ImGui::SameLine();
@@ -636,7 +636,7 @@ void WorldPicker::drawBody(Runtime& rt, const Options& opts) {
             }
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("save the token for this url (worlds.json, 0600) and attach");
+            ke::ui::tip("save the token for this url (worlds.json, 0600) and attach");
         }
         ImGui::Unindent();
     }
@@ -750,24 +750,24 @@ void DesktopFrame::draw(FrameInputs& in) {
         if (ui::beginMenu("DEBUG")) {
             ui::menuItem("SESSION", nullptr, &showSession);
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("the connection, the session and the log's state");
+                ke::ui::tip("the connection, the session and the log's state");
             }
             ui::menuItem("BIND", nullptr, &showBind);
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("the workspace bind rows");
+                ke::ui::tip("the workspace bind rows");
             }
             ImGui::Separator();
             if (ui::menuItem("DROP CONNECTION", nullptr, false, st != ConnState::Disconnected)) {
                 rt.client.drop(); // closes the socket without detach; auto-reconnect follows
             }
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-                ImGui::SetTooltip("close the socket without a detach, to test the reconnect");
+                ke::ui::tip("close the socket without a detach, to test the reconnect");
             }
             if (ui::menuItem("RECONNECT")) {
                 rt.client.reconnect();
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("open the connection again now");
+                ke::ui::tip("open the connection again now");
             }
             ImGui::EndMenu();
         }
@@ -782,7 +782,7 @@ void DesktopFrame::draw(FrameInputs& in) {
                 ImGui::OpenPopup("world-picker");
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("the worlds this machine knows; attach to another, or add one");
+                ke::ui::tip("the worlds this machine knows; attach to another, or add one");
             }
             if (opts && ImGui::BeginPopup("world-picker")) {
                 worlds.drawBody(rt, *opts);
@@ -815,7 +815,7 @@ void DesktopFrame::draw(FrameInputs& in) {
             }
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("search Fields, names and Messages (Cmd-F); the box opens above HISTORY");
+            ke::ui::tip("search Fields, names and Messages (Cmd-F); the box opens above HISTORY");
         }
         {
             // narrow window: the left column is hidden; [ PANES ] brings it back at its minimum width
@@ -832,7 +832,7 @@ void DesktopFrame::draw(FrameInputs& in) {
                     }
                 }
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip(leftHidden ? "show PRINCIPALS (the window is narrow)"
+                    ke::ui::tip(leftHidden ? "show PRINCIPALS (the window is narrow)"
                                                  : "hide the left column again");
                 }
             }
@@ -913,6 +913,7 @@ void DesktopFrame::draw(FrameInputs& in) {
         }
     };
     p.graph.twilight = in.prefs.mapTwilight;
+    ui::setTooltipsOn(in.prefs.tooltips);
     // the drive holds the pointer still and types by name, so a test keeps focus where it put it
     const bool followMouse = in.prefs.focusFollowsMouse && SDL_getenv("ORBIS_TEST") == nullptr;
     p.mux.followMouse = followMouse;

@@ -376,7 +376,7 @@ class FilesModule final : public Module {
                 ImGui::OpenPopup("filemenu");
             }
             if (hover && !e.directory()) {
-                ImGui::SetTooltip("%s\n%s", joinPath(p.path, e.name).c_str(), kFileHint);
+                ke::ui::tip("%s\n%s", joinPath(p.path, e.name).c_str(), kFileHint);
             }
         }
         dl->PopClipRect();

@@ -195,7 +195,7 @@ void TerminalPane::drawNewField(Tab& tab, NewField& nf, const model::PrincipalIn
         }
         ImGui::PopID();
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("who this Field is shown to: the model, people, or both");
+            ke::ui::tip("who this Field is shown to: the model, people, or both");
         }
     }
     const std::string kind = chat::kFieldTypes[nf.type];
@@ -317,10 +317,10 @@ void TerminalPane::drawHintCell(Tab& tab, const model::PrincipalInfo* info, chat
         ImGui::PopStyleColor(3);
         drive::hit("hint:" + base, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
         if (ImGui::IsItemHovered() && !current.empty()) {
-            ImGui::SetTooltip("%s\nhint by %s, reader %s // click to edit", current.c_str(), hf ? hf->by.c_str() : "?",
+            ke::ui::tip("%s\nhint by %s, reader %s // click to edit", current.c_str(), hf ? hf->by.c_str() : "?",
                               hf && !hf->reader.empty() ? hf->reader.c_str() : "both");
         } else if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("a one-line hint about %s for the next reader, person or Principal (%s)", base.c_str(),
+            ke::ui::tip("a one-line hint about %s for the next reader, person or Principal (%s)", base.c_str(),
                               hintName.c_str());
         }
     }
@@ -349,7 +349,7 @@ void TerminalPane::drawThread(Tab& tab, const model::PrincipalInfo* info, const 
                                                                                                : c.dump();
         text(Ink::strong, by.empty() ? "?" : principals.nameOf(by));
         if (ImGui::IsItemHovered() && !by.empty()) {
-            ImGui::SetTooltip("%s", by.c_str());
+            ke::ui::tip("%s", by.c_str());
         }
         ImGui::SameLine();
         text(Ink::secondary, clockPart(when));
@@ -414,7 +414,7 @@ void TerminalPane::drawFields(Tab& tab, const model::PrincipalInfo* info, const 
             });
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("the exact text of its latest prompt, what the model was actually told");
+            ke::ui::tip("the exact text of its latest prompt, what the model was actually told");
         }
     }
     // The object's own hint and comment thread, above the table.
@@ -449,7 +449,7 @@ void TerminalPane::drawFields(Tab& tab, const model::PrincipalInfo* info, const 
         tab.newField.open = !tab.newField.open;
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("add a Field");
+        ke::ui::tip("add a Field");
     }
     drawNewField(tab, tab.newField, info, chat, "", "new-field");
     if (info->cls == "principal" && info->drivenBy == "process") {
@@ -521,7 +521,7 @@ void TerminalPane::drawFields(Tab& tab, const model::PrincipalInfo* info, const 
             text(Ink::inspected, shown);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip(hint.empty() ? "%s" : "%s\nhint: %s", name.c_str(), hint.c_str());
+            ke::ui::tip(hint.empty() ? "%s" : "%s\nhint: %s", name.c_str(), hint.c_str());
         }
         {
             // the comment badge: [ N ] opens the thread under the row
@@ -536,7 +536,7 @@ void TerminalPane::drawFields(Tab& tab, const model::PrincipalInfo* info, const 
                 }
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%zu comment(s) on %s (%s/comment) // click to open the thread", comments.size(),
+                ke::ui::tip("%zu comment(s) on %s (%s/comment) // click to open the thread", comments.size(),
                                   name.c_str(), name.c_str());
             }
         }
@@ -594,7 +594,7 @@ void TerminalPane::drawFields(Tab& tab, const model::PrincipalInfo* info, const 
                 }
             }
             if (ImGui::IsItemHovered() && tall) {
-                ImGui::SetTooltip("%zu characters: opens in the editor", whole.size());
+                ke::ui::tip("%zu characters: opens in the editor", whole.size());
             }
             ImGui::SameLine();
             if (bracketButtonNamed("clear", "clear:" + name)) {
@@ -606,7 +606,7 @@ void TerminalPane::drawFields(Tab& tab, const model::PrincipalInfo* info, const 
                 }
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("removes this Field from reads and prompts; the log keeps its history\nasks first; shift-click clears at once");
+                ke::ui::tip("removes this Field from reads and prompts; the log keeps its history\nasks first; shift-click clears at once");
             }
             if (clipped || edit.expanded) {
                 ImGui::SameLine();
@@ -614,7 +614,7 @@ void TerminalPane::drawFields(Tab& tab, const model::PrincipalInfo* info, const 
                     edit.expanded = !edit.expanded;
                 }
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("%zu characters", whole.size());
+                    ke::ui::tip("%zu characters", whole.size());
                 }
             }
         }
@@ -626,12 +626,12 @@ void TerminalPane::drawFields(Tab& tab, const model::PrincipalInfo* info, const 
         ImGui::TableNextColumn();
         text(Ink::secondary, fp ? principals.nameOf(f.by) : "-");
         if (fp && ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s\nreader %s", f.by.c_str(), f.reader.c_str());
+            ke::ui::tip("%s\nreader %s", f.by.c_str(), f.reader.c_str());
         }
         ImGui::TableNextColumn();
         text(Ink::secondary, fp ? clockPart(f.at) : "-");
         if (fp && ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s\nseq %lld", f.at.c_str(), static_cast<long long>(f.seq));
+            ke::ui::tip("%s\nseq %lld", f.at.c_str(), static_cast<long long>(f.seq));
         }
         if (tab.clearing == name && fp) {
             // Under the row, where the value being cleared is still in view.

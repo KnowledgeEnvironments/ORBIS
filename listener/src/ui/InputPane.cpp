@@ -125,7 +125,7 @@ void InputPane::drawTalk(LineTarget& target) {
         cutOff_ = false;
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("hold to speak; the words land in the line to read before sending");
+        ke::ui::tip("hold to speak; the words land in the line to read before sending");
     }
     if (!voiceNote_.empty()) {
         ImGui::SameLine();
@@ -162,7 +162,7 @@ void InputPane::drawLine(LineTarget& target, const Anim& anim, ImFont* mono) {
             target.attach();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("send a file with your next line; you can also paste or drop one");
+            ke::ui::tip("send a file with your next line; you can also paste or drop one");
         }
     } else {
         text(Ink::strong, ">");
@@ -261,7 +261,7 @@ void InputPane::drawLine(LineTarget& target, const Anim& anim, ImFont* mono) {
             }
         }
         if (ImGui::IsItemHovered() && !target.labelTooltip.empty()) {
-            ImGui::SetTooltip("%s", target.labelTooltip.c_str());
+            ke::ui::tip("%s", target.labelTooltip.c_str());
         }
     }
 
@@ -349,7 +349,7 @@ void InputPane::drawLine(LineTarget& target, const Anim& anim, ImFont* mono) {
         ImGui::SameLine();
         steerNow = bracketButtonNamed("steer", "steer", !text_.empty());
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("interrupt the running call with this line (Shift-Return)");
+            ke::ui::tip("interrupt the running call with this line (Shift-Return)");
         }
     }
     if (entered && ImGui::GetIO().KeyAlt) { // Option-Return: a newline, the line stays open

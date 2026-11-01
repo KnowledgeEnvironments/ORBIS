@@ -69,7 +69,7 @@ void PrincipalsPane::drawMenu(const model::Principals& principals, const std::st
             symbolUi().ask(std::move(r));
         }
         if (!blocked.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-            ImGui::SetTooltip("%s", blocked.c_str());
+            ke::ui::tip("%s", blocked.c_str());
         }
         ImGui::EndPopup();
     }
@@ -104,7 +104,7 @@ void PrincipalsPane::drawActor(const model::Principals& principals, const model:
                 tip += "\n" + totals;
             }
         }
-        ImGui::SetTooltip("%s", tip.c_str());
+        ke::ui::tip("%s", tip.c_str());
     }
     drawMenu(principals, root.id, "", clicked);
     ImGui::SameLine(0.0f, 0.0f);
@@ -130,7 +130,7 @@ void PrincipalsPane::drawActor(const model::Principals& principals, const model:
         ImGui::SameLine();
         text(ink(inverse, Ink::secondary), "temp");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("temporary: retired when its Task ends or its time runs out; its record stays on the log");
+            ke::ui::tip("temporary: retired when its Task ends or its time runs out; its record stays on the log");
         }
     }
     if (isUnsafe(root.id)) {
@@ -198,7 +198,7 @@ void PrincipalsPane::drawActor(const model::Principals& principals, const model:
                     }
                 }
                 if (!tip.empty()) {
-                    ImGui::SetTooltip("%s", tip.c_str());
+                    ke::ui::tip("%s", tip.c_str());
                 }
             }
             drawMenu(principals, item.id, item.route, clicked);
@@ -231,7 +231,7 @@ void PrincipalsPane::drawLoopChips(const model::Principals& principals, const mo
         }
         chip(std::to_string(waiting) + " QUEUED", ink(inverse, Ink::inspected));
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%zu message(s) queued for %s", waiting, principals.nameOf(id).c_str());
+            ke::ui::tip("%zu message(s) queued for %s", waiting, principals.nameOf(id).c_str());
         }
     }
     if (tasks_) {
@@ -241,7 +241,7 @@ void PrincipalsPane::drawLoopChips(const model::Principals& principals, const mo
             }
             chip(std::to_string(n) + " TO APPROVE", ink(inverse, Ink::inspected));
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%zu op(s) of %s wait for approval; open its chat for the cards", n,
+                ke::ui::tip("%zu op(s) of %s wait for approval; open its chat for the cards", n,
                                   principals.nameOf(id).c_str());
             }
         }
@@ -279,7 +279,7 @@ void PrincipalsPane::drawRow(const model::Principals& principals, const std::str
                 tip += "\nstalled: " + stalled;
             }
         }
-        ImGui::SetTooltip("%s", tip.c_str());
+        ke::ui::tip("%s", tip.c_str());
     }
     drawMenu(principals, id, "", clicked);
     ImGui::SameLine(0.0f, 0.0f);
@@ -311,7 +311,7 @@ void PrincipalsPane::drawRow(const model::Principals& principals, const std::str
         }
         text(ink(inverse, Ink::secondary), total);
         if (ImGui::IsItemHovered() && t.evaluations > 0) {
-            ImGui::SetTooltip("%s", model::totalsLine(t).c_str());
+            ke::ui::tip("%s", model::totalsLine(t).c_str());
         }
     }
     ImGui::PopID();
@@ -332,7 +332,7 @@ std::string PrincipalsPane::drawBody(const model::Principals& principals, const 
         prefsDirty_ = true;
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("one flat table instead of the tree");
+        ke::ui::tip("one flat table instead of the tree");
     }
     ImGui::SameLine();
     if (bracketButtonNamed("show deleted", "show-deleted", true, showDeleted_)) {

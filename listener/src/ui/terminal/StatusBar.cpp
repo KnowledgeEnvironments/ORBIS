@@ -35,7 +35,7 @@ void TerminalPane::drawStatusBar(Tab& tab, const model::PrincipalInfo* info, mod
         }
         text(nearLimit ? Ink::inspected : Ink::secondary, shown.empty() ? st : shown);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", (st + "\ncontext of the last model call and the running total for " + principals.nameOf(tab.principal)).c_str());
+            ke::ui::tip("%s", (st + "\ncontext of the last model call and the running total for " + principals.nameOf(tab.principal)).c_str());
         }
         if (tasks_) {
             // Approvals waiting on this Principal (as approver) or asked by it (its own gated ops).
@@ -55,7 +55,7 @@ void TerminalPane::drawStatusBar(Tab& tab, const model::PrincipalInfo* info, mod
                 ImGui::SameLine();
                 chip(std::to_string(total) + " TO APPROVE", Ink::inspected);
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("%zu approval(s) waiting on %s, %zu asked by it; the cards are in the transcript", forMe,
+                    ke::ui::tip("%zu approval(s) waiting on %s, %zu asked by it; the cards are in the transcript", forMe,
                                       principals.nameOf(tab.principal).c_str(), mine);
                 }
             }
@@ -70,7 +70,7 @@ void TerminalPane::drawStatusBar(Tab& tab, const model::PrincipalInfo* info, mod
                     sendDirective(tab, info, principals, chat, session, "/compress");
                 }
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("replace the older part of this conversation with a summary; nothing is deleted");
+                    ke::ui::tip("replace the older part of this conversation with a summary; nothing is deleted");
                 }
                 ImGui::SameLine();
                 if (bracketButtonNamed("off the record", "off-the-record", true, false, Ink::unresolved)) {
@@ -95,7 +95,7 @@ void TerminalPane::drawStatusBar(Tab& tab, const model::PrincipalInfo* info, mod
                 ImGui::OpenPopup("terminal-actions");
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("the world's named actions (act {action args}), opened as forms");
+                ke::ui::tip("the world's named actions (act {action args}), opened as forms");
             }
             if (ImGui::BeginPopup("terminal-actions")) {
                 occasional();

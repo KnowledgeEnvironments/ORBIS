@@ -78,7 +78,7 @@ void TerminalPane::drawDevices(Tab& tab, const model::PrincipalInfo* info, const
             ImGui::TableNextColumn();
             text(t->revoked() ? Ink::secondary : Ink::strong, t->label.empty() ? t->id.substr(0, 8) : t->label);
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("token %s\nissued by %s", t->id.c_str(), principals.nameOf(t->issuedBy).c_str());
+                ke::ui::tip("token %s\nissued by %s", t->id.c_str(), principals.nameOf(t->issuedBy).c_str());
             }
             ImGui::TableNextColumn();
             text(Ink::secondary, dayPart(t->createdAt));
@@ -90,7 +90,7 @@ void TerminalPane::drawDevices(Tab& tab, const model::PrincipalInfo* info, const
             const std::string st = t->state(now);
             chip(upper(st), st == "live" ? Ink::primary : (st == "revoked" ? Ink::inspected : Ink::inspected));
             if (!t->reason.empty() && ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", t->reason.c_str());
+                ke::ui::tip("%s", t->reason.c_str());
             }
             ImGui::TableNextColumn();
             if (!t->revoked()) {
@@ -119,7 +119,7 @@ void TerminalPane::drawDevices(Tab& tab, const model::PrincipalInfo* info, const
                     });
                 }
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("act token.revoke {token, reason}: the device stops attaching at its next attach");
+                    ke::ui::tip("act token.revoke {token, reason}: the device stops attaching at its next attach");
                 }
             }
             ImGui::TableNextColumn();
@@ -139,7 +139,7 @@ void TerminalPane::drawDevices(Tab& tab, const model::PrincipalInfo* info, const
         tab.pairStatus.clear();
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("act pair.begin: a 6-digit code the phone claims for a token of its own (5 minutes)");
+        ke::ui::tip("act pair.begin: a 6-digit code the phone claims for a token of its own (5 minutes)");
     }
     ImGui::SameLine(contentRight() - squareSide());
     if (squareButton(tab.newDevice ? "x" : "+", "new-device", hasActions, tab.newDevice)) {
@@ -150,7 +150,7 @@ void TerminalPane::drawDevices(Tab& tab, const model::PrincipalInfo* info, const
         }
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("act token.issue {principal, label, ttl-s}: a new token for another device; the secret shows once");
+        ke::ui::tip("act token.issue {principal, label, ttl-s}: a new token for another device; the secret shows once");
     }
     if (tab.newDevice) {
         ImGui::Indent();
@@ -239,7 +239,7 @@ void TerminalPane::drawDevices(Tab& tab, const model::PrincipalInfo* info, const
             tab.issueErr = !tab.issuedSaved;
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", (tokenDir_ / (safeFileName(tab.issuedLabel) + ".token")).string().c_str());
+            ke::ui::tip("%s", (tokenDir_ / (safeFileName(tab.issuedLabel) + ".token")).string().c_str());
         }
         ImGui::SameLine();
         if (bracketButtonNamed("dismiss", "dismiss-secret")) {
@@ -350,7 +350,7 @@ void TerminalPane::drawPairing(Tab& tab, chat::Chat& chat, const Session& sessio
             ImGui::Dummy(ImVec2(side, side));
             drive::hit("image:pair-qr", origin, ImVec2(origin.x + side, origin.y + side));
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", tab.pairLink.c_str());
+                ke::ui::tip("%s", tab.pairLink.c_str());
             }
         }
         ImGui::SetNextItemWidth(std::min(ImGui::GetContentRegionAvail().x - 120.0f, ImGui::CalcTextSize("0").x * 80));

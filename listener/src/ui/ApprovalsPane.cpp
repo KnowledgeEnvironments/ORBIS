@@ -180,7 +180,7 @@ void ApprovalsPane::drawDetail(const model::TaskInfo& t, const model::Principals
             editing_ = true;
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("approve this and let commands like it run without asking");
+            ke::ui::tip("approve this and let commands like it run without asking");
         }
     }
 }

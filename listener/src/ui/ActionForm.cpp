@@ -72,7 +72,7 @@ bool drawForm(const std::vector<ArgSpec>& specs, FormValues& v, const FormContex
                             changed = true;
                         }
                         if (ImGui::IsItemHovered()) {
-                            ImGui::SetTooltip("%s", id.c_str());
+                            ke::ui::tip("%s", id.c_str());
                         }
                     }
                     ImGui::EndCombo();

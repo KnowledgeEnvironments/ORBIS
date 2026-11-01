@@ -782,11 +782,27 @@ void boldText(ImU32 color, std::string_view s) {
 
 namespace {
 std::string g_detailHint;
+bool g_tooltipsOn = true;
 } // namespace
+
+void setTooltipsOn(bool on) { g_tooltipsOn = on; }
+
+void tip(const char* fmt, ...) {
+    if (!g_tooltipsOn) {
+        return;
+    }
+    va_list args;
+    va_start(args, fmt);
+    ImGui::SetTooltipV(fmt, args);
+    va_end(args);
+}
 
 bool detailShown(const std::string& hint) {
     if (ImGui::GetIO().KeyShift) {
         return true;
+    }
+    if (!g_tooltipsOn) {
+        return false;
     }
     const std::string line = hint.substr(0, hint.find('\n'));
     g_detailHint = (line.size() > 100 ? line.substr(0, 100) : line) + "  //  hold Shift for more";

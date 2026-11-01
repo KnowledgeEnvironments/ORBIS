@@ -84,14 +84,14 @@ void TerminalPane::drawCards(Tab& tab, model::Principals& principals, chat::Chat
             decide(tab, chat, c.task, true);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("act task.approve {task %s}", c.task.c_str());
+            ke::ui::tip("act task.approve {task %s}", c.task.c_str());
         }
         ImGui::SameLine();
         if (bracketButtonNamed("deny", "deny:" + shortId, session.attached() && !busy && open, false, Ink::inspected)) {
             decide(tab, chat, c.task, false);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("act task.deny {task %s reason}", c.task.c_str());
+            ke::ui::tip("act task.deny {task %s reason}", c.task.c_str());
         }
         if (c.rows >= 2) {
             // the second reserved row: the reason box and the time left, never over the next block
@@ -118,7 +118,7 @@ void TerminalPane::drawCards(Tab& tab, model::Principals& principals, chat::Chat
         } else {
             text(Ink::secondary, "pending"); // no expiry known yet: the Task's Fields are still on their way
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("the Task's Fields have not reached this listener yet; reading it");
+                ke::ui::tip("the Task's Fields have not reached this listener yet; reading it");
             }
             ImGui::SameLine();
         }

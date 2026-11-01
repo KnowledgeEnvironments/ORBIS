@@ -122,7 +122,7 @@ void drawMarkdownExtras(const MdExtras& md, const SelDoc& doc, const SelLayout& 
             ImGui::SetClipboardText(cb.source.c_str());
         }
         if (hov) {
-            ImGui::SetTooltip("copy the code block");
+            ke::ui::tip("copy the code block");
         }
         if (!cb.lang.empty()) {
             const std::string tag = upper(cb.lang);
@@ -140,7 +140,7 @@ void drawMarkdownExtras(const MdExtras& md, const SelDoc& doc, const SelLayout& 
             }
         }
         if (!urls.empty()) {
-            ImGui::SetTooltip("link: %s\nright-click to copy; the listener never opens links", urls.c_str());
+            ke::ui::tip("link: %s\nright-click to copy; the listener never opens links", urls.c_str());
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
                 ImGui::SetClipboardText(urls.c_str());
             }

@@ -103,6 +103,10 @@ std::vector<Item> items(MenuHost h) {
     add("VIEW", "CHAT", "", "the conversation area", [] { bringDockWindowFront("CHAT"); });
     add("VIEW", "GRAPH", "", "the world as a graph", [] { bringDockWindowFront("GRAPH"); });
     add("VIEW", "PANES", "", "terminals, files, editors and viewers", [] { bringDockWindowFront("PANES"); });
+    add("VIEW", "TOOLTIPS", "", "labels on hover and hints in the status line; Shift still opens a card", [&] {
+        in.prefs.tooltips = !in.prefs.tooltips;
+        in.saveWhimsy();
+    }, {}, &in.prefs.tooltips);
     add("VIEW", "FOCUS FOLLOWS MOUSE", "", "typing goes to what is under the pointer, with no click", [&] {
         in.prefs.focusFollowsMouse = !in.prefs.focusFollowsMouse;
         in.saveWhimsy();
@@ -182,7 +186,7 @@ void menuItem(const Item& i) {
     const bool picked = ui::menuItem(i.label, i.shortcut[0] != 0 ? i.shortcut : nullptr, i.checked != nullptr && *i.checked, enabled);
     drive::hit(std::string("menu:") + i.label, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-        ImGui::SetTooltip("%s", enabled ? i.hover : i.disabledWhy.c_str());
+        ke::ui::tip("%s", enabled ? i.hover : i.disabledWhy.c_str());
     }
     if (picked) {
         i.run();

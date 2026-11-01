@@ -97,7 +97,7 @@ class DocumentModule final : public Module {
                 contrast_ = !contrast_;
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("black on white, as a page would read; off shows it in the theme");
+                ke::ui::tip("black on white, as a page would read; off shows it in the theme");
             }
         }
         if (!status_.empty()) {

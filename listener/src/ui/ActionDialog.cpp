@@ -231,7 +231,7 @@ void ActionDialog::drawStep(Step& s, const model::Principals& principals, const 
     }
     if (ImGui::IsItemHovered()) {
         const json preview = argsFromValues(s.specs, s.values);
-        ImGui::SetTooltip("act {action \"%s\", args %s}", s.action.c_str(), preview.dump(1).c_str());
+        ke::ui::tip("act {action \"%s\", args %s}", s.action.c_str(), preview.dump(1).c_str());
     }
     if (!s.result.empty()) {
         ImGui::SameLine();

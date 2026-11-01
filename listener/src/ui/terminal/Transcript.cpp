@@ -186,7 +186,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
                 }
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("the whole thread %s in its own window: every participant's Messages in order, with their cost", r.thread.c_str());
+                ke::ui::tip("the whole thread %s in its own window: every participant's Messages in order, with their cost", r.thread.c_str());
             }
             ImGui::PopID();
         }
@@ -267,7 +267,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
                 tip += "\n\nCONTRADICTION (reply/contradiction): the prose claimed what the kernel record denies\n" + it->second.contradiction;
             }
             if (detailShown(tip)) {
-                ImGui::SetTooltip("%s", tip.c_str());
+                ke::ui::tip("%s", tip.c_str());
             }
         } else if (auto ot = view.opTips.find(hp); ot != view.opTips.end()) {
             if (detailShown("this op's arguments and result")) {
@@ -278,7 +278,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
                 ImGui::EndTooltip();
             }
         } else if (auto ct = view.costTips.find(hp); ct != view.costTips.end()) {
-            ImGui::SetTooltip("%s", ct->second.c_str());
+            ke::ui::tip("%s", ct->second.c_str());
         }
     }
     if (sr.hoveredPara >= 0 && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !view.heads.empty()) {
@@ -419,7 +419,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             cancel(tab, evals, chat);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("stop this Evaluation: act cancel (Esc Esc, Cmd-.)");
+            ke::ui::tip("stop this Evaluation: act cancel (Esc Esc, Cmd-.)");
         }
         ImGui::SameLine();
         if (!tab.cancelling.empty()) {
@@ -428,7 +428,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             text(Ink::primary, line);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("RETURN queues a line for after this call\nSHIFT-RETURN or [ STEER ] interrupts it with a line\nESC ESC or [ STOP ] stops it");
+            ke::ui::tip("RETURN queues a line for after this call\nSHIFT-RETURN or [ STEER ] interrupts it with a line\nESC ESC or [ STOP ] stops it");
         }
     } else if (!stalled.empty()) {
         ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + wrapW);
@@ -437,7 +437,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
         ImGui::PopStyleColor();
         ImGui::PopTextWrapPos();
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("loop/stalled of %s\nright-click the FIELDS tab value to copy", principals.nameOf(tab.principal).c_str());
+            ke::ui::tip("loop/stalled of %s\nright-click the FIELDS tab value to copy", principals.nameOf(tab.principal).c_str());
         }
         const std::vector<std::string> rts = info ? info->routes() : std::vector<std::string>{};
         if (bracketButton("retry", !tab.lastSent.empty() && !rts.empty() && session.attached())) {
@@ -527,7 +527,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             tab.folderPrompt.clear();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("act workspace.mount {principal %s path %s name %s shell true}", tab.principal.c_str(), folder.c_str(),
+            ke::ui::tip("act workspace.mount {principal %s path %s name %s shell true}", tab.principal.c_str(), folder.c_str(),
                               base.c_str());
         }
         ImGui::SameLine();
@@ -540,7 +540,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             tab.folderPrompt.clear();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("a tree view of the top two levels, as an Object tagged on a Message");
+            ke::ui::tip("a tree view of the top two levels, as an Object tagged on a Message");
         }
         ImGui::SameLine();
         if (bracketButtonNamed("x", "drop-cancel")) {
@@ -755,7 +755,7 @@ void TerminalPane::drawPendingImages(Tab& tab) {
         const bool drop = ImGui::IsItemClicked();
         if (ImGui::IsItemHovered()) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-            ImGui::SetTooltip("click: leave it out");
+            ke::ui::tip("click: leave it out");
         }
         drive::hit("pending-image:" + p.name, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
         ImGui::PopID();
@@ -835,10 +835,10 @@ void TerminalPane::drawContextBar(Tab& tab, const model::Evaluations& evals) {
     text(ink, figure);
     if (ImGui::IsItemHovered()) {
         if (g.known) {
-            ImGui::SetTooltip("%ld of the Model's %ld token window in the last prompt\nthe mark is where the conversation compresses first, at %ld",
+            ke::ui::tip("%ld of the Model's %ld token window in the last prompt\nthe mark is where the conversation compresses first, at %ld",
                               g.used, g.window, g.compressAt);
         } else {
-            ImGui::SetTooltip("%ld tokens in the last prompt\nthis Model does not report its window: set model/context-tokens on it", g.used);
+            ke::ui::tip("%ld tokens in the last prompt\nthis Model does not report its window: set model/context-tokens on it", g.used);
         }
     }
 }

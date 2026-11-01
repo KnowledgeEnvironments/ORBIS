@@ -52,7 +52,7 @@ void TerminalPane::drawMemory(Tab& tab, const model::PrincipalInfo* info, const 
         }
         drive::hit("button:create", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("set-field memory/notes \"\", memory/policy (the world's default text), memory/budget %g, "
+            ke::ui::tip("set-field memory/notes \"\", memory/policy (the world's default text), memory/budget %g, "
                               "memory/retention-days %g, reader both, as you",
                               kMemoryBudgetDefault, kMemoryRetentionDefault);
         }
@@ -73,14 +73,14 @@ void TerminalPane::drawMemory(Tab& tab, const model::PrincipalInfo* info, const 
         const float frac = budgetChars > 0 ? static_cast<float>(static_cast<double>(used) / budgetChars) : 0.0f;
         slantBar(std::min(frac, 1.0f), 24, frac > 1.0f ? Ink::inspected : (frac > 0.8f ? Ink::inspected : Ink::primary));
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("every memory/* Field against memory/budget; the prompt always carries all of them");
+            ke::ui::tip("every memory/* Field against memory/budget; the prompt always carries all of them");
         }
         ImGui::SameLine(contentRight() - squareSide());
         if (squareButton(tab.newMemory.open ? "x" : "+", "new-memory", true, tab.newMemory.open)) {
             tab.newMemory.open = !tab.newMemory.open;
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("add a memory Field");
+            ke::ui::tip("add a memory Field");
         }
         ImGui::Separator();
     }
@@ -156,7 +156,7 @@ void TerminalPane::drawMemory(Tab& tab, const model::PrincipalInfo* info, const 
                     }
                 }
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("clears the value with a set-field; the history stays on the log\nasks first; shift-click clears at once");
+                    ke::ui::tip("clears the value with a set-field; the history stays on the log\nasks first; shift-click clears at once");
                 }
             }
         }

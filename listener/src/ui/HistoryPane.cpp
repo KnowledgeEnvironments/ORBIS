@@ -190,7 +190,7 @@ void HistoryPane::drawBody(const EventStore& store, const chat::Chat& chat, cons
     dimText("%zu rows // head %lld // filtered %zu", rows.size(), static_cast<long long>(store.maxSeq()),
             store.holes().size());
     if (ImGui::IsItemHovered() && !store.holes().empty()) {
-        ImGui::SetTooltip("filtered: runs of seqs the world skipped because this Principal may not read them; expected, not a loss");
+        ke::ui::tip("filtered: runs of seqs the world skipped because this Principal may not read them; expected, not a loss");
     }
     if (!store.gaps().empty()) {
         ImGui::SameLine();
@@ -227,7 +227,7 @@ void HistoryPane::drawBody(const EventStore& store, const chat::Chat& chat, cons
         }
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("search Fields, names and Messages (Cmd-F); the world answers what you may read");
+        ke::ui::tip("search Fields, names and Messages (Cmd-F); the world answers what you may read");
     }
     nextControl("[ THIS PRINCIPAL ]");
     if (bracketButton("this principal", !focus_.empty(), onlyFocus_ && !focus_.empty())) {
@@ -235,7 +235,7 @@ void HistoryPane::drawBody(const EventStore& store, const chat::Chat& chat, cons
         selected_ = selAnchor_ = -1; // indices change meaning with the filter
     }
     if (ImGui::IsItemHovered() && !focus_.empty()) {
-        ImGui::SetTooltip("only rows touching %s\n%s", nameOf(focus_).c_str(), focus_.c_str());
+        ke::ui::tip("only rows touching %s\n%s", nameOf(focus_).c_str(), focus_.c_str());
     }
     nextControl("[ READS ]");
     if (bracketButtonNamed("reads", "history-reads", true, showReads_)) {
@@ -245,7 +245,7 @@ void HistoryPane::drawBody(const EventStore& store, const chat::Chat& chat, cons
         viewScanned_ = 0;
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("show field-read and resolved rows: what clients and agents do just by looking");
+        ke::ui::tip("show field-read and resolved rows: what clients and agents do just by looking");
     }
     nextControl("[ ROUTINE ]");
     if (bracketButtonNamed("routine", "history-routine", true, showRoutine_)) {
@@ -255,7 +255,7 @@ void HistoryPane::drawBody(const EventStore& store, const chat::Chat& chat, cons
         viewScanned_ = 0;
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("show each chat turn's bookkeeping: streaming, costs and iterations\nMessages, ops and failures always show");
+        ke::ui::tip("show each chat turn's bookkeeping: streaming, costs and iterations\nMessages, ops and failures always show");
     }
     nextControl("[ FOLLOW ]");
     if (bracketButton("follow", true, stickToBottom_)) {
@@ -382,7 +382,7 @@ void HistoryPane::drawBody(const EventStore& store, const chat::Chat& chat, cons
                                ImGui::GetItemRectMax());
                     if (ImGui::IsItemHovered()) {
                         ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-                        ImGui::SetTooltip("open this Message in its chat; shift-click selects rows");
+                        ke::ui::tip("open this Message in its chat; shift-click selects rows");
                     }
                 }
                 if (ImGui::BeginPopupContextItem("row-menu")) {
@@ -481,7 +481,7 @@ void HistoryPane::drawEvent(const Event& e, const chat::Chat& chat, const Anim& 
     ImGui::TableNextColumn();
     text(ink(inverse, Ink::secondary), clockPart(e.at));
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", e.at.c_str());
+        ke::ui::tip("%s", e.at.c_str());
     }
     ImGui::TableNextColumn();
     const auto messageId = chat::MessageCache::messageIdOf(e);
@@ -491,7 +491,7 @@ void HistoryPane::drawEvent(const Event& e, const chat::Chat& chat, const Anim& 
         chip(e.kind, ink(inverse, kindColor(e.kind)));
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s\nevent %s", e.kind.c_str(), e.id.c_str());
+        ke::ui::tip("%s\nevent %s", e.kind.c_str(), e.id.c_str());
     }
     ImGui::TableNextColumn();
 
@@ -508,7 +508,7 @@ void HistoryPane::drawEvent(const Event& e, const chat::Chat& chat, const Anim& 
         if (const chat::MessageRow* m = cache.get(*messageId)) {
             text(ink(inverse, Ink::nav), nameOf(m->from));
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("from %s\nmessage %s", m->from.c_str(), m->id.c_str());
+                ke::ui::tip("from %s\nmessage %s", m->from.c_str(), m->id.c_str());
             }
             ImGui::SameLine(0.0f, 0.0f);
             text(ink(inverse, Ink::strong), " > ");
@@ -518,7 +518,7 @@ void HistoryPane::drawEvent(const Event& e, const chat::Chat& chat, const Anim& 
                 ImGui::SameLine();
                 text(ink(inverse, Ink::nav), "<- " + shortId(*m->inReplyTo));
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("in reply to %s", m->inReplyTo->c_str());
+                    ke::ui::tip("in reply to %s", m->inReplyTo->c_str());
                 }
             }
             ImGui::SameLine();
@@ -535,7 +535,7 @@ void HistoryPane::drawEvent(const Event& e, const chat::Chat& chat, const Anim& 
     } else {
         text(ink(inverse, Ink::primary), nameOf(e.stream));
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("stream %s\n%s", nameOf(e.stream).c_str(), e.stream.c_str());
+            ke::ui::tip("stream %s\n%s", nameOf(e.stream).c_str(), e.stream.c_str());
         }
         ImGui::SameLine(0.0f, 0.0f);
         text(ink(inverse, Ink::secondary), " | ");
@@ -549,7 +549,7 @@ void HistoryPane::drawEvent(const Event& e, const chat::Chat& chat, const Anim& 
             if (e.delegation) {
                 tip += "\ndelegation " + *e.delegation;
             }
-            ImGui::SetTooltip("%s", tip.c_str());
+            ke::ui::tip("%s", tip.c_str());
         }
         ImGui::SameLine(0.0f, 0.0f);
         text(ink(inverse, Ink::secondary), " | ");
@@ -560,7 +560,7 @@ void HistoryPane::drawEvent(const Event& e, const chat::Chat& chat, const Anim& 
             const long long n = e.body["count"].is_number() ? e.body["count"].get<long long>() : 0;
             text(ink(inverse, Ink::unresolved), "* \u00b7 " + std::to_string(n) + " objects");
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("a snapshot read: every object this principal resolves, in one event\n%s", oneLine(e.body).c_str());
+                ke::ui::tip("a snapshot read: every object this principal resolves, in one event\n%s", oneLine(e.body).c_str());
             }
         } else {
             const float bodyX = ImGui::GetCursorScreenPos().x;
@@ -650,7 +650,7 @@ void HistoryPane::drawSearch() {
             ImGui::SameLine();
             text(Ink::secondary, "local");
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("the world has no search op; this searched what the listener already holds (Fields, names, read Messages)");
+                ke::ui::tip("the world has no search op; this searched what the listener already holds (Fields, names, read Messages)");
             }
         }
     }
@@ -665,7 +665,7 @@ void HistoryPane::drawSearch() {
                 const bool clicked = ImGui::Selectable("##hit", false, ImGuiSelectableFlags_AllowOverlap);
                 drive::hit("search:hit:" + std::to_string(i), ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("%s%s\nseq %lld  score %.1f\nclick: open the object (a Principal's FIELDS) or scroll the rows to the seq",
+                    ke::ui::tip("%s%s\nseq %lld  score %.1f\nclick: open the object (a Principal's FIELDS) or scroll the rows to the seq",
                                       hit.object.c_str(), hit.field.empty() ? "" : ("  " + hit.field).c_str(),
                                       static_cast<long long>(hit.seq), hit.score);
                 }

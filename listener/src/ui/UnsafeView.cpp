@@ -59,7 +59,7 @@ void unsafeIndicator(const model::Principals& principals, chat::Chat& chat, doub
     dl->AddRectFilled(at, ImVec2(at.x + size.x, at.y + size.y), Ink::unsafe);
     dl->AddText(at, Surface::background, label.c_str());
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("approvals are off for this Principal; click to list and end it");
+        ke::ui::tip("approvals are off for this Principal; click to list and end it");
     }
     if (ImGui::BeginPopup("unsafe-list")) {
         for (const chat::UnsafeEntry& e : g_entries) {

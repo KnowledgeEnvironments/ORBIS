@@ -103,7 +103,7 @@ void TerminalPane::drawModelPicker(Tab& tab, const model::PrincipalInfo* info, c
     const ImVec2 controlAt = ImGui::GetItemRectMin();
     if (ImGui::IsItemHovered()) {
         const std::string source = tab.chosen.is_object() ? tab.chosen.value("source", std::string()) : std::string();
-        ImGui::SetTooltip("%s", (name + (source.empty() ? "" : "\nchosen for: " + source) + "\nclick to choose").c_str());
+        ke::ui::tip("%s", (name + (source.empty() ? "" : "\nchosen for: " + source) + "\nclick to choose").c_str());
     }
     const bool plan = tab.chosen.is_object() && tab.chosen.value("plan", false);
     const std::string status = tab.chosen.is_object() ? tab.chosen.value("status", std::string()) : std::string();
@@ -221,7 +221,7 @@ void TerminalPane::drawModelPicker(Tab& tab, const model::PrincipalInfo* info, c
         drive::hit("menu:model:" + ename + ":" + slug, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
         if (ImGui::IsItemHovered()) {
             tab.pickerCursor = static_cast<int>(i);
-            ImGui::SetTooltip("%s\n%s\ncontext %s // price %s", ename.c_str(), title.c_str(), contextOf(e).c_str(), priceOf(e).c_str());
+            ke::ui::tip("%s\n%s\ncontext %s // price %s", ename.c_str(), title.c_str(), contextOf(e).c_str(), priceOf(e).c_str());
         }
         ImGui::SameLine();
         text(st == "ok" ? Ink::secondary : Ink::inspected, st);
@@ -243,7 +243,7 @@ void TerminalPane::drawModelPicker(Tab& tab, const model::PrincipalInfo* info, c
         tab.pickerConversation = true;
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-        ImGui::SetTooltip("%s", tab.lastThread.empty() ? "no conversation yet" : "only this conversation; the agent's choice stays");
+        ke::ui::tip("%s", tab.lastThread.empty() ? "no conversation yet" : "only this conversation; the agent's choice stays");
     }
     ImGui::Separator();
     if (models.empty()) {
@@ -325,7 +325,7 @@ void TerminalPane::drawModelPicker(Tab& tab, const model::PrincipalInfo* info, c
         ImGui::EndMenu();
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("used when the chosen Model is down or at its limit; the chat says which one answered");
+        ke::ui::tip("used when the chosen Model is down or at its limit; the chat says which one answered");
     }
     const bool canCreate = actions_ && actions_->get("model.create") != nullptr;
     if (menuItem("NEW MODEL…", nullptr, false, canCreate)) {
@@ -345,7 +345,7 @@ void TerminalPane::drawModelPicker(Tab& tab, const model::PrincipalInfo* info, c
             signin.start(chat, renew);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("use your ChatGPT plan here: opens your browser, and no key is needed");
+            ke::ui::tip("use your ChatGPT plan here: opens your browser, and no key is needed");
         }
     }
     if (plan && tab.chosen.value("signed-in", false)) {

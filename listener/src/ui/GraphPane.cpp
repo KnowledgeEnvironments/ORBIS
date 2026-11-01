@@ -351,7 +351,7 @@ void GraphPane::drawPorts(const model::MapActor& a, ImVec2 origin, float top) {
             symbolUi().ask(std::move(r));
         }
         if (hot) {
-            ImGui::SetTooltip("%s\n%s\n%s", p.name.c_str(), p.kind.c_str(), p.pane ? "click opens the pane" : "click inspects it");
+            ke::ui::tip("%s\n%s\n%s", p.name.c_str(), p.kind.c_str(), p.pane ? "click opens the pane" : "click inspects it");
         }
         ImGui::PopID();
         const float kindW = ImGui::CalcTextSize(p.kind.c_str()).x;
@@ -568,7 +568,7 @@ void GraphPane::tooltip(const GraphInput& in, const model::MapActor& a) {
         tip += "\n" + totals;
     }
     tip += platform::touchScreen() ? "\ntap opens, hold for more" : "\nclick opens, shift-click inspects, drag onto another to connect";
-    ImGui::SetTooltip("%s", tip.c_str());
+    ke::ui::tip("%s", tip.c_str());
 }
 
 void GraphPane::drawWelcome(const GraphInput& in, GraphActions& out, ImVec2 origin) {
@@ -679,7 +679,7 @@ void GraphPane::drawMenus(const GraphInput& in, GraphActions& out) {
             symbolUi().ask(std::move(r));
         }
         if (!blocked.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-            ImGui::SetTooltip("%s", blocked.c_str());
+            ke::ui::tip("%s", blocked.c_str());
         }
         ImGui::EndPopup();
     }
@@ -707,7 +707,7 @@ void GraphPane::drawMenus(const GraphInput& in, GraphActions& out) {
             }
             drive::hit("menu:drop-hand", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
             if (route.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-                ImGui::SetTooltip("you share no Route with %s", toName.c_str());
+                ke::ui::tip("you share no Route with %s", toName.c_str());
             }
         }
         ImGui::EndPopup();

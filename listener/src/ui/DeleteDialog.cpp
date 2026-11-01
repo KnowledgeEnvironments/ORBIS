@@ -81,7 +81,7 @@ void DeleteDialog::draw(const model::Principals& fold, chat::Chat& chat) {
             retire(true);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("delete it although the objects above still use it");
+            ke::ui::tip("delete it although the objects above still use it");
         }
     }
     ImGui::SameLine();

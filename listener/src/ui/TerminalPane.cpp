@@ -329,7 +329,7 @@ void TerminalPane::drawBody(model::Principals& principals, const model::Evaluati
                 this->filter = id;
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("all: everything. messages: what people and agents said. activity: heartbeats, approvals and status lines");
+                ke::ui::tip("all: everything. messages: what people and agents said. activity: heartbeats, approvals and status lines");
             }
         }
     }

@@ -192,7 +192,7 @@ void drawInlineMath(const std::string& tex, const std::string& shown, ImVec2 at,
     if (!box.ok) {
         dl->AddText(at, Ink::secondary, tex.c_str()); // no delimiters: they are not what was meant
         if (ImGui::IsMouseHoveringRect(at, ImVec2(at.x + width, at.y + lineHeight))) {
-            ImGui::SetTooltip("%s", box.error.c_str());
+            ke::ui::tip("%s", box.error.c_str());
         }
         return;
     }
@@ -202,7 +202,7 @@ void drawInlineMath(const std::string& tex, const std::string& shown, ImVec2 at,
     const float baseline = at.y + lineHeight * 0.8f;
     paint(dl, small, ImVec2(at.x + (width - small.width) / 2, baseline), mathInk());
     if (ImGui::IsMouseHoveringRect(at, ImVec2(at.x + width, at.y + lineHeight))) {
-        ImGui::SetTooltip("%s", shown.c_str());
+        ke::ui::tip("%s", shown.c_str());
     }
 }
 
@@ -323,7 +323,7 @@ void drawDisplayMath(const std::string& tex, ImVec2 min, ImVec2 max, int id) {
             symbolUi().ask(std::move(r));
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("the first page, in a pane of its own");
+            ke::ui::tip("the first page, in a pane of its own");
         }
     }
     if (failed && g_mathWorld != nullptr) {

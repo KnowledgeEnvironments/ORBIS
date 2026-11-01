@@ -83,14 +83,14 @@ void SessionPane::drawBody(const Session& session, const WsClient& client, const
                         (store.holes().empty() ? std::string() : " \u00b7 filtered " + std::to_string(store.holes().size())),
             Ink::primary);
         if (ImGui::IsItemHovered() && !store.holes().empty()) {
-            ImGui::SetTooltip("%zu run(s) of seqs the world skipped: Events this Principal may not read (resolution filters "
+            ke::ui::tip("%zu run(s) of seqs the world skipped: Events this Principal may not read (resolution filters "
                               "every push). Expected for a narrow Principal; not a loss.",
                               store.holes().size());
         }
         if (!store.gaps().empty()) {
             row("GAPS", std::to_string(store.gaps().size()) + " (the world's head fell below our cursor)", Ink::fatal);
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("a different or truncated log under this URL (a --fresh world, a lost tail): the rows "
+                ke::ui::tip("a different or truncated log under this URL (a --fresh world, a lost tail): the rows "
                                   "before seq %lld may not match it; forget the session to start clean",
                                   static_cast<long long>(store.gaps().back().got));
             }
@@ -140,7 +140,7 @@ void SessionPane::drawBody(const Session& session, const WsClient& client, const
         ImGui::SetClipboardText(log::recent(200).c_str());
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("copy the last 200 listener log lines (what stderr printed) to the clipboard");
+        ke::ui::tip("copy the last 200 listener log lines (what stderr printed) to the clipboard");
     }
     ImGui::PopFont();
 }
@@ -173,12 +173,12 @@ void SessionPane::drawBindsBody(const std::vector<BindRow>& rows, ImFont* mono, 
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(r.plan.name.c_str());
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", r.plan.label.c_str());
+                ke::ui::tip("%s", r.plan.label.c_str());
             }
             ImGui::TableNextColumn();
             text(Ink::nav, names_ ? names_->nameOf(r.plan.object) : r.plan.object);
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", r.plan.object.c_str());
+                ke::ui::tip("%s", r.plan.object.c_str());
             }
             ImGui::TableNextColumn();
             if (!r.sent) {
@@ -192,7 +192,7 @@ void SessionPane::drawBindsBody(const std::vector<BindRow>& rows, ImFont* mono, 
                 // An err here is the expected sprint-0 answer, shown dim, never red.
                 text(Ink::secondary, "err " + (r.response->err ? r.response->err->code : std::string("?")));
                 if (ImGui::IsItemHovered() && r.response->err) {
-                    ImGui::SetTooltip("%s", r.response->err->message.c_str());
+                    ke::ui::tip("%s", r.response->err->message.c_str());
                 }
             }
         }
