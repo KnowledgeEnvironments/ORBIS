@@ -725,8 +725,21 @@ void hazardTape(ImDrawList* dl, ImVec2 min, ImVec2 max, double seconds) {
                                 ImVec2(x + stripe, max.y), ImVec2(x, max.y)};
         dl->AddConvexPolyFilled(quad, 4, Ink::inspected);
     }
+    // Classic Mac OS: a rounded tube set into the surface. Light falls from above across the stripes,
+    // and the edge is inset, dark above and left, light below and right.
+    const float mid = min.y + height * 0.42f;
+    dl->AddRectFilledMultiColor(min, ImVec2(max.x, mid), IM_COL32(255, 255, 255, 120), IM_COL32(255, 255, 255, 120),
+                                IM_COL32(255, 255, 255, 0), IM_COL32(255, 255, 255, 0));
+    dl->AddRectFilledMultiColor(ImVec2(min.x, mid), max, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 150),
+                                IM_COL32(0, 0, 0, 150));
     dl->PopClipRect();
-    dl->AddRect(min, max, Ink::inspected);
+    const ImU32 dark = IM_COL32(0, 0, 0, 200);
+    const ImU32 light = IM_COL32(255, 255, 255, 110);
+    const ImVec2 end(max.x - 1.0f, max.y - 1.0f);
+    dl->AddLine(min, ImVec2(end.x, min.y), dark);
+    dl->AddLine(min, ImVec2(min.x, end.y), dark);
+    dl->AddLine(ImVec2(min.x, end.y), end, light);
+    dl->AddLine(ImVec2(end.x, min.y), ImVec2(end.x, max.y), light);
 }
 
 void hazardSpinner(float width, double seconds) {

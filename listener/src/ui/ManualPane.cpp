@@ -206,9 +206,11 @@ void ManualPane::drawTopic(chat::Chat& chat, const model::Principals& principals
     if (status_ == "reading") { // a tape at the right of the button row, drawn over nothing: the page never moves
         const ImVec2 at = ImGui::GetCursorScreenPos();
         const float right = at.x + ImGui::GetContentRegionAvail().x;
-        const float tall = ImGui::GetFrameHeight();
-        hazardTape(ImGui::GetWindowDrawList(), ImVec2(right - ImGui::CalcTextSize("0").x * 14.0f, at.y + tall * 0.25f),
-                   ImVec2(right, at.y + tall * 0.75f), ImGui::GetTime());
+        // the size of every other one (hazardSpinner)
+        const float tall = ImGui::GetTextLineHeight();
+        const float top = at.y + std::floor((ImGui::GetFrameHeight() - tall) / 2.0f);
+        hazardTape(ImGui::GetWindowDrawList(), ImVec2(right - ImGui::GetFontSize() * 5.0f, top), ImVec2(right, top + tall),
+                   ImGui::GetTime());
     } else if (!status_.empty()) {
         text(Ink::secondary, status_);
     }

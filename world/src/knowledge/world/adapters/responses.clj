@@ -40,7 +40,8 @@
     (seq (instructions-of messages)) (assoc :instructions (instructions-of messages))
     tools? (assoc :tools (tools chat-tools))
     (and tools? (seq only)) (assoc :tool_choice "required")
-    (= :on mode) (assoc :reasoning {:effort "medium"})))
+    ;; the reasoning itself is never sent: only a summary, and only when it is asked for
+    (= :on mode) (assoc :reasoning {:effort "medium" :summary "auto"})))
 
 (defn- error-line
   "An error object or a `{\"detail\": ...}` body as one line, its code first: the code decides recovery."
