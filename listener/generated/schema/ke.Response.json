@@ -1,0 +1,52 @@
+{
+  "title" : "Response",
+  "anyOf" : [ {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "ok" : {
+        "const" : true
+      },
+      "result" : { },
+      "seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      }
+    },
+    "required" : [ "id", "ok", "result", "seq" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "ok" : {
+        "const" : false
+      },
+      "err" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "enum" : [ "unresolved", "gated", "budget", "residency", "conflict", "lagging", "invalid", "not-implemented", "unauthenticated", "unknown-action", "invalid-args", "narrower-required", "outside-mount", "invalid-ops", "not-allowed", "too-large", "not-an-image", "approval-pending", "person-only", "unsupervised", "consent-declined", "plan-not-granted", "sign-in-failed", "log-version", "secret-in-args", "session-only", "rate-limited", "no-renderer", "unconfined", "no-speech-model", "too-large", "unreachable", "scratch-readonly" ]
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "data" : {
+            "type" : "object",
+            "properties" : { }
+          }
+        },
+        "required" : [ "code", "message" ]
+      },
+      "seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      }
+    },
+    "required" : [ "id", "ok", "err", "seq" ]
+  } ]
+}

@@ -1,0 +1,4 @@
+assets/fonts/*
+!assets/fonts/.gitkeep
+!assets/fonts/MonaspaceXenon.ttf
+!assets/fonts/MonaspaceXenon-OFL.txt

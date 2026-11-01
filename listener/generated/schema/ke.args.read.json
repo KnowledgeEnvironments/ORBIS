@@ -1,0 +1,45 @@
+{
+  "type" : "object",
+  "properties" : {
+    "object" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "name" : {
+      "type" : "string",
+      "minLength" : 1,
+      "maxLength" : 512
+    },
+    "field" : {
+      "type" : "string"
+    },
+    "seq" : {
+      "type" : "integer",
+      "minimum" : 0
+    },
+    "depth" : {
+      "type" : "integer"
+    },
+    "range" : {
+      "type" : "array",
+      "prefixItems" : [ {
+        "type" : "integer"
+      }, {
+        "type" : "integer"
+      } ],
+      "items" : false
+    },
+    "byte-range" : {
+      "type" : "array",
+      "prefixItems" : [ {
+        "type" : "integer"
+      }, {
+        "type" : "integer"
+      } ],
+      "items" : false
+    },
+    "bytes" : {
+      "type" : "boolean"
+    }
+  }
+}

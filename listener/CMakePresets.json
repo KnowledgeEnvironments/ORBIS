@@ -1,0 +1,174 @@
+{
+  "version": 8,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "macos-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "/opt/homebrew",
+        "CMAKE_IGNORE_PREFIX_PATH": "/opt/local",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "FETCHCONTENT_BASE_DIR": "${sourceDir}/third_party/_deps"
+      },
+      "environment": {
+        "PKG_CONFIG_PATH": "/opt/homebrew/lib/pkgconfig"
+      }
+    },
+    {
+      "name": "macos-debug",
+      "inherits": "macos-base",
+      "displayName": "macOS Debug (Ninja, Homebrew SDL3/FreeType)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "macos-release",
+      "inherits": "macos-base",
+      "displayName": "macOS Release (Ninja, Homebrew SDL3/FreeType)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "macos-source",
+      "displayName": "macOS Debug (Ninja, SDL3/FreeType from source, no Homebrew) (RelWithDebInfo)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_IGNORE_PREFIX_PATH": "/opt/local;/opt/homebrew",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "LISTENER_DEPS_FROM_SOURCE": "ON",
+        "FETCHCONTENT_BASE_DIR": "${sourceDir}/third_party/_deps/${presetName}"
+      }
+    },
+    {
+      "name": "ios-base",
+      "hidden": true,
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "iOS",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "17.0",
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
+        "CMAKE_IGNORE_PREFIX_PATH": "/opt/local;/opt/homebrew",
+        "CMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH": "YES",
+        "LISTENER_BUNDLE_ID": "dev.orbis.listener",
+        "FETCHCONTENT_BASE_DIR": "${sourceDir}/third_party/_deps/${presetName}"
+      }
+    },
+    {
+      "name": "ios-device",
+      "inherits": "ios-base",
+      "displayName": "iOS device (Xcode, SDL3/FreeType from source, automatic signing)",
+      "cacheVariables": {
+        "CMAKE_OSX_SYSROOT": "iphoneos",
+        "CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM": "$env{ORBIS_APPLE_TEAM}",
+        "CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_STYLE": "Automatic",
+        "CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY": "Apple Development"
+      }
+    },
+    {
+      "name": "ios-simulator",
+      "inherits": "ios-base",
+      "displayName": "iOS simulator arm64 (Xcode, SDL3/FreeType from source)",
+      "cacheVariables": {
+        "CMAKE_OSX_SYSROOT": "iphonesimulator",
+        "CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_STYLE": "Manual",
+        "CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY": "-"
+      }
+    },
+    {
+      "name": "macos-source-debug",
+      "displayName": "macOS from source (Debug)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_IGNORE_PREFIX_PATH": "/opt/local;/opt/homebrew",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "LISTENER_DEPS_FROM_SOURCE": "ON",
+        "FETCHCONTENT_BASE_DIR": "${sourceDir}/third_party/_deps/${presetName}"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "macos-debug",
+      "configurePreset": "macos-debug"
+    },
+    {
+      "name": "macos-release",
+      "configurePreset": "macos-release"
+    },
+    {
+      "name": "macos-source",
+      "configurePreset": "macos-source"
+    },
+    {
+      "name": "ios-device",
+      "configurePreset": "ios-device",
+      "configuration": "Debug"
+    },
+    {
+      "name": "ios-simulator",
+      "configurePreset": "ios-simulator",
+      "configuration": "Debug"
+    },
+    {
+      "name": "macos-source-debug",
+      "configurePreset": "macos-source-debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "macos-debug",
+      "configurePreset": "macos-debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "timeout": 120
+      }
+    },
+    {
+      "name": "macos-release",
+      "configurePreset": "macos-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "timeout": 120
+      }
+    },
+    {
+      "name": "macos-source",
+      "configurePreset": "macos-source",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "timeout": 120
+      }
+    },
+    {
+      "name": "macos-source-debug",
+      "configurePreset": "macos-source-debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "timeout": 120
+      }
+    }
+  ]
+}

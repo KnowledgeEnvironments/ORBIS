@@ -1,0 +1,12 @@
+{
+  "type" : "object",
+  "properties" : {
+    "pairing-code" : {
+      "type" : "string"
+    },
+    "label" : {
+      "type" : "string"
+    }
+  },
+  "required" : [ "pairing-code" ]
+}

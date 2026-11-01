@@ -1,0 +1,13 @@
+{:paths ["src"]
+ :deps {org.clojure/clojure {:mvn/version "1.12.6"}
+        metosin/malli       {:mvn/version "0.20.2"}
+        metosin/jsonista    {:mvn/version "0.3.14"}}
+ :aliases
+ {:test   {:extra-paths ["test"]
+           :extra-deps {lambdaisland/kaocha     {:mvn/version "1.91.1392"}
+                        org.clojure/test.check  {:mvn/version "1.1.3"}
+                        metosin/jsonista        {:mvn/version "0.3.14"}}
+           :main-opts ["-m" "kaocha.runner"]}
+  :export {:extra-deps {metosin/jsonista {:mvn/version "0.3.14"}}
+           :exec-fn knowledge.schema.json/export!
+           :exec-args {:out "../listener/generated/schema"}}}}

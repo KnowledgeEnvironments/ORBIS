@@ -1,0 +1,40 @@
+;; What the manual is seeded from. A file is split at its `##` headings into section topics, so
+;; docs/ stays the one source. `docs` here is a link to the repository's docs directory, which a
+;; release carries, so a world's manual is the docs of the release it runs.
+{:books [{:book "start" :title "Start here" :order 0
+          :concepts [{:name "start/what-this-is" :file "concepts/what-this-is.md"}
+                     {:name "start/first-steps" :file "concepts/first-steps.md"}
+                     {:name "start/working-on-a-project" :file "concepts/working-on-a-project.md"}
+                     {:name "start/who-may-do-what" :file "concepts/who-may-do-what.md"}
+                     {:name "start/subagents" :file "concepts/subagents.md"}
+                     {:name "start/activity-marks" :file "concepts/activity-marks.md"}
+                     {:name "start/models" :file "concepts/models.md"}
+                     {:name "start/resolution" :file "concepts/resolution.tex" :format "latex"}]}
+         {:book "authority" :title "Authority" :order 1 :file "docs/authority.md"}
+         {:book "self-hosting" :title "Self-hosting" :order 2 :file "docs/self-hosting.md"}
+         {:book "panes" :title "Panes" :order 3 :file "docs/panes.md"}
+         {:book "protocol" :title "The wire protocol" :order 4 :file "docs/protocol.md"}
+         {:book "ground-rules" :title "Ground rules" :order 5 :file "docs/ground-rules.md"}
+         {:book "ethos" :title "Why it is like this" :order 6 :file "docs/ethos.md"}]
+ ;; Fields a person or a Principal tunes. Class Fields come from the schema; these are the rest.
+ :fields {"instructions/charter" "What a Principal is for. Part of its system prompt, written first."
+          "instructions/own" "A Principal's own standing notes to itself, part of its system prompt."
+          "memory/notes" "What a Principal keeps between wakes, in its own words. Serialized on every wake, up to memory/budget."
+          "memory/budget" "How many tokens of memory/notes a wake carries."
+          "memory/policy" "How a Principal should use its memory, in plain words."
+          "serialize/budget-tokens" "The prompt budget of one model call, estimated at 4 chars per token."
+          "serialize/compress-at" "Tokens of unsummarised conversation at which a wake compresses first. Unset: 70 percent of what the budget leaves after the standing prompt. 0 turns compression off."
+          "serialize/summary-tokens" "The size a conversation's summary should stay under, in tokens. Unset: 400."
+          "serialize/compressor" "The prompt that writes a conversation's summary. Unset: the shipped one."
+          "loop/max-iterations" "Turns a wake may take before one last turn with no tools. Unset: 8."
+          "loop/max-ops" "Ops a Principal may make in one turn. Unset: 16."
+          "loop/reasoning" "Whether this Principal's model reasons: on, off, or inherit from its Model."
+          "loop/accepts-from" "Who may wake this Principal."
+          "policy/approval" "Which ops wait for a person's card. A person's own session changes it, nobody else."
+          "policy/approval-rules" "Standing rules that admit gated ops without a card, each with a Task as record."
+          "policy/unsafe" "Unsafe mode on this Principal: no cards until it expires. Changed only through approval.unsafe and approval.unsafe.off."
+          "world/unsafe" "Every armed Principal and unconfined Adapter. Any session may read it; it drives the red indicator."
+          "world/notifications" "Where notifications live. Any session may read it."
+          "world/manual" "Where this manual lives. Any session may read it."
+          "world/release" "The release this world is running: commit, version, log version."
+          "object/label" "A pretty name for people. Agents keep resolving the bound name."}}

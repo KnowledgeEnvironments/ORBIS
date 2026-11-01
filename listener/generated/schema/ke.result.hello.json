@@ -1,0 +1,28 @@
+{
+  "type" : "object",
+  "properties" : {
+    "world" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "name" : {
+      "type" : "string"
+    },
+    "url" : {
+      "type" : "string"
+    },
+    "format-versions" : {
+      "type" : "object",
+      "properties" : { }
+    },
+    "head" : {
+      "type" : "integer",
+      "minimum" : 0
+    },
+    "root" : {
+      "type" : "string",
+      "format" : "uuid"
+    }
+  },
+  "required" : [ "world", "name", "url", "format-versions", "head" ]
+}

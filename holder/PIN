@@ -1,0 +1,3 @@
+# libghostty-vt: pre-1.0, so the exact commit, behind src/vt.h and nothing else.
+GHOSTTY_COMMIT=3bd54e025cc3349ee76ab1af7ec1ff8f7353632b
+GHOSTTY_ZIG=0.17.0

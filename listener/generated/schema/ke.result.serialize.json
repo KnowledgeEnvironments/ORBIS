@@ -1,0 +1,17 @@
+{
+  "type" : "object",
+  "properties" : {
+    "serialization" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "size" : {
+      "type" : "object",
+      "properties" : { }
+    },
+    "hash" : {
+      "type" : "string"
+    }
+  },
+  "required" : [ "serialization", "size", "hash" ]
+}

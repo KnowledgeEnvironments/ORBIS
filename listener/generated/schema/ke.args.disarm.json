@@ -1,0 +1,10 @@
+{
+  "type" : "object",
+  "properties" : {
+    "trigger" : {
+      "type" : "string",
+      "format" : "uuid"
+    }
+  },
+  "required" : [ "trigger" ]
+}

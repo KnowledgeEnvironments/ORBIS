@@ -1,0 +1,24 @@
+{
+  "type" : "object",
+  "properties" : {
+    "working-set" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "uniqueItems" : true
+    },
+    "model" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "depth" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "type" : "integer"
+      }
+    }
+  },
+  "required" : [ "working-set", "model" ]
+}

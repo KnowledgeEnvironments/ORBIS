@@ -1,0 +1,25 @@
+# runtime data
+/data/
+world/data/
+# clojure
+.cpcache/
+target/
+.nrepl-port
+.lsp/
+.clj-kondo/.cache/
+# c++
+listener/build/
+listener/third_party/_deps/
+imgui.ini
+compile_commands.json
+# env and editors
+.envrc
+.DS_Store
+*.log
+/logs/
+# android
+listener/platform/android/.gradle/
+listener/platform/android/build/
+listener/platform/android/app/build/
+listener/platform/android/app/.cxx/
+listener/platform/android/local.properties

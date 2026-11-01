@@ -1,0 +1,20 @@
+{
+  "type" : "object",
+  "properties" : {
+    "message" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "seq" : {
+      "type" : "integer",
+      "minimum" : 0
+    },
+    "steered" : {
+      "type" : "boolean"
+    },
+    "next-wake" : {
+      "type" : "boolean"
+    }
+  },
+  "required" : [ "message", "seq" ]
+}

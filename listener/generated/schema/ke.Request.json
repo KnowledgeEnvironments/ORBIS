@@ -1,0 +1,1395 @@
+{
+  "title" : "Request",
+  "oneOf" : [ {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "attach"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "principal" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "token" : {
+            "type" : "string"
+          },
+          "session" : {
+            "type" : "string"
+          },
+          "subs" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          },
+          "client-kind" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "string"
+            } ]
+          }
+        },
+        "required" : [ "token" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "detach"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : { }
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "resolve"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "minLength" : 1,
+            "maxLength" : 512
+          },
+          "op" : {
+            "type" : "string",
+            "enum" : [ "read", "reference", "transmit", "write", "delegate", "evaluate", "create" ]
+          },
+          "watch" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "name", "op" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "read"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string",
+            "minLength" : 1,
+            "maxLength" : 512
+          },
+          "field" : {
+            "type" : "string"
+          },
+          "seq" : {
+            "type" : "integer",
+            "minimum" : 0
+          },
+          "depth" : {
+            "type" : "integer"
+          },
+          "range" : {
+            "type" : "array",
+            "prefixItems" : [ {
+              "type" : "integer"
+            }, {
+              "type" : "integer"
+            } ],
+            "items" : false
+          },
+          "byte-range" : {
+            "type" : "array",
+            "prefixItems" : [ {
+              "type" : "integer"
+            }, {
+              "type" : "integer"
+            } ],
+            "items" : false
+          },
+          "bytes" : {
+            "type" : "boolean"
+          }
+        }
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "history"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "stream" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "after" : {
+            "type" : "integer",
+            "minimum" : 0
+          },
+          "limit" : {
+            "type" : "integer",
+            "minimum" : 1
+          },
+          "snapshot" : {
+            "type" : "boolean"
+          },
+          "cursor" : {
+            "type" : "string"
+          },
+          "next" : {
+            "anyOf" : [ {
+              "type" : "integer",
+              "minimum" : 0
+            }, {
+              "type" : "string"
+            } ]
+          },
+          "since-fork" : {
+            "type" : "boolean"
+          },
+          "conversations" : {
+            "type" : "boolean"
+          },
+          "principal" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "retired" : {
+            "type" : "boolean"
+          },
+          "before" : {
+            "type" : "integer",
+            "minimum" : 0
+          },
+          "last" : {
+            "type" : "integer",
+            "minimum" : 1
+          },
+          "thread" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "subscribe"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "sub" : {
+            "type" : "string"
+          },
+          "stream" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "streams" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "uniqueItems" : true
+          },
+          "kinds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "created", "bound", "unbound", "field-set", "field-read", "resolved", "granted", "revoked", "sent", "delivered", "task-moved", "evaluated", "fired", "attached", "detached", "retired", "restored", "scratch-began", "scratch-ended", "pane-opened", "pane-input", "pane-output", "pane-edit", "pane-closed" ]
+            },
+            "uniqueItems" : true
+          },
+          "after" : {
+            "type" : "integer",
+            "minimum" : 0
+          },
+          "window" : {
+            "type" : "integer",
+            "minimum" : 1,
+            "maximum" : 4096
+          },
+          "query" : { }
+        },
+        "required" : [ "sub" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "unsubscribe"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "sub" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "sub" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "search"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "limit" : {
+            "type" : "integer"
+          },
+          "kinds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "field", "message", "object" ]
+            },
+            "uniqueItems" : true
+          },
+          "since" : {
+            "type" : "integer",
+            "minimum" : 0
+          }
+        },
+        "required" : [ "text" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "present"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "to" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "uniqueItems" : true
+          },
+          "route" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "text", "table", "tree", "graph", "image", "tex" ]
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "data" : {
+            "anyOf" : [ {
+              "type" : "object",
+              "properties" : { }
+            }, {
+              "type" : "object",
+              "properties" : {
+                "blob/sha256" : {
+                  "type" : "string",
+                  "minLength" : 64,
+                  "maxLength" : 64
+                },
+                "blob/size" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ "blob/sha256", "blob/size" ]
+            } ]
+          },
+          "about" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          "in-reply-to" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "title-refs" : {
+            "type" : "array",
+            "items" : {
+              "title" : "Ref",
+              "type" : "object",
+              "properties" : {
+                "start" : {
+                  "type" : "integer"
+                },
+                "end" : {
+                  "type" : "integer"
+                },
+                "kind" : {
+                  "type" : "string",
+                  "enum" : [ "object", "field", "seq", "path" ]
+                },
+                "object" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                },
+                "field" : {
+                  "type" : "string"
+                },
+                "seq" : {
+                  "type" : "integer",
+                  "minimum" : 0
+                },
+                "path" : {
+                  "type" : "string"
+                },
+                "line" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [ "start", "end", "kind" ]
+            }
+          },
+          "data-refs" : {
+            "type" : "array",
+            "items" : {
+              "title" : "Ref",
+              "type" : "object",
+              "properties" : {
+                "start" : {
+                  "type" : "integer"
+                },
+                "end" : {
+                  "type" : "integer"
+                },
+                "kind" : {
+                  "type" : "string",
+                  "enum" : [ "object", "field", "seq", "path" ]
+                },
+                "object" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                },
+                "field" : {
+                  "type" : "string"
+                },
+                "seq" : {
+                  "type" : "integer",
+                  "minimum" : 0
+                },
+                "path" : {
+                  "type" : "string"
+                },
+                "line" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [ "start", "end", "kind" ]
+            }
+          },
+          "unresolved-refs" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "to", "route", "kind", "title", "data" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "bind"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "namespace" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string",
+            "minLength" : 1,
+            "maxLength" : 512
+          },
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "name", "object" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "unbind"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "namespace" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string",
+            "minLength" : 1,
+            "maxLength" : 512
+          }
+        },
+        "required" : [ "name" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "set-field"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "field" : {
+            "type" : "string"
+          },
+          "type" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "enum" : [ "string", "number", "boolean", "instant", "keyword", "bytes", "ref", "list", "map" ]
+            }, {
+              "type" : "array",
+              "prefixItems" : [ {
+                "const" : "ref"
+              }, {
+                "type" : "string"
+              } ],
+              "items" : false
+            }, {
+              "type" : "array",
+              "prefixItems" : [ {
+                "const" : "list"
+              }, {
+                "$ref" : "#/definitions/knowledge.schema.core.field-type"
+              } ],
+              "items" : false
+            }, {
+              "type" : "array",
+              "prefixItems" : [ {
+                "const" : "map"
+              }, {
+                "$ref" : "#/definitions/knowledge.schema.core.field-type"
+              } ],
+              "items" : false
+            } ]
+          },
+          "value" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "number"
+            }, {
+              "type" : "integer"
+            }, {
+              "type" : "boolean"
+            }, {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "string"
+            }, {
+              "type" : "string",
+              "format" : "byte"
+            }, {
+              "type" : "string",
+              "format" : "uuid"
+            }, {
+              "type" : "object",
+              "properties" : {
+                "blob/sha256" : {
+                  "type" : "string",
+                  "minLength" : 64,
+                  "maxLength" : 64
+                },
+                "blob/size" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ "blob/sha256", "blob/size" ]
+            }, {
+              "type" : "object",
+              "properties" : {
+                "external/model" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                },
+                "external/key" : {
+                  "type" : "string"
+                },
+                "external/sha256" : {
+                  "type" : "string"
+                },
+                "external/last-seen" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              },
+              "required" : [ "external/model", "external/key" ]
+            }, {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/definitions/knowledge.schema.core.value"
+              }
+            }, {
+              "type" : "object",
+              "additionalProperties" : {
+                "$ref" : "#/definitions/knowledge.schema.core.value"
+              }
+            } ]
+          },
+          "from" : {
+            "type" : "object",
+            "properties" : {
+              "object" : {
+                "type" : "string",
+                "format" : "uuid"
+              },
+              "name" : {
+                "type" : "string",
+                "minLength" : 1,
+                "maxLength" : 512
+              },
+              "field" : {
+                "type" : "string"
+              },
+              "range" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
+          "reader" : {
+            "type" : "string",
+            "enum" : [ "human", "agent", "both" ]
+          },
+          "visibility" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "refs" : {
+            "type" : "array",
+            "items" : {
+              "title" : "Ref",
+              "type" : "object",
+              "properties" : {
+                "start" : {
+                  "type" : "integer"
+                },
+                "end" : {
+                  "type" : "integer"
+                },
+                "kind" : {
+                  "type" : "string",
+                  "enum" : [ "object", "field", "seq", "path" ]
+                },
+                "object" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                },
+                "field" : {
+                  "type" : "string"
+                },
+                "seq" : {
+                  "type" : "integer",
+                  "minimum" : 0
+                },
+                "path" : {
+                  "type" : "string"
+                },
+                "line" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [ "start", "end", "kind" ]
+            }
+          },
+          "unresolved-refs" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "object", "field" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "send"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "to" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "uniqueItems" : true
+          },
+          "route" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          "refs" : {
+            "type" : "array",
+            "items" : {
+              "title" : "Ref",
+              "type" : "object",
+              "properties" : {
+                "start" : {
+                  "type" : "integer"
+                },
+                "end" : {
+                  "type" : "integer"
+                },
+                "kind" : {
+                  "type" : "string",
+                  "enum" : [ "object", "field", "seq", "path" ]
+                },
+                "object" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                },
+                "field" : {
+                  "type" : "string"
+                },
+                "seq" : {
+                  "type" : "integer",
+                  "minimum" : 0
+                },
+                "path" : {
+                  "type" : "string"
+                },
+                "line" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [ "start", "end", "kind" ]
+            }
+          },
+          "unresolved-refs" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "in-reply-to" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "reasoning" : {
+            "type" : "string",
+            "enum" : [ "on", "off" ]
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "view" ]
+          },
+          "view" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "steer" : {
+            "type" : "boolean"
+          },
+          "images" : {
+            "type" : "array",
+            "items" : {
+              "anyOf" : [ {
+                "type" : "string"
+              }, {
+                "title" : "ImageAttachment",
+                "type" : "object",
+                "properties" : {
+                  "sha256" : {
+                    "type" : "string"
+                  },
+                  "size" : {
+                    "type" : "integer"
+                  },
+                  "mime" : {
+                    "type" : "string"
+                  },
+                  "name" : {
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "sha256", "size", "mime", "name" ]
+              } ]
+            }
+          }
+        },
+        "required" : [ "to", "route", "text" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "move"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "task" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "to" : {
+            "type" : "string",
+            "enum" : [ "open", "active", "blocked", "done", "cancelled", "pending", "approved", "denied", "expired", "failed" ]
+          },
+          "evidence" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "uniqueItems" : true
+          }
+        },
+        "required" : [ "task", "to" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "evaluate"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "working-set" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "uniqueItems" : true
+          },
+          "model" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "route" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "policy" : {
+            "type" : "string",
+            "enum" : [ "normal", "one-shot" ]
+          },
+          "depth" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer"
+            }
+          }
+        },
+        "required" : [ "working-set", "model" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "cancel"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "evaluation" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "evaluation" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "release"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "evaluation" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "evaluation" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "fail"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "evaluation" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "evaluation" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "grant"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "grantee" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "scope" : {
+            "anyOf" : [ {
+              "type" : "array",
+              "items" : {
+                "type" : "string",
+                "format" : "uuid"
+              },
+              "uniqueItems" : true
+            }, {
+              "type" : "object",
+              "properties" : {
+                "prefix" : {
+                  "type" : "string",
+                  "minLength" : 1,
+                  "maxLength" : 512
+                },
+                "class" : {
+                  "type" : "string"
+                },
+                "field-prefix" : {
+                  "type" : "string"
+                }
+              }
+            }, {
+              "const" : "everything"
+            } ]
+          },
+          "ops" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "read", "reference", "transmit", "write", "delegate", "evaluate", "create" ]
+            },
+            "uniqueItems" : true
+          },
+          "delegable" : {
+            "type" : "boolean"
+          },
+          "until" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "grantee", "scope", "ops" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "revoke"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "grant" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "grant" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "arm"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "trigger" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "as" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "predicate" : {
+            "oneOf" : [ {
+              "type" : "object",
+              "properties" : {
+                "kind" : {
+                  "const" : "schedule"
+                },
+                "cron" : {
+                  "type" : "string"
+                },
+                "every-ms" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ "kind" ]
+            }, {
+              "type" : "object",
+              "properties" : {
+                "kind" : {
+                  "const" : "completion"
+                },
+                "evaluation" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                }
+              },
+              "required" : [ "kind", "evaluation" ]
+            }, {
+              "type" : "object",
+              "properties" : {
+                "kind" : {
+                  "const" : "state"
+                },
+                "object" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                },
+                "field" : {
+                  "type" : "string"
+                },
+                "test" : { }
+              },
+              "required" : [ "kind", "object", "field", "test" ]
+            }, {
+              "type" : "object",
+              "properties" : {
+                "kind" : {
+                  "const" : "threshold"
+                },
+                "meter" : {
+                  "type" : "string"
+                },
+                "over" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                },
+                "bound" : {
+                  "type" : "number"
+                }
+              },
+              "required" : [ "kind", "meter", "over", "bound" ]
+            } ]
+          },
+          "evaluation" : {
+            "type" : "object",
+            "properties" : { }
+          },
+          "once" : {
+            "type" : "boolean"
+          }
+        }
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "disarm"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "trigger" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "trigger" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "serialize"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "working-set" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "uniqueItems" : true
+          },
+          "model" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "depth" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer"
+            }
+          }
+        },
+        "required" : [ "working-set", "model" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "act"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "class" : {
+            "type" : "string",
+            "enum" : [ "object", "principal", "field", "event", "serialization", "group", "message", "task", "evaluation", "trigger", "model", "route", "grant", "adapter" ]
+          },
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "action" : {
+            "type" : "string"
+          },
+          "args" : {
+            "type" : "object",
+            "properties" : { }
+          }
+        },
+        "required" : [ "action", "args" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "hello"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : { }
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  }, {
+    "type" : "object",
+    "properties" : {
+      "id" : {
+        "type" : "string"
+      },
+      "op" : {
+        "const" : "pair.claim"
+      },
+      "args" : {
+        "type" : "object",
+        "properties" : {
+          "pairing-code" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "pairing-code" ]
+      }
+    },
+    "required" : [ "id", "op", "args" ]
+  } ],
+  "definitions" : {
+    "knowledge.schema.core.field-type" : {
+      "anyOf" : [ {
+        "type" : "string",
+        "enum" : [ "string", "number", "boolean", "instant", "keyword", "bytes", "ref", "list", "map" ]
+      }, {
+        "type" : "array",
+        "prefixItems" : [ {
+          "const" : "ref"
+        }, {
+          "type" : "string"
+        } ],
+        "items" : false
+      }, {
+        "type" : "array",
+        "prefixItems" : [ {
+          "const" : "list"
+        }, {
+          "$ref" : "#/definitions/knowledge.schema.core.field-type"
+        } ],
+        "items" : false
+      }, {
+        "type" : "array",
+        "prefixItems" : [ {
+          "const" : "map"
+        }, {
+          "$ref" : "#/definitions/knowledge.schema.core.field-type"
+        } ],
+        "items" : false
+      } ]
+    },
+    "knowledge.schema.core.value" : {
+      "anyOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "number"
+      }, {
+        "type" : "integer"
+      }, {
+        "type" : "boolean"
+      }, {
+        "type" : "string",
+        "format" : "date-time"
+      }, {
+        "type" : "string"
+      }, {
+        "type" : "string",
+        "format" : "byte"
+      }, {
+        "type" : "string",
+        "format" : "uuid"
+      }, {
+        "type" : "object",
+        "properties" : {
+          "blob/sha256" : {
+            "type" : "string",
+            "minLength" : 64,
+            "maxLength" : 64
+          },
+          "blob/size" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "blob/sha256", "blob/size" ]
+      }, {
+        "type" : "object",
+        "properties" : {
+          "external/model" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "external/key" : {
+            "type" : "string"
+          },
+          "external/sha256" : {
+            "type" : "string"
+          },
+          "external/last-seen" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "external/model", "external/key" ]
+      }, {
+        "type" : "array",
+        "items" : {
+          "$ref" : "#/definitions/knowledge.schema.core.value"
+        }
+      }, {
+        "type" : "object",
+        "additionalProperties" : {
+          "$ref" : "#/definitions/knowledge.schema.core.value"
+        }
+      } ]
+    }
+  }
+}

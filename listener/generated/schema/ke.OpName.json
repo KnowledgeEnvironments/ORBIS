@@ -1,0 +1,4 @@
+{
+  "type" : "string",
+  "enum" : [ "attach", "detach", "resolve", "read", "history", "subscribe", "unsubscribe", "search", "present", "bind", "unbind", "set-field", "send", "move", "evaluate", "cancel", "release", "fail", "grant", "revoke", "arm", "disarm", "serialize", "act", "hello", "pair.claim" ]
+}

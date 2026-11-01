@@ -1,0 +1,10 @@
+Resolution is one predicate. A Principal $p$ reaches an Object named $n$ for an op $o$ when a Grant
+held by $p$ or one of its Groups covers it:
+
+$$\mathrm{resolves}(p, n, o) \iff \exists g \in G(p) : o \in \mathrm{ops}(g) \wedge \mathrm{lookup}(p, n) \in \mathrm{scope}(g)$$
+
+A Grant $g'$ issued by $p$ needs a delegable $g$ held by $p$ with
+
+$$\mathrm{ops}(g') \subseteq \mathrm{ops}(g), \quad \mathrm{scope}(g') \subseteq \mathrm{scope}(g)$$
+
+so authority can only shrink going down.

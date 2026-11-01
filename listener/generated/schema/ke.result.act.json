@@ -1,0 +1,15 @@
+{
+  "type" : "object",
+  "properties" : {
+    "result" : { },
+    "object" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "seq" : {
+      "type" : "integer",
+      "minimum" : 0
+    }
+  },
+  "required" : [ "result" ]
+}

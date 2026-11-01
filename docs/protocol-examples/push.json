@@ -1,0 +1,4 @@
+{"sub":"history","as-of":44,"events":[
+ {"event/id":"0b5a2c3e-1111-4c2a-8f1e-000000000043","event/stream":"5a1f7b0e-7d6b-4b1f-9a3e-2b2d9a5e0001","event/seq":43,"event/kind":"attached","event/actor":"5a1f7b0e-7d6b-4b1f-9a3e-2b2d9a5e0001","event/at":"2026-10-29T06:00:00.000Z","event/body":{"session":"s-01","client-kind":"listener","format":"json"}},
+ {"event/id":"0b5a2c3e-1111-4c2a-8f1e-000000000044","event/stream":"5a1f7b0e-7d6b-4b1f-9a3e-2b2d9a5e0001","event/seq":44,"event/kind":"field-set","event/actor":"5a1f7b0e-7d6b-4b1f-9a3e-2b2d9a5e0001","event/at":"2026-10-29T06:00:01.000Z","event/body":{"name":"object/name","type":"string","value":"root","reader":"both"}}
+]}

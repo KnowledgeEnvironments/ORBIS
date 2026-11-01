@@ -1,0 +1,21 @@
+{
+  "type" : "object",
+  "properties" : {
+    "token" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "secret" : {
+      "type" : "string"
+    },
+    "principal" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "world" : {
+      "type" : "string",
+      "format" : "uuid"
+    }
+  },
+  "required" : [ "token", "secret", "principal", "world" ]
+}

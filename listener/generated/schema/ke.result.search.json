@@ -1,0 +1,42 @@
+{
+  "type" : "object",
+  "properties" : {
+    "hits" : {
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "field" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "seq" : {
+            "type" : "integer",
+            "minimum" : 0
+          },
+          "snippet" : {
+            "type" : "string"
+          },
+          "score" : {
+            "type" : "integer"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "field", "message", "object" ]
+          }
+        },
+        "required" : [ "object", "seq", "snippet", "score", "kind" ]
+      }
+    },
+    "total" : {
+      "type" : "integer"
+    }
+  },
+  "required" : [ "hits", "total" ]
+}

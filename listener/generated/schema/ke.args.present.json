@@ -1,0 +1,141 @@
+{
+  "type" : "object",
+  "properties" : {
+    "to" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "uniqueItems" : true
+    },
+    "route" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "kind" : {
+      "type" : "string",
+      "enum" : [ "text", "table", "tree", "graph", "image", "tex" ]
+    },
+    "title" : {
+      "type" : "string"
+    },
+    "data" : {
+      "anyOf" : [ {
+        "type" : "object",
+        "properties" : { }
+      }, {
+        "type" : "object",
+        "properties" : {
+          "blob/sha256" : {
+            "type" : "string",
+            "minLength" : 64,
+            "maxLength" : 64
+          },
+          "blob/size" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "blob/sha256", "blob/size" ]
+      } ]
+    },
+    "about" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "format" : "uuid"
+      }
+    },
+    "in-reply-to" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "title-refs" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Ref",
+        "type" : "object",
+        "properties" : {
+          "start" : {
+            "type" : "integer"
+          },
+          "end" : {
+            "type" : "integer"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "object", "field", "seq", "path" ]
+          },
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "field" : {
+            "type" : "string"
+          },
+          "seq" : {
+            "type" : "integer",
+            "minimum" : 0
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "line" : {
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "start", "end", "kind" ]
+      }
+    },
+    "data-refs" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Ref",
+        "type" : "object",
+        "properties" : {
+          "start" : {
+            "type" : "integer"
+          },
+          "end" : {
+            "type" : "integer"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "object", "field", "seq", "path" ]
+          },
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "field" : {
+            "type" : "string"
+          },
+          "seq" : {
+            "type" : "integer",
+            "minimum" : 0
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "line" : {
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "start", "end", "kind" ]
+      }
+    },
+    "unresolved-refs" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string"
+      }
+    }
+  },
+  "required" : [ "to", "route", "kind", "title", "data" ]
+}

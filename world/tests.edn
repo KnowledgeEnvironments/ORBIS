@@ -1,0 +1,13 @@
+#kaocha/v1
+{:tests [{:id :unit
+          :test-paths ["test"]
+          :ns-patterns ["^knowledge\\.world\\.(?!protocol\\.resume-test|boot\\.).*-test$"]}
+         {:id :exit
+          :test-paths ["test"]
+          :ns-patterns ["^knowledge\\.world\\.protocol\\.resume-test$"]}
+         {:id :kernel-zero
+          :test-paths ["test"]
+          :ns-patterns ["^knowledge\\.world\\.boot\\..*-test$"]
+          :kaocha.plugin.randomize/randomize? false}]
+ :reporter kaocha.report/documentation
+ :fail-fast? false}

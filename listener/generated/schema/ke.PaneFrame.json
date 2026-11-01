@@ -1,0 +1,61 @@
+{
+  "title" : "PaneFrame",
+  "type" : "object",
+  "properties" : {
+    "pane" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "seq" : {
+      "type" : "integer"
+    },
+    "base" : {
+      "type" : "integer"
+    },
+    "full" : {
+      "type" : "boolean"
+    },
+    "cols" : {
+      "type" : "integer"
+    },
+    "rows" : {
+      "type" : "integer"
+    },
+    "data" : {
+      "type" : "string"
+    },
+    "edit" : {
+      "type" : "object",
+      "properties" : {
+        "at" : {
+          "type" : "integer"
+        },
+        "del" : {
+          "type" : "integer"
+        },
+        "text" : {
+          "type" : "string"
+        },
+        "who" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "version" : {
+          "type" : "integer"
+        }
+      },
+      "required" : [ "at", "del", "text", "who", "version" ]
+    },
+    "state" : {
+      "type" : "object",
+      "properties" : { }
+    },
+    "exited" : {
+      "type" : "boolean"
+    },
+    "exit" : {
+      "type" : "integer"
+    }
+  },
+  "required" : [ "pane", "seq" ]
+}

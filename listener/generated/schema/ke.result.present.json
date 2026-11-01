@@ -1,0 +1,21 @@
+{
+  "type" : "object",
+  "properties" : {
+    "serialization" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "seq" : {
+      "type" : "integer",
+      "minimum" : 0
+    },
+    "truncated" : {
+      "type" : "boolean"
+    }
+  },
+  "required" : [ "serialization", "message", "seq", "truncated" ]
+}

@@ -1,0 +1,32 @@
+{
+  "type" : "object",
+  "properties" : {
+    "working-set" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "uniqueItems" : true
+    },
+    "model" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "route" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "policy" : {
+      "type" : "string",
+      "enum" : [ "normal", "one-shot" ]
+    },
+    "depth" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "type" : "integer"
+      }
+    }
+  },
+  "required" : [ "working-set", "model" ]
+}

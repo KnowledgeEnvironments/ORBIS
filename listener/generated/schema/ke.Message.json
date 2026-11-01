@@ -1,0 +1,428 @@
+{
+  "title" : "Message",
+  "type" : "object",
+  "properties" : {
+    "object/id" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "object/class" : {
+      "type" : "string",
+      "enum" : [ "object", "principal", "field", "event", "serialization", "group", "message", "task", "evaluation", "trigger", "model", "route", "grant", "adapter" ]
+    },
+    "object/names" : {
+      "type" : "array",
+      "items" : {
+        "type" : "array",
+        "prefixItems" : [ {
+          "type" : "string",
+          "format" : "uuid"
+        }, {
+          "type" : "string",
+          "minLength" : 1,
+          "maxLength" : 512
+        } ],
+        "items" : false
+      },
+      "uniqueItems" : true
+    },
+    "object/stream" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "object/fields" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "title" : "Field",
+        "type" : "object",
+        "properties" : {
+          "field/name" : {
+            "type" : "string"
+          },
+          "field/type" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "enum" : [ "string", "number", "boolean", "instant", "keyword", "bytes", "ref", "list", "map" ]
+            }, {
+              "type" : "array",
+              "prefixItems" : [ {
+                "const" : "ref"
+              }, {
+                "type" : "string"
+              } ],
+              "items" : false
+            }, {
+              "type" : "array",
+              "prefixItems" : [ {
+                "const" : "list"
+              }, {
+                "$ref" : "#/definitions/knowledge.schema.core.field-type"
+              } ],
+              "items" : false
+            }, {
+              "type" : "array",
+              "prefixItems" : [ {
+                "const" : "map"
+              }, {
+                "$ref" : "#/definitions/knowledge.schema.core.field-type"
+              } ],
+              "items" : false
+            } ]
+          },
+          "field/reader" : {
+            "type" : "string",
+            "enum" : [ "human", "agent", "both" ]
+          },
+          "field/value" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "number"
+            }, {
+              "type" : "integer"
+            }, {
+              "type" : "boolean"
+            }, {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "string"
+            }, {
+              "type" : "string",
+              "format" : "byte"
+            }, {
+              "type" : "string",
+              "format" : "uuid"
+            }, {
+              "type" : "object",
+              "properties" : {
+                "blob/sha256" : {
+                  "type" : "string",
+                  "minLength" : 64,
+                  "maxLength" : 64
+                },
+                "blob/size" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ "blob/sha256", "blob/size" ]
+            }, {
+              "type" : "object",
+              "properties" : {
+                "external/model" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                },
+                "external/key" : {
+                  "type" : "string"
+                },
+                "external/sha256" : {
+                  "type" : "string"
+                },
+                "external/last-seen" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              },
+              "required" : [ "external/model", "external/key" ]
+            }, {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/definitions/knowledge.schema.core.value"
+              }
+            }, {
+              "type" : "object",
+              "additionalProperties" : {
+                "$ref" : "#/definitions/knowledge.schema.core.value"
+              }
+            } ]
+          },
+          "field/author" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "field/set-by" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "field/set-at" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "field/visibility" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "field/mode" : {
+            "type" : "string",
+            "enum" : [ "inline", "blob", "external" ]
+          }
+        },
+        "required" : [ "field/name", "field/type", "field/reader", "field/value", "field/author", "field/set-at" ]
+      }
+    },
+    "object/created" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "object/backing" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message/from" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message/to" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "uniqueItems" : true
+    },
+    "message/route" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message/text" : {
+      "type" : "string"
+    },
+    "message/tags" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "format" : "uuid"
+      }
+    },
+    "message/refs" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Ref",
+        "type" : "object",
+        "properties" : {
+          "start" : {
+            "type" : "integer"
+          },
+          "end" : {
+            "type" : "integer"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "object", "field", "seq", "path" ]
+          },
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "field" : {
+            "type" : "string"
+          },
+          "seq" : {
+            "type" : "integer",
+            "minimum" : 0
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "line" : {
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "start", "end", "kind" ]
+      }
+    },
+    "message/images" : {
+      "type" : "array",
+      "items" : {
+        "title" : "ImageAttachment",
+        "type" : "object",
+        "properties" : {
+          "sha256" : {
+            "type" : "string"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "mime" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "sha256", "size", "mime", "name" ]
+      }
+    },
+    "message/unresolved-refs" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "message/in-reply-to" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message/reasoning" : {
+      "type" : "string",
+      "enum" : [ "on", "off" ]
+    },
+    "message/kind" : {
+      "type" : "string",
+      "enum" : [ "approval", "approval-result", "trigger", "view", "status", "request", "directive", "steer", "gateway" ]
+    },
+    "message/gateway" : {
+      "type" : "object",
+      "properties" : { }
+    },
+    "message/directive" : {
+      "type" : "string"
+    },
+    "message/resumes" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message/lacking" : {
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "properties" : { }
+      }
+    },
+    "message/trigger" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message/task" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message/expires-at" : {
+      "type" : "string",
+      "format" : "date-time"
+    },
+    "message/view" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message/thread" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message/asked-by" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "message/device" : {
+      "type" : "string"
+    },
+    "message/session" : {
+      "type" : "string"
+    },
+    "message/seq" : {
+      "type" : "integer",
+      "minimum" : 0
+    }
+  },
+  "required" : [ "object/id", "object/class", "object/names", "object/stream", "object/fields", "message/from", "message/to", "message/route", "message/text", "message/tags", "message/seq" ],
+  "definitions" : {
+    "knowledge.schema.core.field-type" : {
+      "anyOf" : [ {
+        "type" : "string",
+        "enum" : [ "string", "number", "boolean", "instant", "keyword", "bytes", "ref", "list", "map" ]
+      }, {
+        "type" : "array",
+        "prefixItems" : [ {
+          "const" : "ref"
+        }, {
+          "type" : "string"
+        } ],
+        "items" : false
+      }, {
+        "type" : "array",
+        "prefixItems" : [ {
+          "const" : "list"
+        }, {
+          "$ref" : "#/definitions/knowledge.schema.core.field-type"
+        } ],
+        "items" : false
+      }, {
+        "type" : "array",
+        "prefixItems" : [ {
+          "const" : "map"
+        }, {
+          "$ref" : "#/definitions/knowledge.schema.core.field-type"
+        } ],
+        "items" : false
+      } ]
+    },
+    "knowledge.schema.core.value" : {
+      "anyOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "number"
+      }, {
+        "type" : "integer"
+      }, {
+        "type" : "boolean"
+      }, {
+        "type" : "string",
+        "format" : "date-time"
+      }, {
+        "type" : "string"
+      }, {
+        "type" : "string",
+        "format" : "byte"
+      }, {
+        "type" : "string",
+        "format" : "uuid"
+      }, {
+        "type" : "object",
+        "properties" : {
+          "blob/sha256" : {
+            "type" : "string",
+            "minLength" : 64,
+            "maxLength" : 64
+          },
+          "blob/size" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "blob/sha256", "blob/size" ]
+      }, {
+        "type" : "object",
+        "properties" : {
+          "external/model" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "external/key" : {
+            "type" : "string"
+          },
+          "external/sha256" : {
+            "type" : "string"
+          },
+          "external/last-seen" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "external/model", "external/key" ]
+      }, {
+        "type" : "array",
+        "items" : {
+          "$ref" : "#/definitions/knowledge.schema.core.value"
+        }
+      }, {
+        "type" : "object",
+        "additionalProperties" : {
+          "$ref" : "#/definitions/knowledge.schema.core.value"
+        }
+      } ]
+    }
+  }
+}

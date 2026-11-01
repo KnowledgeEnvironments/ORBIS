@@ -1,0 +1,83 @@
+{
+  "type" : "object",
+  "properties" : {
+    "trigger" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "as" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "predicate" : {
+      "oneOf" : [ {
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "const" : "schedule"
+          },
+          "cron" : {
+            "type" : "string"
+          },
+          "every-ms" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "kind" ]
+      }, {
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "const" : "completion"
+          },
+          "evaluation" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "kind", "evaluation" ]
+      }, {
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "const" : "state"
+          },
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "field" : {
+            "type" : "string"
+          },
+          "test" : { }
+        },
+        "required" : [ "kind", "object", "field", "test" ]
+      }, {
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "const" : "threshold"
+          },
+          "meter" : {
+            "type" : "string"
+          },
+          "over" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "bound" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "kind", "meter", "over", "bound" ]
+      } ]
+    },
+    "evaluation" : {
+      "type" : "object",
+      "properties" : { }
+    },
+    "once" : {
+      "type" : "boolean"
+    }
+  }
+}
