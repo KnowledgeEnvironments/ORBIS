@@ -572,7 +572,11 @@
     (cond
       err {:err err}
       (or (nil? m) (nil? f) (not (reachable? db p m :write))) (unresolved-path db p name)
-      (get-in (objects/fields db (:adapter m)) [:adapter/read-only :field/value]) (act/err :not-allowed "this mount is read-only")
+      (get-in (objects/fields db (:adapter m)) [:adapter/read-only :field/value])
+      (act/err :not-allowed (if (str/starts-with? (str located) "harness/")
+                              (str "harness is the running release, read-only. Your working copy is the mount `src`: edit `src/"
+                                   (subs (str located) (count "harness/")) "`, build and test there, commit, then release.make and world.restart.")
+                              "this mount is read-only"))
       (.isDirectory f) (act/err :invalid-args "that is a directory")
       (and (.exists f) (nil? (text-of f))) (act/err :invalid-args "binary or over 2 MiB: not editable here")
       (and (not (.exists f)) (not fresh?))

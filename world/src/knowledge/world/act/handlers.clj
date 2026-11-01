@@ -1273,14 +1273,17 @@
       (and id (objects/exists? db id) (not (objects/retired? db id))) (act/err :conflict "that Object is not retired")
       (nil? grant) act/unresolved
       :else
-      (let [names (->> (log/read-stream (:log world) id 0 100000)
-                       (filter #(= :retired (:event/kind %))) last :event/body :names)
+      (let [retired-event (->> (log/read-stream (:log world) id 0 100000)
+                               (filter #(= :retired (:event/kind %))) last)
+            names (:names (:event/body retired-event))
             free (filterv (fn [[ns n]] (nil? (objects/lookup db ns n))) names)
             taken (filterv (fn [[ns n]] (some? (objects/lookup db ns n))) names)
             seq-no (act/append! world (log/pending :restored id p {:names free} :delegation grant))]
         (doseq [[ns n] free] (act/restore-name! world p grant ns id n))
         {:ok {:result (cond-> {:object id :restored true :names (mapv second free)}
-                        (seq taken) (assoc :names-taken (mapv second taken)))
+                        (seq taken) (assoc :names-taken (mapv second taken))
+                        ;; its names were on an event the retention sweep has dropped
+                        (nil? retired-event) (assoc :names-pruned true))
               :object id :seq seq-no}}))))
 
 (defmethod actions/handle! :field.clear

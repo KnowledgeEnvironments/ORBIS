@@ -194,8 +194,8 @@
 
 (defn hold-reading?
   "Has this wake read long enough that its reading tools should wait a turn?"
-  [{:keys [quiet]}]
-  (>= (long (or quiet 0)) force-after))
+  [{:keys [quiet] :as log}]
+  (>= (long (or quiet 0)) (long (:force-after log force-after))))
 
 (defn fixing?
   "A build or test failed and nothing has changed: the next turn fixes it."
@@ -259,9 +259,9 @@
       "FIX: the last run failed, and its failing lines are below. This turn change the code with edit, or read the lines you need. Running it again now is refused."
       (failed-run log)
       "STUCK: the same failure has outlasted three turns. Say what fails and why, plainly."
-      (>= quiet force-after)
+      (>= quiet (:force-after log force-after))
       "WRITE NOW: reading is closed this turn. Make the first change with edit, or say what stops you."
-      (and (empty? edits) (>= quiet act-after))
+      (and (empty? edits) (>= quiet (:act-after log act-after)))
       "WRITE: you have read enough. State the plan in a line, then make the first change with edit. A new file is edit with `new` alone."
       (seq edits) "FINISH: the change has run, and a passing build is not the goal. Show the goal itself holds, then report, ending with `Proved: <what you ran or read, and what it showed>` or `Not proved: <why>`."
       :else "READ: find what the change touches, then change it.")))

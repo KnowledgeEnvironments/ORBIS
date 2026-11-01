@@ -135,23 +135,27 @@
 (defn newest!
   "The newest page: `last` visible events (default `limit`, clamped) with seq below
    `before` (default past the head), ascending; `prev` is the seq to pass as `before` for the page
-   before it, present when older visible events remain. Reads the log backwards in chunks."
+   before it, present when older visible events remain. Reads the log backwards in chunks, down
+   to the first seq the log holds; `gap` is that seq when the page reaches it on a pruned log, so
+   a client knows the log goes back no further and why."
   [world p {:keys [before last limit]}]
   (let [head (log/head (:log world))
+        floor (log/first-seq (:log world))
         end (long (or before (inc head)))
         want (long (min max-limit (or last limit 256)))
         [db _] (pinned (:index world))
         visible (loop [acc [] hi (dec end)]
-                  (if (or (< hi 1) (> (count acc) want))
+                  (if (or (< hi floor) (> (count acc) want))
                     acc
-                    (let [lo (max 1 (- hi 999))
+                    (let [lo (max floor (- hi 999))
                           batch (log/read-from (:log world) lo (inc (- hi lo)))
                           keep (filterv #(visible-event? db p %) batch)]
                       (recur (into keep acc) (dec lo)))))
         page (vec (take-last want visible))
         more? (> (count visible) (count page))]
     {:ok (cond-> {:events page}
-           (and more? (seq page)) (assoc :prev (:event/seq (first page))))}))
+           (and more? (seq page)) (assoc :prev (:event/seq (first page)))
+           (and (> floor 1) (not more?)) (assoc :gap floor))}))
 
 (defn thread!
   "`history {thread <id>}`: the Messages of a thread, oldest first, each in the read
@@ -235,10 +239,12 @@
                    (cond (or (empty? batch) (>= (count acc) n-events)) (vec (take n-events acc))
                          ;; a page of unreadable events is skipped, the page after it read
                          :else (recur acc (:event/seq (peek (vec batch)))))))
-        last-seq (some-> events peek :event/seq)]
+        last-seq (some-> events peek :event/seq)
+        gap (when-not snapshot? (log/gap (:log world) (inc (long from))))]
     (when (and snapshot? (nil? cursor))
       (act/append! world (log/pending :resolved p p {:name "*" :op :read :count (:total snap) :seq at})))
     {:ok (cond-> {:events (mapv #(refs/visible-event db p %) events)}
            (and (not snapshot?) last-seq (= (count events) n-events)) (assoc :next last-seq)
+           gap (assoc :gap gap)
            snap (assoc :snapshot (dissoc snap :next))
            (:next snap) (assoc :next (:next snap)))})))

@@ -123,6 +123,26 @@
 
 ;; ------------------------------------------------------------------ fork
 
+(defn- nearest-snapshot
+  "The parent's newest snapshot at or below seq, anchor included."
+  ^File [^File parent ^long at]
+  (->> (concat (snap/snapshot-files (io/file parent "snapshots")) (snap/snapshot-files (snap/anchor-dir parent)))
+       (filter #(<= (snap/seq-of %) at))
+       (sort-by snap/seq-of)
+       last))
+
+(defn- fork-refusal
+  "Why a fork at seq cannot be made from this parent, or nil. The child folds from a snapshot and the
+   parent's segments: on a pruned parent those must meet, at a seq it still holds."
+  [^File parent ^long at]
+  (let [floor (log/first-seq-of-dir parent)
+        sf (nearest-snapshot parent at)]
+    (when (> floor 1)
+      (cond
+        (< at (dec floor)) (str "the parent no longer holds seq " at ": its log starts at " floor)
+        (or (nil? sf) (< (snap/seq-of sf) (dec floor)))
+        (str "no snapshot of the parent at or below seq " at " reaches its first segment, " floor)))))
+
 (defn fork!
   "Make child-dir a fork of parent-dir at seq N (default: the parent's head). Writes world.edn with
    the same world/id, a fork id and the parent reference, copies the parent's newest snapshot at or
@@ -136,6 +156,7 @@
     (when (.exists (io/file child "world.edn"))
       (throw (ex-info "child dir already holds a world" {:child (str child)})))
     (when (> at head) (throw (ex-info "fork seq beyond the parent's head" {:at at :head head})))
+    (when-let [why (fork-refusal parent at)] (throw (ex-info why {:at at :parent (str parent)})))
     (.mkdirs child)
     (let [fork-id (random-uuid)
           wedn {:world/id (:world/id pedn) :format-version 1 :created-at (Date.)
@@ -146,11 +167,11 @@
       (.mkdirs (io/file child "blobs" "sha256"))
       (.mkdirs (io/file child "snapshots"))
       ;; the nearest parent snapshot at or below N, copied as the child's own cache
-      (when-let [^File sf (->> (snap/snapshot-files (io/file parent "snapshots"))
-                               (filter #(<= (parse-long (second (re-matches #"snap-0*(\d+)\.snap" (.getName ^File %)))) at))
-                               last)]
+      (when-let [^File sf (nearest-snapshot parent at)]
         (Files/copy (.toPath sf) (.toPath (io/file child "snapshots" (.getName sf)))
                     (into-array java.nio.file.CopyOption [StandardCopyOption/REPLACE_EXISTING])))
+      ;; the child reads the parent's segments in place: the parent's sweep leaves them while it exists
+      (log/mark-fork! parent {:fork fork-id :child (str child) :seq at})
       {:child (str child) :parent (str parent) :world (:world/id pedn) :fork fork-id :at at})))
 
 ;; ------------------------------------------------------------------ diff / promote
@@ -164,6 +185,9 @@
         _ (when-not parent (throw (ex-info "not a fork" {:child (str child)})))
         l (log/open! child {:fsync :never :parent (update parent :data-dir #(let [f (io/file %)] (if (.isAbsolute f) f (io/file child %))))})]
     (try
+      ;; a diff or a promotion that skipped events would be wrong without saying so
+      (when-let [f (log/own-gap l)]
+        (throw (ex-info "this fork no longer holds all of its own events" {:first-seq f :forked-at (:seq parent)})))
       (loop [acc [] from (inc (long (:seq parent)))]
         (let [batch (log/read-own-from l from 1000)]
           (if (empty? batch) {:events acc :fork-id (:fork/id wedn) :at (:seq parent) :parent parent}
@@ -181,8 +205,10 @@
 
 (def not-promoted
   "Fields a fork sets about itself that must not reach the parent: credentials (the child minted
-   its own tokens; the parent keeps its own) and the fork marks."
-  #{:principal/token-hash :world/parent :world/forked-at :world/fork-id})
+   its own tokens; the parent keeps its own), the fork marks, and what it decided and did about its
+   own disk."
+  #{:principal/token-hash :world/parent :world/forked-at :world/fork-id
+    :retention/limit-gb :retention/last-sweep})
 
 (defn promotable?
   "Every event of a fork travels except a field-set of a Field in `not-promoted`."
@@ -211,13 +237,16 @@
         (finally (log/close! l))))))
 
 (defn fold-at
-  "The fold of a world directory at its head: a db value, for equality checks in tests."
+  "The fold of a world directory from seq 1 at its head: a db value, for equality checks in tests.
+   Throws on a pruned world, which has no fold from seq 1."
   [data-dir]
   (let [root (.getCanonicalFile (io/file data-dir))
         wedn (edn/read-string (slurp (io/file root "world.edn")))
         parent (some-> (:parent wedn) (update :data-dir #(let [f (io/file %)] (if (.isAbsolute f) f (io/file root %)))))
         l (log/open! root (cond-> {:fsync :never} parent (assoc :parent parent)))]
     (try
+      (when-let [f (log/gap l 1)]
+        (throw (ex-info "this world's log has been pruned: there is no fold from seq 1" {:type :log/gap :first-seq f})))
       (loop [db (fold/empty-db) from 1]
         (let [batch (log/read-from l from 1000)]
           (if (empty? batch) db (recur (fold/apply-events db batch) (inc (:event/seq (peek batch)))))))

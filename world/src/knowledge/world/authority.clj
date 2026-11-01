@@ -186,7 +186,9 @@
     ;; the box: changed by adapter.confine and adapter.unconfine, never by writing the Adapter
     :adapter/locator confined-field :adapter/network :adapter/read :adapter/ssh :adapter/leash
     ;; a person's terminal: write on the pane must not open it, and root holds write on everything
-    pane-person pane-shares})
+    pane-person pane-shares
+    ;; a chain the record keeps for the retention sweep
+    :pane/record})
 
 (def person-chosen-fields
   "Which Model an agent runs on spends a person's money or plan, so an agent never chooses for itself."
@@ -194,6 +196,7 @@
 
 (defn- gateway-field? [k] (= "gateway" (namespace k)))
 (defn- policy-field? [k] (= "policy" (namespace k)))
+(defn- retention-field? [k] (= "retention" (namespace k)))
 
 (defn write-refusal
   "Why this Field cannot be written, as an err, or nil. person? is a person's own session. policy/*
@@ -207,6 +210,10 @@
       ;; a handle, a password's variable and a cursor: what reaches an agent from outside is a person's act
       (gateway-field? k)
       (refuse :conflict (str field " changes only through gateway.create and gateway.bind"))
+      ;; how much of the world the disk keeps is a person's, and a record of what went is the kernel's:
+      ;; an agent that raised the limit, or wrote the record, could hide what it did to the disk
+      (retention-field? k)
+      (refuse :conflict (str field " changes only through retention.set, a person's own session"))
       (and (policy-field? k) (not person?))
       (refuse :person-only (str field " is written only by a person's own session"))
       (and (person-chosen-fields k) (not person?))
@@ -224,6 +231,6 @@
    goes by approval.unsafe.off, with its record."
   [field person?]
   (let [k (field-key field)]
-    (if (or (fold/structural k) (kernel-fields k) (gateway-field? k) (#{unsafe-field unsafe-index} k))
+    (if (or (fold/structural k) (kernel-fields k) (gateway-field? k) (retention-field? k) (#{unsafe-field unsafe-index} k))
       (refuse :conflict "the kernel needs that Field")
       (write-refusal field person?))))

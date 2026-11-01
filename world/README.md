@@ -41,6 +41,7 @@ the bearer token root attaches with: `attach {token <contents of root.token>}`.
 | `KE_FSYNC` | `batch` | `batch` (one force per group commit), `always` (per event), `never` |
 | `KE_FORMAT` | `transit` | default wire form when `?format=` is absent |
 | `KE_LOG` | `info` | timbre level |
+| `KE_RETENTION_GB` | `16` | limit on blobs and log segments in GiB, or `infinite`, until a person sets one with `retention.set` (`docs/log-format.md` Retention) |
 | `KE_MODEL_URL` | | base url of the chat-completions endpoint; set, kernel-zero creates `root.model` as a Model on it (residency `:tenant`); unset, `root.model` is the :stub Model |
 | `KE_MODEL_ID` | `default` | the model name sent in each request |
 | `KE_MODEL_KEY` | | bearer key; read from the environment at each Evaluation, named by the Model's `model/key-env` Field, never written to the log |

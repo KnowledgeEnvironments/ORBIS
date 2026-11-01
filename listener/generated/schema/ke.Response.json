@@ -30,7 +30,7 @@
         "properties" : {
           "code" : {
             "type" : "string",
-            "enum" : [ "unresolved", "gated", "budget", "residency", "conflict", "lagging", "invalid", "not-implemented", "unauthenticated", "unknown-action", "invalid-args", "narrower-required", "outside-mount", "invalid-ops", "not-allowed", "too-large", "not-an-image", "approval-pending", "person-only", "unsupervised", "consent-declined", "plan-not-granted", "sign-in-failed", "log-version", "secret-in-args", "session-only", "rate-limited", "no-renderer", "unconfined", "no-speech-model", "too-large", "unreachable", "scratch-readonly" ]
+            "enum" : [ "unresolved", "gated", "budget", "residency", "conflict", "lagging", "invalid", "not-implemented", "unauthenticated", "unknown-action", "invalid-args", "narrower-required", "outside-mount", "invalid-ops", "not-allowed", "too-large", "not-an-image", "approval-pending", "person-only", "unsupervised", "consent-declined", "plan-not-granted", "sign-in-failed", "log-version", "secret-in-args", "session-only", "rate-limited", "no-renderer", "unconfined", "no-speech-model", "too-large", "unreachable", "scratch-readonly", "pruned" ]
           },
           "message" : {
             "type" : "string"

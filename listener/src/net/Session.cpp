@@ -483,6 +483,12 @@ void Session::onPush(const Push& p) {
     if (state.cursor && p.asOf < *state.cursor) {
         events_.noteRegression(p.sub, *state.cursor, p.asOf);
     }
+    if (p.gap) {
+        log::warn("session: {} missed seqs below {}: retention dropped them", p.sub, *p.gap);
+        if (logGap) {
+            logGap(p.sub, *p.gap);
+        }
+    }
     // p.from above our cursor is not a loss: the world advances its cursor over events its filter
     // dropped without pushing them (pump-sub keeps the last seq READ), so the range cursor+1..from
     // is the same filtered hole that append() counts when the push's first event lands.

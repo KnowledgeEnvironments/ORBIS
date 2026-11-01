@@ -13,7 +13,8 @@ change without losing the agent doing it.
   src/                 the working copy, where edits happen; a clone of the repository
   restart.request      world to supervisor: release, by, reason
   restart.outcome      supervisor to world: result, from, to, reason
-  logs/supervise.log   every start, health result, restart and rollback
+  logs/supervise.log   every start, health result, restart and rollback; rotated by size
+  anchor/              the snapshot a pruned log stands on (`docs/log-format.md` Retention)
   world.env            optional, 0600: the Model key, sourced by the supervisor
   bin/holder           the terminal holder, copied in by release.sh when one is built
   holder.sock          its socket, 0600; a data dir with a long path uses a short one under /tmp
@@ -41,7 +42,7 @@ Deleting a world: `scripts/supervise.sh --stop <dir>`, then `chmod -R u+w <dir>/
 
 ## Changing ORBIS
 
-1. Edit in `src/`, then build and test there.
+1. Edit in the mount `src`, then build and test there.
 2. Commit, then `release.make {rev?}` makes a release and answers its commit. A confined shell cannot write
    `releases/`, so from a shell inside the world this is the only way; `scripts/release.sh` is for a person.
 3. `world.restart {release, reason}` asks for it.
@@ -77,6 +78,12 @@ Each release's manifest carries the log format it reads. An older one is refused
 again by the supervisor, which reads the format from the newest segment. A rollback keeps every event
 the failed release appended: events are data, and the older world has to read them. A release that
 wrote something the older world cannot fold is not recoverable by rollback.
+
+## Retention and restarts
+
+A sweep can drop log segments, and a world that has must boot from a snapshot. So a self-hosting world relies on three things, each tested: a release that is not yet `release.good` drops no segment, so nothing it wrote holds the world up when it fails; `anchor/` sits outside what a rollback moves aside; and a release that cannot load any snapshot on a pruned log exits non-zero instead of folding what is left, which is an ordinary failed start and returns to `release.good`. On the good release itself the same exit is a crash loop with its reason in `logs/world.log`, and a person decides.
+
+Old releases are removed by the sweep. It keeps `release`, `release.good`, one a restart request names, the running one and the newest three. A release is read-only, and removing one goes through the same `chmod` as deleting a world.
 
 ## Limits
 

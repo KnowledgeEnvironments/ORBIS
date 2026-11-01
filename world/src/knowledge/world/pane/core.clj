@@ -216,16 +216,18 @@
                        [(name k) value]))}))
 
 (defn- replay-screen
-  "A terminal rebuilt from its pane-output blobs, for a world that has restarted."
+  "A terminal rebuilt from its pane-output blobs, for a world that has restarted. Output the sweep
+   has taken leaves one line saying so, where it was."
   [world id]
   (let [db (act/db world)
         {:keys [cols rows]} (field db id :pane/size)
-        events (log/read-stream (:log world) id 0 Long/MAX_VALUE)]
+        events (log/read-stream (:log world) id 0 Long/MAX_VALUE)
+        said (volatile! false)]
     (reduce (fn [s {:keys [event/kind event/body]}]
               (if (= :pane-output kind)
                 (if-let [bs (blob/get (:blobs world) (:blob body))]
-                  (scr/feed s (String. ^bytes bs "UTF-8"))
-                  s)
+                  (do (vreset! said false) (scr/feed s (String. ^bytes bs "UTF-8")))
+                  (if @said s (do (vreset! said true) (scr/feed s "[older output pruned]\r\n"))))
                 s))
             (scr/create (or cols 80) (or rows 24))
             events)))
@@ -555,6 +557,19 @@
     (doseq [{:keys [done]} here]
       (deref done 2000 nil))))
 
+(def record-field
+  "On an open terminal, what its chain had reached when the retention sweep was about to drop the
+   segment holding its last pane-output: {:n :chain :offset}." :pane/record)
+
+(defn record-terminal!
+  "Keep a terminal's chain above `through`, the seq the sweep will drop to: its last pane-output is
+   at or below that and nothing newer stands for it."
+  [world id through]
+  (let [events (log/read-stream (:log world) id 0 Long/MAX_VALUE)
+        {:keys [event/seq event/body]} (last (filter #(= :pane-output (:event/kind %)) events))]
+    (when (and seq (<= (long seq) (long through)))
+      (set-field! world id record-field :map (select-keys body [:n :chain :offset])))))
+
 (defn- revive!
   "A terminal the holder kept through a restart: its record's chain and offset, and the holder asked
    for what came after."
@@ -564,7 +579,8 @@
         grant (:object/created-under (objects/entity db id))
         last-output (last (filter #(= :pane-output (:event/kind %))
                                   (log/read-stream (:log world) id 0 Long/MAX_VALUE)))
-        {:keys [n chain offset]} (:event/body last-output)
+        ;; a quiet terminal's last output can be older than the log's first segment
+        {:keys [n chain offset]} (or (:event/body last-output) (field db id record-field))
         start (long (or offset 0))
         lv (-> (terminal-state id owner grant (scr/create cols rows))
                (assoc :offset (atom start) :pty {:holder true :id (str id)}))]

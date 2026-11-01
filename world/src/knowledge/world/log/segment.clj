@@ -6,7 +6,7 @@
   (:require [clojure.java.io :as io]
             [knowledge.world.log.frame :as frame]
             [taoensso.timbre :as log])
-  (:import [java.io File RandomAccessFile]
+  (:import [java.io File FileNotFoundException RandomAccessFile]
            [java.nio ByteBuffer]
            [java.nio.channels ClosedChannelException FileChannel]
            [java.nio.file Files StandardOpenOption]))
@@ -134,12 +134,28 @@
       (reset! reader ::closed)
       (when (instance? FileChannel r) (.close ^FileChannel r)))))
 
+(defn retire!
+  "Close a segment the retention sweep has dropped. A reader that took it from an older state gets
+   :pruned rather than an exception: it asked for something that has gone, not for something broken."
+  [{:keys [^FileChannel channel reader]}]
+  (locking reader
+    (let [r @reader]
+      (reset! reader ::pruned)
+      (when (instance? FileChannel r) (.close ^FileChannel r))))
+  (when (.isOpen channel) (.close channel)))
+
+(defn from-floor
+  "The segments at or above floor, the first seq still held; nil keeps them all."
+  [segments floor]
+  (if floor (vec (drop-while #(< (long (:first-seq %)) (long floor)) segments)) segments))
+
 (defn- reader-channel
-  "The segment's read channel, opened or reopened on demand."
+  "The segment's read channel, opened or reopened on demand; nil once the sweep has dropped it."
   ^FileChannel [{:keys [^File file reader]}]
   (locking reader
     (let [r @reader]
       (cond
+        (= ::pruned r) nil
         (= ::closed r) (throw (ClosedChannelException.))
         (and r (.isOpen ^FileChannel r)) r
         :else (reset! reader (open-channel-ro file))))))
@@ -149,15 +165,22 @@
    when a thread is interrupted inside it, for every other user of that channel, and stopping a
    world interrupts its lanes and scheduler: one reader caught mid-read used to take the writer's
    channel with it. So the writer keeps its own, and a reader that loses this one reopens it and
-   finishes, leaving the thread's interrupt set for whoever is waiting to see it."
+   finishes, leaving the thread's interrupt set for whoever is waiting to see it. A segment that was
+   pruned answers {:status :pruned}: a reader stops there as at the end of a segment, and the file
+   of a fork's parent can go too, with no one here having been told."
   [segment ^long offset ^long end]
   (loop [tries 3 interrupted? false]
-    (let [r (try (frame/read-at (reader-channel segment) offset end)
+    (let [r (try (if-let [ch (reader-channel segment)]
+                   (frame/read-at ch offset end)
+                   {:status :pruned})
+                 (catch FileNotFoundException _ {:status :pruned})
                  (catch ClosedChannelException e
-                   (when (or (zero? tries) (= ::closed @(:reader segment)))
-                     (when interrupted? (.interrupt (Thread/currentThread)))
-                     (throw e))
-                   ::lost))]
+                   (cond
+                     (= ::pruned @(:reader segment)) {:status :pruned}
+                     (or (zero? tries) (= ::closed @(:reader segment)))
+                     (do (when interrupted? (.interrupt (Thread/currentThread)))
+                         (throw e))
+                     :else ::lost)))]
       (if (= ::lost r)
         (recur (dec tries) (or (Thread/interrupted) interrupted?))
         (do (when interrupted? (.interrupt (Thread/currentThread))) r)))))

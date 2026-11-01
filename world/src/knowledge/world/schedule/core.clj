@@ -24,8 +24,9 @@
    One thread: a virtual thread owns a queue; the log subscription (on the writer thread, which never
    appends) enqueues the events a Trigger may watch; the thread drains them, fires what they match,
    then ticks the clock-driven Triggers, every tick-ms at most. Internal jobs ride the same clock:
-   the approval and unsafe-mode expiry sweeps (knowledge.world.act.gates) every expire-every-ms, and the Model
-   probe (knowledge.world.models/probe-all!) every models/probe-every-ms."
+   the approval and unsafe-mode expiry sweeps (knowledge.world.act.gates) every expire-every-ms, the Model
+   probe (knowledge.world.models/probe-all!) every models/probe-every-ms, and the retention sweep, which
+   this clock only starts: it runs on a thread of its own (knowledge.world.retention)."
   (:require [clojure.string :as str]
             [knowledge.world.act.core :as act]
             [knowledge.world.act.gates :as gates]
@@ -35,6 +36,7 @@
             [knowledge.world.fold.objects :as objects]
             [knowledge.world.log.core :as log]
             [knowledge.world.notify :as notify]
+            [knowledge.world.retention :as retention]
             [knowledge.world.resolve.core :as resolve]
             [knowledge.world.route.core :as route]
             [taoensso.timbre :as timbre])
@@ -254,6 +256,8 @@
         last-delegate (atom (System/currentTimeMillis))
         ;; the Model probe, first 15 s after start, then every probe-every-ms
         last-probe (atom (- (+ (System/currentTimeMillis) 15000) models/probe-every-ms))
+        last-sweep (atom (System/currentTimeMillis))
+        sweep-every (long (get-in world [:config :retention :every-ms] (:every-ms retention/defaults)))
         thread (-> (Thread/ofVirtual) (.name "ke-scheduler")
                    (.start (fn []
                              (while @running
@@ -275,6 +279,9 @@
                                  (when (> (- (System/currentTimeMillis) @last-probe) models/probe-every-ms)
                                    (reset! last-probe (System/currentTimeMillis))
                                    (models/probe-all! world))
+                                 (when (> (- (System/currentTimeMillis) @last-sweep) sweep-every)
+                                   (reset! last-sweep (System/currentTimeMillis))
+                                   (retention/kick! world))
                                  (catch InterruptedException _ (reset! running false))
                                  (catch Throwable t (timbre/warn t "scheduler pass failed")))))))]
     (timbre/info "scheduler started" {:armed (count (armed-triggers (act/db world)))})

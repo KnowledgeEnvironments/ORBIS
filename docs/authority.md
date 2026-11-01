@@ -42,6 +42,7 @@ above it. These hold for every Principal, root included, and all of them live in
 | Property | Rule | Enforced at |
 |---|---|---|
 | `policy/*`: gates, standing rules | Only a person's own session | `set-field`, `field.clear`, `approval.*` |
+| `retention/limit-gb`: how much of its past a world keeps | Only a person's own session | `retention.set`; no `set-field` writes any `retention/*`, a person's included, and `retention/last-sweep` is the kernel's |
 | Approving a card, `task.decide` | Only a person's own session | `task.decide`, `task.decide-many` |
 | Unsafe mode | Armed only by a person, per Principal, time-limited | `approval.unsafe` |
 | `principal/driven-by`, `principal/namespace`, `principal/token-hash`, `world/root`, `world/release`, `world/restart`, `world/notifications` | The kernel's: never by `set-field`, from any session | `protocol/ops.clj` `kernel-fields` |

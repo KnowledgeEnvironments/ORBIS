@@ -54,7 +54,9 @@
    :pane-input [:map [:pane c/Id] [:who c/Id] [:bytes :int] [:from :string] [:text {:optional true} :string]]
    :pane-output [:map [:pane c/Id] [:n :int] [:blob :string] [:size :int] [:chain :string] [:offset {:optional true} :int]]
    :pane-edit [:map [:pane c/Id] [:who c/Id] [:version :int] [:verb :keyword] [:at :int] [:del :int] [:text :string]
-               [:sha {:optional true} :string]]
+               [:sha {:optional true} :string]
+               ;; verb :checkpoint: blob names the whole buffer, so a buffer folds from here (retention)
+               [:blob {:optional true} :string]]
    :pane-closed [:map [:pane c/Id] [:exit {:optional true} :int] [:reason :keyword]]
    :scratch-began [:map [:scratch c/Id] [:principal c/Id] [:forked-at c/Seq]]
    :scratch-ended [:map [:scratch c/Id] [:principal c/Id] [:messages :int] [:tokens-in :int] [:tokens-out :int]

@@ -1842,6 +1842,9 @@
                 },
                 "sha" : {
                   "type" : "string"
+                },
+                "blob" : {
+                  "type" : "string"
                 }
               },
               "required" : [ "pane", "who", "version", "verb", "at", "del", "text" ]
@@ -1927,6 +1930,10 @@
       "type" : "boolean"
     },
     "from" : {
+      "type" : "integer",
+      "minimum" : 0
+    },
+    "gap" : {
       "type" : "integer",
       "minimum" : 0
     },

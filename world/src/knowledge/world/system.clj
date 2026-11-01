@@ -15,6 +15,7 @@
             [knowledge.world.protocol.session :as session]
             [knowledge.world.protocol.subscription :as subscription]
             [knowledge.world.release :as release]
+            [knowledge.world.retention :as retention]
             [knowledge.world.schedule.core :as schedule]
             [knowledge.world.pane.core :as pane]
             [knowledge.world.scratch.core :as scratch]
@@ -52,7 +53,8 @@
         {:keys [world/id] :as world-edn} (world-edn! data-dir)
         parent (parent-of data-dir world-edn)
         log (log/open! data-dir (cond-> config parent (assoc :parent parent)))
-        index (index/start! (index/create log data-dir id))
+        index (try (index/start! (index/create log data-dir id))
+                   (catch Throwable t (log/close! log) (throw t)))
         scheduler (Executors/newScheduledThreadPool 2)
         sessions (session/registry)
         world (cond-> {:config config :data-dir data-dir :world-id id :world-edn world-edn
@@ -67,7 +69,9 @@
                        :scratches (scratch/registry)
                        :panes (pane/registry)
                        ;; the socket to this world's terminal holder, when it has one
-                       :holder (atom nil)}
+                       :holder (atom nil)
+                       ;; the disk sweep's thread (knowledge.world.retention)
+                       :retention (retention/component)}
                 parent (assoc :fork {:parent parent :id (:fork/id world-edn)}))
         fresh (kz/kernel-zero! world)
         ;; a fork or an imported world arrives without credentials: new ones, their hashes on the log
@@ -95,7 +99,8 @@
         ;; who this world says it is (hello), now that the port is known
         identity (kz/world-identity! world)
         ;; data/world.pid names this process, so scripts stop this world and no other
-        _ (spit (io/file data-dir "world.pid") (str (.pid (java.lang.ProcessHandle/current))))]
+        _ (spit (io/file data-dir "world.pid") (str (.pid (java.lang.ProcessHandle/current))))
+        _ (retention/kick! world)]
     (timbre/info "world started" {:port (:port world) :data (str data-dir) :head (log/head log) :name (:name identity)})
     world))
 
@@ -109,6 +114,7 @@
     (schedule/stop! (:trigger-scheduler world) world)
     (rloop/stop! (:loop world) world)
     (when scheduler (.shutdownNow scheduler))
+    (retention/stop! (:retention world))
     (when wake-key (log/unsubscribe! log wake-key))
     (when sessions (reset! sessions {}))
     (index/stop! index)

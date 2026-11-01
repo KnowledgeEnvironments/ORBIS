@@ -90,6 +90,7 @@ else a full screen. The same `after` works on a new session. Other kinds use the
 
 Output is not on the event log: it goes to blobs, with a `pane-output {pane n blob size chain}`
 event per 64 KiB (at exit, and after 30 s idle), `chain` being sha256(previous chain || blob hash).
+Retention may drop old segments and old output blobs: an open terminal keeps its newest 16 MiB and `pane/record`, an open editor gets a `pane-edit` of verb `checkpoint` (`docs/log-format.md` Retention).
 `pane-opened`, `pane-input` (who, how much, from where, text for a model's input), `pane-edit` and
 `pane-closed` are events, so an agent's use of a terminal is on the record. A person's keystrokes
 are counted per burst and not kept, so a password stays off the log.

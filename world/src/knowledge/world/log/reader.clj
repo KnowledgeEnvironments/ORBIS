@@ -22,6 +22,11 @@
   [st]
   (into (vec (get-in st [:parent :segments])) (:segments st)))
 
+(defn first-seq
+  "The oldest seq a reader can still reach. 1 on a log nothing has pruned."
+  ^long [st]
+  (long (or (some-> (first (all-segments st)) :first-seq) 1)))
+
 (defn- cap-of [st] (get-in st [:parent :seq]))
 
 (defn- parent-segment? [st segment] (some #(identical? % segment) (get-in st [:parent :segments])))

@@ -148,6 +148,9 @@ class Session {
 
     // Off-the-record pushes go here and nowhere else.
     std::function<void(const Push&)> scratchPush;
+    // A sub's cursor fell below the first seq the world still holds (`gap` on a push): the world
+    // cannot send what was in between, so the owner folds again from a snapshot.
+    std::function<void(const std::string& sub, Seq firstHeld)> logGap;
     // A pane's screen bytes (docs/panes.md): off the log, so they bypass every sub and ack.
     std::function<void(const PaneData&)> paneData;
 

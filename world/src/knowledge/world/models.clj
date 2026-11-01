@@ -226,6 +226,9 @@
         set-by-hand (when model (field db model :model/context-tokens))]
     (some #(when (and (number? %) (pos? %)) (long %)) [listed reported set-by-hand])))
 
+(def wide-iterations "Turns a wake gets on a Model whose window is known: real work is reading, changing, building and testing." 40)
+(def wide-turns "How far progress carries it." 200)
+
 (defn window-of
   "The window of what p would run on now, in this conversation, or nil."
   [db p thread]

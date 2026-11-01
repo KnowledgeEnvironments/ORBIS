@@ -118,9 +118,13 @@
                      (contains? (resolve/visible-fields db p (select-keys (objects/fields db id) [k]) :read) k)))
       act/unresolved
       (let [events (sets-of (:log world) id k)
+            ;; a pruned log may hold none of a Field's changes, or not the ones asked for
+            gap (cond since (log/gap (:log world) (inc (long since)))
+                      (empty? events) (log/gap (:log world) 1))
             after (if since (filterv #(> (long (:event/seq %)) (long since)) events) (vec (take-last 1 events)))]
         (if (empty? after)
-          {:ok {:result {:object id :field k :changed false}}}
+          {:ok {:result (cond-> {:object id :field k :changed false}
+                          gap (assoc :gap gap))}}
           (let [first-ev (first after) last-ev (peek after)
                 before (text-of (get-in first-ev [:event/body :previous]))
                 now (text-of (get-in last-ev [:event/body :value]))
@@ -128,4 +132,5 @@
             {:ok {:result (cond-> {:object id :field k :changed true :changes (count after)
                                    :by (:event/actor last-ev) :seq (:event/seq last-ev)
                                    :diff (vec (take max-diff-lines lines))}
-                            (> (count lines) max-diff-lines) (assoc :clipped (count lines)))}}))))))
+                            (> (count lines) max-diff-lines) (assoc :clipped (count lines))
+                            gap (assoc :gap gap))}}))))))

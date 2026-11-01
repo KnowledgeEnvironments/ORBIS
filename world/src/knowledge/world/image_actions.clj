@@ -73,7 +73,7 @@
 (defmethod actions/handle! :image.read
   [_ world p {:keys [message index offset]} _]
   (let [{:keys [attachment]} (attachment! world p message index)
-        bs (or (blob/get (:blobs world) (:sha256 attachment)) (fail! :conflict "those bytes are gone"))]
+        bs (or (blob/get (:blobs world) (:sha256 attachment)) (fail! :pruned "retention pruned this image's bytes"))]
     {:ok {:result (assoc (image/piece bs offset pane-actions/bytes-chunk) :mime (:mime attachment))}}))
 
 (defmethod actions/handle! :image.open

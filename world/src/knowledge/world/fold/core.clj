@@ -22,6 +22,12 @@
 
 (defn empty-db [] (d/empty-db schema))
 
+(defn current-schema
+  "A db from a snapshot, under this release's schema. A snapshot carries the schema it was written
+   with, and on a pruned log a new release cannot refold to get its own."
+  [db]
+  (if (= schema (:schema db)) db (d/init-db (d/datoms db :eavt) schema)))
+
 (def structural
   "Class fields the index also keeps as entity attributes, for resolution and membership queries."
   #{:principal/driven-by :principal/namespace :group/members :object/backing})

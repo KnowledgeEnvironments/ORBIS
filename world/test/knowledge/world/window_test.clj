@@ -8,6 +8,7 @@
             [knowledge.world.code :as code]
             [knowledge.world.conversation :as conversation]
             [knowledge.world.fixtures :as fx]
+            [knowledge.world.loop.core]
             [knowledge.world.loop.worklog :as worklog]
             [knowledge.world.models :as models]
             [knowledge.world.serialize.core :as ser]
@@ -44,6 +45,26 @@
     (is (= 1048576 (models/reported-window text)))
     (is (= 200000 (models/reported-window "vllm:context_length{model=\"x\"} 200000.0\n")))
     (is (nil? (models/reported-window "# HELP context_length 5\nother 7\n")))))
+
+(deftest a-wake-has-room-and-a-principal-can-set-it
+  (fx/with-world [{:keys [world root]}]
+    (let [p (:principal root)
+          room #'knowledge.world.loop.core/room-of]
+      (testing "no window, the old limits"
+        (with-redefs [models/window-of (fn [_ _ _] nil)]
+          (is (= 7 (:force-after (room world p nil))))))
+      (with-redefs [models/window-of (fn [_ _ _] 272000)]
+        (testing "a window gives room"
+          (is (= 30 (:force-after (room world p nil))))
+          (is (= 20 (:act-after (room world p nil)))))
+        (testing "a Field on the Principal wins"
+          (ws/request!! root :set-field {:object p :field :loop/force-after :type :number :value 12 :reader :both})
+          (is (= 12 (:force-after (room world p nil)))))))))
+
+(deftest reading-closes-when-the-log-says
+  (is (not (worklog/hold-reading? {:quiet 10 :force-after 30})))
+  (is (worklog/hold-reading? {:quiet 30 :force-after 30}))
+  (is (worklog/hold-reading? {:quiet 7}) "and at the old limit with none set"))
 
 (deftest the-first-turn-of-a-thread-may-carry-its-room
   (let [log (worklog/add {:open-chars 400000} [{:op :read :args {:name "a"} :ok false}])]

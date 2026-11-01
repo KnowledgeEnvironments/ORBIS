@@ -23,3 +23,6 @@ listener/platform/android/build/
 listener/platform/android/app/build/
 listener/platform/android/app/.cxx/
 listener/platform/android/local.properties
+
+# a world's projects, when its working copy holds them
+/projects/

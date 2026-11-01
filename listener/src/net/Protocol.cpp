@@ -167,6 +167,7 @@ Frame parseFrame(const json& j) {
         p.asOf = require<Seq>(j, "as-of", "push");
         p.lagging = optional<bool>(j, "lagging").value_or(false);
         p.from = optional<Seq>(j, "from");
+        p.gap = optional<Seq>(j, "gap");
         const json& events = j.at("events");
         if (!events.is_array()) {
             throw ProtocolError("push frame \"events\" is not an array");
@@ -228,6 +229,9 @@ json toJson(const Frame& f) {
                 }
                 if (v.from) {
                     j["from"] = *v.from;
+                }
+                if (v.gap) {
+                    j["gap"] = *v.gap;
                 }
                 return j;
             } else if constexpr (std::is_same_v<T, PaneData>) {

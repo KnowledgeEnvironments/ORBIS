@@ -38,7 +38,7 @@ test-schema:
 	cd schema && $(CLJ) -M:test
 
 smoke:           ## before a deploy, about two minutes: a wake, a prompt, a gate, a boot. The full suite is for a release
-	cd world && $(CLJ) -M:test --focus knowledge.world.loop.answer-test --focus knowledge.world.loop.worklog-test --focus knowledge.world.loop.realwork-test --focus knowledge.world.serialize.wake-economy-test --focus knowledge.world.act.gates-test --focus knowledge.world.window-test --focus knowledge.world.adapters.git-test --focus knowledge.world.protocol.resume-test
+	cd world && $(CLJ) -M:test --focus knowledge.world.loop.answer-test --focus knowledge.world.loop.worklog-test --focus knowledge.world.loop.realwork-test --focus knowledge.world.serialize.wake-economy-test --focus knowledge.world.act.gates-test --focus knowledge.world.window-test --focus knowledge.world.adapters.git-test --focus knowledge.world.protocol.resume-test --focus knowledge.world.retention-test
 
 test-unit: holder
 	cd world && $(CLJ) -M:test --focus :unit

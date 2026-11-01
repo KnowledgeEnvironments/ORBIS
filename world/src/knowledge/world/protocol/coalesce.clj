@@ -15,15 +15,17 @@
       [[push s]]
       (let [[a b] (split-at (quot (count (:events push)) 2) (:events push))]
         (concat (split-push encode (assoc push :events (vec a) :lagging nil))
-                (split-push encode (cond-> (assoc push :events (vec b))
+                (split-push encode (cond-> (dissoc (assoc push :events (vec b)) :gap)
                                      (:from push) (assoc :from (:event/seq (last a))))))))))
 
 (defn pushes
   "Encoded pushes for events on one sub. from is the cursor the batch was read from; each later
    chunk's from is the last seq of the chunk before it."
   ([encode sub events as-of lagging?] (pushes encode sub events as-of lagging? nil))
-  ([encode sub events as-of lagging? from]
+  ([encode sub events as-of lagging? from] (pushes encode sub events as-of lagging? from nil))
+  ([encode sub events as-of lagging? from gap]
    (let [chunks (partition-all max-events events)
          froms (reductions (fn [_ chunk] (:event/seq (last chunk))) from chunks)]
-     (mapcat (fn [chunk from] (split-push encode (frames/push sub chunk as-of lagging? from)))
-             chunks froms))))
+     (mapcat (fn [chunk from g] (split-push encode (frames/push sub chunk as-of lagging? from g)))
+             ;; a gap with nothing to show still goes out: the client has to hear it
+             (if (and gap (empty? events)) [[]] chunks) froms (cons gap (repeat nil))))))

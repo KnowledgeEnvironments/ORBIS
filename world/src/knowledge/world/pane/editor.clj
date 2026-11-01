@@ -1,6 +1,8 @@
 (ns knowledge.world.pane.editor
   "Editor buffers held in the world. The buffer is a fold of `pane-edit` events over the file at
-   open, so every edit has an author on the log and a restart loses nothing, undo included.
+   open, so every edit has an author on the log and a restart loses nothing, undo included. A
+   long-open buffer can outlive the segments holding those events: before the retention sweep drops
+   them it writes a `checkpoint`, the whole buffer in a blob, and the fold starts there.
    The holder rule: whoever edits holds the buffer until they save. Another Principal's edit must
    name the current `version`, proving it saw what is there; else `err conflict`. So a person and
    a model never overwrite each other silently.
@@ -8,7 +10,8 @@
    An editor can also sit on a Field (pane/target the Object, pane/field the name). Save is then a
    set-field by whoever saves, and a write to that Field from anywhere reloads a buffer nobody holds
    and marks a held one stale, so its holder decides. `reload` in the log records either."
-  (:require [clojure.string :as str]
+  (:require [clojure.edn :as edn]
+            [clojure.string :as str]
             [knowledge.world.act.core :as act]
             [knowledge.world.adapters.fs :as fs]
             [knowledge.world.fold.objects :as objects]
@@ -36,23 +39,55 @@
   "A buffer after one pane-edit body."
   [b {:keys [verb sha] :as e}]
   (case verb
+    ;; a copy of what the fold already holds, for a fold that starts here
+    :checkpoint b
     :save (-> b (assoc :base-sha sha :holder nil :version (:version e) :stale false) (dissoc :saving))
     ;; the whole text, from outside the buffer: nothing here undoes across that
     :reload (assoc b :text (:text e) :base-sha sha :holder nil :version (:version e) :stale false :undo [] :redo [])
     (apply-edit b e)))
 
 (defn- blob-text [world sha]
-  (String. ^bytes (blob/get (:blobs world) sha) "UTF-8"))
+  (some-> (blob/get (:blobs world) sha) (String. "UTF-8")))
+
+(defn- checkpoint-of
+  "The buffer a checkpoint event stands for, or nil when its blob is gone."
+  [world {:keys [blob version]}]
+  (when-let [text (blob-text world blob)]
+    (assoc (edn/read-string text) :version version)))
+
+(defn- what-is-there
+  "The text of the file or Field under a pane, for a buffer whose own record has gone, or nil."
+  [world id]
+  (let [db (act/db world)
+        target (core/field db id :pane/target)
+        path (core/field db id :pane/path)]
+    (cond
+      (core/field db id :pane/field)
+      (some-> (get-in (objects/fields db target) [(keyword (core/field db id :pane/field)) :field/value]) str)
+      path
+      (when-let [^File f (fs/safe-file (core/field db target :adapter/locator) path)]
+        (when (.isFile f) (slurp f))))))
 
 (defn- fold-buffer
-  "A buffer from its pane's log."
+  "A buffer from its pane's log: from the last checkpoint, else from the open. With neither, which takes
+   a blob that went for all the sweep's care, it is what the file or Field holds now, unheld: edits
+   that were never saved are gone, and the buffer says so, but it opens."
   [world id]
   (let [events (log/read-stream (:log world) id 0 Long/MAX_VALUE)
-        opened (:event/body (first (filter #(= :pane-opened (:event/kind %)) events)))]
-    (reduce (fn [b {:keys [event/kind event/body]}] (if (= :pane-edit kind) (step b body) b))
-            {:text (blob-text world (:blob opened)) :version 0 :base-sha (:blob opened)
-             :holder nil :undo [] :redo []}
-            events)))
+        edits #(filter (fn [e] (= :pane-edit (:event/kind e))) %)
+        opened (:event/body (first (filter #(= :pane-opened (:event/kind %)) events)))
+        cp (last (filter #(= :checkpoint (get-in % [:event/body :verb])) (edits events)))
+        from-cp (when cp (checkpoint-of world (:event/body cp)))
+        from-open (when-let [text (and (nil? cp) (blob-text world (:blob opened)))]
+                    {:text text :version 0 :base-sha (:blob opened) :holder nil :undo [] :redo []})
+        replay (fn [b es] (reduce (fn [b e] (step b (:event/body e))) b (edits es)))]
+    (cond
+      from-cp (replay from-cp (drop-while #(<= (long (:event/seq %)) (long (:event/seq cp))) events))
+      from-open (replay from-open events)
+      :else (let [text (str (what-is-there world id))]
+              {:text text :version (long (or (:version (:event/body (last (edits events)))) 0))
+               :base-sha (blob/sha256-hex (.getBytes text "UTF-8"))
+               :holder nil :undo [] :redo [] :lost-edits true}))))
 
 (declare field-moved!)
 
@@ -95,10 +130,40 @@
         (:buffer l))))
 
 (defmethod core/snapshot :editor [world _ id]
-  (let [{:keys [text version holder stale]} @(buffer world id)]
+  (let [{:keys [text version holder stale lost-edits]} @(buffer world id)]
     {:state (cond-> {:version version :holder holder}
-              stale (assoc :stale true))
+              stale (assoc :stale true)
+              lost-edits (assoc :lost-edits true))
      :data text}))
+
+(defn checkpoint!
+  "Put the whole buffer on the record, undo included, so its fold no longer needs the events before now."
+  [world id]
+  (let [a (buffer world id)]
+    (locking a
+      (let [{:keys [version] :as b} @a
+            bs (.getBytes (pr-str (select-keys b [:text :base-sha :holder :undo :redo :stale])) "UTF-8")
+            sha (:blob/sha256 (blob/put! (:blobs world) bs))
+            owner (core/field (act/db world) id :pane/owner)]
+        (log/append!! (:log world)
+                      (log/pending :pane-edit id owner {:pane id :who owner :version version :verb :checkpoint
+                                                        :at 0 :del 0 :text "" :blob sha}))
+        sha))))
+
+(defn needed-blobs
+  "The blobs an open editor's fold starts from: its last checkpoint, else the file as it opened."
+  [world id]
+  (let [events (log/read-stream (:log world) id 0 Long/MAX_VALUE)
+        cp (last (filter #(= :checkpoint (get-in % [:event/body :verb])) events))
+        opened (first (filter #(= :pane-opened (:event/kind %)) events))]
+    (keep identity [(get-in cp [:event/body :blob]) (get-in opened [:event/body :blob])])))
+
+(defn checkpoint-needed?
+  "Would dropping events up to `through` take something this buffer's fold starts from?"
+  [world id through]
+  (let [events (log/read-stream (:log world) id 0 Long/MAX_VALUE)
+        cp (last (filter #(= :checkpoint (get-in % [:event/body :verb])) events))]
+    (and (seq events) (<= (long (:event/seq (or cp (first events)))) (long through)))))
 
 ;; ---------------------------------------------------------------- positions
 

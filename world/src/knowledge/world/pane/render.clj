@@ -356,6 +356,11 @@
         wall (case kind :math refused refused-in-a-document)
         stopped (when (<= (count source) max-source-chars) (re-find wall source))
         stopped (if (vector? stopped) (first stopped) stopped)]
+    ;; the memo names a blob: once the sweep has taken it the memo is a promise of nothing, so
+    ;; it goes and the source compiles again
+    (when (.exists memo)
+      (let [{:keys [sha256]} (read-string (slurp memo))]
+        (when (and sha256 (not (blob/exists? (:blobs world) sha256))) (.delete memo))))
     (cond
       (.exists memo)
       (let [{:keys [error] :as m} (read-string (slurp memo))]

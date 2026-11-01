@@ -17,6 +17,7 @@
   [log data-dir world-id]
   {:log log
    :dir (io/file data-dir "snapshots")
+   :anchor (snap/anchor-dir data-dir)
    :db (atom (d/db-with (fold/empty-db) [{:world/id world-id}]))
    :applied (atom 0)
    :since-snapshot (atom 0)
@@ -48,6 +49,10 @@
     (loop []
       (let [from (inc @applied)]
         (when (<= from (log/head log))
+          ;; read-from goes on from what is there: a fold over that would be a different world
+          (when-let [f (log/gap log from)]
+            (throw (ex-info "the log no longer holds the events this index needs"
+                            {:type :log/gap :wanted from :first-seq f})))
           (let [events (log/read-from log from chunk-size)]
             (when (seq events)
               (ingest-chunk! idx events)
@@ -62,13 +67,31 @@
 
 (defn applied-seq [idx] @(:applied idx))
 
+(defn- refuse-boot!
+  "The log's first segment is past every snapshot this release can load. Today's world is not
+   recoverable from what is here, and a fold of what is left would be a world missing its past
+   that looks fine. So stop, and say what was looked at: on a new release the supervisor goes back to
+   the last good one, whose snapshots are still there."
+  [{:keys [log dir anchor]} floor]
+  (let [names (fn [d] (mapv #(.getName ^java.io.File %) (snap/snapshot-files d)))
+        msg (str "this world's log starts at seq " floor " and no snapshot this release can load reaches "
+                 (dec floor) ": refusing to start rather than fold part of a world. Looked in "
+                 dir " " (names dir) " and " anchor " " (names anchor)
+                 ". Restore a snapshot from a backup, or run the release that wrote these.")]
+    (timbre/error msg)
+    (throw (ex-info msg {:type :log/unrecoverable :first-seq floor :head (log/head log) :reads snap/schema-version}))))
+
 (defn start!
-  "Load the newest snapshot, replay the rest, subscribe to the log."
-  [{:keys [log dir db applied sub-key] :as idx}]
-  (when-let [{s :seq sdb :db} (snap/load-newest dir (log/head log))]
-    (timbre/info "index from snapshot" {:seq s})
-    (reset! db sdb)
-    (reset! applied s))
+  "Load the newest snapshot that is any use, replay the rest, subscribe to the log. On a pruned log a
+   snapshot is required: the fold from seq 1 does not exist any more."
+  [{:keys [log dir anchor db applied sub-key] :as idx}]
+  (let [floor (log/first-seq log)
+        found (snap/load-newest (remove nil? [dir anchor]) (log/head log) (dec floor))]
+    (when (and (nil? found) (> floor 1)) (refuse-boot! idx floor))
+    (when-let [{s :seq sdb :db} found]
+      (timbre/info "index from snapshot" {:seq s})
+      (reset! db (fold/current-schema sdb))
+      (reset! applied s)))
   (catch-up! idx)
   (reset! sub-key (log/subscribe! log (fn [_batch] (catch-up! idx))))
   (timbre/info "index ready" {:applied @applied})

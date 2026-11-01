@@ -4,7 +4,8 @@
    KE_FORMAT (transit|json, the default wire form), KE_MODEL_URL / KE_MODEL_KEY / KE_MODEL_ID for the
    model adapter (spec 17.1, 18.5 item 3), KE_LOG for the timbre level, KE_HARNESS_ROOT for the
    repository root root mounts as `harness` (else found by walking up from the working directory),
-   KE_WORLD_NAME and KE_PUBLIC_URL for the world's name and the ws URL it tells clients (hello)."
+   KE_WORLD_NAME and KE_PUBLIC_URL for the world's name and the ws URL it tells clients (hello),
+   KE_RETENTION_GB for the disk limit until a person sets one: a number, or infinite."
   (:require [clojure.java.io :as io]
             [clojure.string :as str]))
 
@@ -25,7 +26,10 @@
    :root-leash true
    ;; how this world introduces itself (hello): a name and the ws URL clients reach it at
    :world-name nil
-   :public-url nil})
+   :public-url nil
+   ;; blobs and log segments, in GiB, or "infinite"; retention.set overrides it. :retention takes
+   ;; the sweep's other knobs, knowledge.world.retention/defaults
+   :retention-gb nil})
 
 (defn- env [k] (let [v (System/getenv k)] (when-not (str/blank? v) v)))
 
@@ -33,6 +37,15 @@
   "KE_DATA resolved against the working directory (world/ when run from the Makefile)."
   [data]
   (.getCanonicalFile (io/file data)))
+
+(defn- retention-gb
+  "KE_RETENTION_GB: a positive number or infinite. Anything else is the default, not no limit."
+  [v]
+  (when v
+    (let [s (str/lower-case (str/trim v))]
+      (if (= "infinite" s)
+        s
+        (let [n (parse-double s)] (when (and n (pos? n)) n))))))
 
 (defn config-from-env
   "Read KE_* into a config map. Unknown KE_FSYNC values fall back to :batch."
@@ -53,4 +66,5 @@
                :release (env "KE_RELEASE")
                :work-root (env "KE_WORK")
                :world-name (env "KE_WORLD_NAME")
-               :public-url (env "KE_PUBLIC_URL")))))
+               :public-url (env "KE_PUBLIC_URL")
+               :retention-gb (retention-gb (env "KE_RETENTION_GB"))))))

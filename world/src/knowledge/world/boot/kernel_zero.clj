@@ -182,7 +182,7 @@
 (defmethod step! :default [_ k]
   (throw (ex-info "kernel-zero step not implemented" {:step k})))
 
-(def steps [:name-itself :actions :read-and-write-instructions :bind-model-and-evaluate :arm-heartbeat :answer-listener :first-person :notifications :manual :know-the-harness :memory-defaults :approval-defaults :root-leash])
+(def steps [:name-itself :actions :read-and-write-instructions :bind-model-and-evaluate :arm-heartbeat :answer-listener :first-person :notifications :manual :know-the-harness :memory-defaults :approval-defaults :root-leash :working-copy])
 
 (defn- ok!
   "Unwrap an act result or throw with the step."
@@ -457,6 +457,19 @@
                                                             :value gates-defaults/default-policy :reader :both})))
     {:principals (count ps)}))
 
+(defn- working-copy-unmounted [{:keys [config] :as world}]
+  (let [work (:work-root config)]
+    (when (and work (.isDirectory (java.io.File. (str work)))
+               (nil? (objects/lookup (act/db world) (:world-id world) "src.fs")))
+      work)))
+
+(defmethod step! :working-copy [world _]
+  ;; `harness` is the release this world runs, read-only, and root is who changes ORBIS: without a
+  ;; mount of its own working copy, every edit was refused and only a shell could write it (seen live)
+  (when-let [work (working-copy-unmounted world)]
+    (let [root (objects/root-id (act/db world))]
+      (actions/handle! :workspace.mount world root {:principal (str root) :path (str work) :name "src" :shell false} {}))))
+
 (defmethod step! :root-leash [{:keys [log world-id config] :as world} _]
   ;; root is who runs, tests and configures everyone else, and who agents escalate to. A person ends the
   ;; leash with adapter.confine; this runs once, and a policy a person changed stands.
@@ -571,6 +584,7 @@
    :harness-read-only (fn [world] (nil? (harness-unmarked (act/db world) (:world-id world))))
    :shell-gate (fn [world] (empty? (principals-on-old-policy (act/db world))))
    :route-template (fn [world] (empty? (routes-on-old-template (act/db world))))
+   :working-copy (fn [world] (nil? (working-copy-unmounted world)))
    :root-leash (fn [world] (let [db (act/db world)]
                              (some? (get-in (objects/fields db (objects/root-id db)) [:principal/wide-leash :field/value]))))})
 

@@ -396,11 +396,13 @@
      :choice choice
      :model (:model choice)
      :hop (inc (long (or (field m-state :message/hop) 0)))
-     :max-iterations (long (or (field p-state :loop/max-iterations) lops/default-max-iterations))
+     ;; eight turns was sized to 8k of context; with a Model's real window the wake has room to work
+     :max-iterations (long (or (field p-state :loop/max-iterations)
+                               (if (models/window-of db p thread-id) models/wide-iterations lops/default-max-iterations)))
      ;; a limit a person set on the Principal is a hard one; otherwise progress carries the wake further
      :max-turns (long (or (field p-state :loop/max-turns)
                           (field p-state :loop/max-iterations)
-                          lops/default-max-turns))
+                          (if (models/window-of db p thread-id) models/wide-turns lops/default-max-turns)))
      :max-ops (long (or (field p-state :loop/max-ops) lops/default-max-ops))
      :thread-id thread-id :asked-by asked-by :base base
      :known (vec (remove base (known-objects db p p-state)))}))
@@ -928,6 +930,19 @@
             r))
         results))
 
+(defn- room-of
+  "What the work log may hold and how long reading may go on, for this Principal's Model."
+  [world p thread-id]
+  (let [db (act/db world)
+        fields (objects/fields db p)
+        wide? (models/window-of db p thread-id)
+        turns (fn [k wide narrow]
+                (let [v (get-in fields [k :field/value])]
+                  (cond (number? v) (long v) wide? wide :else narrow)))]
+    {:open-chars (:serialize/open-chars (ser/policy db p thread-id))
+     :act-after (turns :loop/act-after 20 worklog/act-after)
+     :force-after (turns :loop/force-after 30 worklog/force-after)}))
+
 (defn- thread-log
   "The thread's work log, with what the waking card did."
   [world p {:keys [m-state thread-id]}]
@@ -935,7 +950,7 @@
         log (worklog/recall k)
         r (approved-result (act/db world) m-state)]
     (some-> (if r (worklog/remember k (worklog/add log (with-current (act/db world) p [r]))) log)
-            (assoc :open-chars (:serialize/open-chars (ser/policy (act/db world) p thread-id))))))
+            (merge (room-of world p thread-id)))))
 
 (defn- approved-edit
   "The file an approved card just changed, when that decision is what woke p, or nil: a card ends the
@@ -1125,7 +1140,7 @@
         failed? (fn [r] (or (:err r) (false? (:ok r))))
         {:keys [seen fresh?]} (progress (:seen st #{}) results)
         log (when work? (worklog/remember [p thread-id]
-                                    (worklog/add (assoc log :open-chars (:serialize/open-chars (ser/policy (act/db world) p thread-id)))
+                                    (worklog/add (merge log (room-of world p thread-id))
                                                  (with-current (act/db world) p results))))
         ;; in a work wake a turn of reading stops counting once it has gone on long enough
         fresh? (and fresh? (not (and work? (worklog/hold-reading? log))))]

@@ -55,6 +55,9 @@ struct Push {
     // The cursor the page was read from (world pass 11): seqs between `from` and the first event
     // were filtered by resolution, not lost; a `from` above our cursor is a lost delivery.
     std::optional<Seq> from;
+    // The first seq the world still holds, when this sub's cursor was below it: retention dropped
+    // the seqs in between. Unlike `from`, this is a real loss: what was folded from them is stale.
+    std::optional<Seq> gap;
     bool operator==(const Push&) const = default;
 };
 

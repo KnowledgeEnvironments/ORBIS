@@ -365,6 +365,14 @@
         (blob/receipt? v) (some-> (blob/get (:blobs world) (:blob/sha256 v)) (String. "UTF-8"))
         :else nil))
 
+(defn pruned-blob?
+  "A receipt whose bytes the retention sweep has taken. The receipt stays: hash and size still say what
+   was there."
+  [world v]
+  (and (blob/receipt? v) (not (blob/exists? (:blobs world) (:blob/sha256 v)))))
+
+(def pruned-message "retention pruned these bytes; the hash and size remain")
+
 (def byte-page-cap "Most bytes one read returns; a client pages." (* 64 1024))
 
 (defn- utf8-start
@@ -385,13 +393,18 @@
     {:text (String. b (int from) (int (- to from)) "UTF-8")
      :from from :to to :size size :truncated (< to want)}))
 
+(defn- page-field
+  "The Field a range is asked of: the named one, else a file's text or bytes."
+  [fields field]
+  (cond (and field (contains? fields field)) field
+        (contains? fields :file/text) :file/text
+        (contains? fields :file/bytes) :file/bytes))
+
 (defn- with-byte-range
   "Fields with one text or bytes Field replaced by a page of its bytes; beside it k-byte-range,
    k-size and, when capped, k-range-truncated."
   [world fields field byte-range]
-  (let [k (cond (and field (contains? fields field)) field
-                (contains? fields :file/text) :file/text
-                (contains? fields :file/bytes) :file/bytes)
+  (let [k (page-field fields field)
         text (when (and byte-range k) (text-of world (get-in fields [k :field/value])))]
     (if-not text
       fields
@@ -410,9 +423,7 @@
    the names file/text, file/range, file/lines, file/range-truncated; any other Field k gains
    k-range, k-lines and k-range-truncated beside the paged k."
   [world fields field range]
-  (let [k (cond (and field (contains? fields field)) field
-                (contains? fields :file/text) :file/text
-                (contains? fields :file/bytes) :file/bytes)
+  (let [k (page-field fields field)
         text (when (and range k) (text-of world (get-in fields [k :field/value])))]
     (if-not text
       fields
@@ -462,19 +473,28 @@
                                           object (resolve/resolve! world db0 p (id-name object) :read)
                                           name (resolve/resolve! world db0 p name :read))]
       (let [db (db world) ; after a mount materialized, the index has caught up
-            state (if seq
-                    (objects/state-at (partial log/read-stream (:log world)) object seq)
-                    (objects/state db object))
+            ;; a fold of one stream is only the state at seq if the stream's start is still there
+            past-pruned? (and seq (< (or (:object/created-seq (objects/entity db object)) 0)
+                                     (log/first-seq (:log world)))
+                              (> (log/first-seq (:log world)) 1))
+            state (cond past-pruned? nil
+                        seq (objects/state-at (partial log/read-stream (:log world)) object seq)
+                        :else (objects/state db object))
             fields (refs/visible-fields db p (resolve/visible-fields db p (:object/fields state) :read))
             fields (if field (select-keys fields [field]) fields)
             read-keys (keys fields)
+            ;; a page of bytes that are gone is an answer of its own, not the receipt as if it were text
+            page-pruned? (when (or range (:byte-range args))
+                           (when-let [k (page-field fields field)]
+                             (pruned-blob? world (get-in fields [k :field/value]))))
             fields (with-range world fields field range)
             fields (with-byte-range world fields field (:byte-range args))
             ;; what the bytes Fields weigh, so a client can skip a large payload; with
             ;; bytes false the payloads stay out and only this summary says what is there
             blobs (into {} (for [[k {:keys [field/value]}] fields
                                  :let [summary (cond (bytes? value) {:size (alength ^bytes value) :sha256 (blob/sha256-hex value) :inline true}
-                                                     (blob/receipt? value) {:size (:blob/size value) :sha256 (:blob/sha256 value)})]
+                                                     (blob/receipt? value) (cond-> {:size (:blob/size value) :sha256 (:blob/sha256 value)}
+                                                                             (pruned-blob? world value) (assoc :pruned true)))]
                                  :when summary]
                              [k (let [mime (or (get-in fields [(keyword (namespace k) "mime") :field/value])
                                                (get-in fields [:file/mime :field/value]))]
@@ -484,8 +504,11 @@
                      (into {} (map (fn [[k f]] [k (if (bytes? (:field/value f))
                                                    (assoc f :field/value {:blob/sha256 (blob/sha256-hex (:field/value f)) :blob/size (alength ^bytes (:field/value f))})
                                                    f)])) fields))]
-        (if (and field (empty? fields))
-          unresolved
+        (cond
+          past-pruned? (err :pruned (str "the log no longer goes back to seq " seq ": it starts at " (log/first-seq (:log world))))
+          page-pruned? (err :pruned pruned-message)
+          (and field (empty? fields)) unresolved
+          :else
           (do (when (not-empty read-keys)
                 (append! world (log/pending :field-read object p (cond-> {:names (vec read-keys) :by p} via (assoc :via via))
                                             :streams #{p} :delegation grant :via via)))
@@ -516,6 +539,7 @@
             text (if (and text range) (:text (fs/lines-range text range)) text)]
         (cond
           (nil? f) {:err {:code :unresolved :message (str "no Field " (or field "to copy") " there you can read")}}
+          (pruned-blob? world (:field/value f)) (err :pruned pruned-message)
           (and text (> (count text) max-copy-chars))
           {:err {:code :invalid :message (str (count text) " chars is more than one Field holds; copy a range")}}
           text {:ok {:value text :type :string}}

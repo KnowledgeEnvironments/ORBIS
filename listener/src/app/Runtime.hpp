@@ -88,6 +88,7 @@ class Runtime {
   private:
     void startBoot();
     void requestSnapshotPage(json args);
+    void onLogGap(const std::string& sub, Seq firstHeld);
     void finishBoot(BootInfo::Mode mode, const std::string& reason);
     void watchUnsafe();
     void watchNotifications();

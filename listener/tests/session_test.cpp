@@ -235,6 +235,25 @@ TEST_CASE("an off-the-record push goes to its handler and touches nothing else",
     CHECK(h.session->subs().count("scratch-abc") == 0);
 }
 
+TEST_CASE("a gap reaches the owner, and an empty push of one still counts", "[session]") {
+    Harness h;
+    h.session->onOpen();
+    h.answerAttach("s-1", false, 0);
+    std::vector<std::pair<std::string, Seq>> gaps;
+    h.session->logGap = [&gaps](const std::string& sub, Seq first) { gaps.emplace_back(sub, first); };
+    Push p;
+    p.sub = "history";
+    p.asOf = 500;
+    p.gap = 400;
+    h.session->onFrame(Frame{p});
+    REQUIRE(gaps.size() == 1);
+    CHECK(gaps[0].first == "history");
+    CHECK(gaps[0].second == 400);
+    p.gap.reset();
+    h.session->onFrame(Frame{p});
+    CHECK(gaps.size() == 1);
+}
+
 TEST_CASE("reattach sends the persisted session and acked map", "[session]") {
     Harness h;
     h.session->onOpen();

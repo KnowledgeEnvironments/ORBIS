@@ -1833,6 +1833,9 @@
           },
           "sha" : {
             "type" : "string"
+          },
+          "blob" : {
+            "type" : "string"
           }
         },
         "required" : [ "pane", "who", "version", "verb", "at", "del", "text" ]

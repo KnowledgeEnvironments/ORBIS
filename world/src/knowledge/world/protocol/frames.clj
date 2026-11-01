@@ -13,10 +13,12 @@
   "A push frame; from is the cursor the page was read from, so a client tells a
    resolution-filtered hole (seqs between from and the first event) from a lost delivery."
   ([sub events as-of lagging?] (push sub events as-of lagging? nil))
-  ([sub events as-of lagging? from]
+  ([sub events as-of lagging? from] (push sub events as-of lagging? from nil))
+  ([sub events as-of lagging? from gap]
    (cond-> {:sub sub :events (vec events) :as-of as-of}
      lagging? (assoc :lagging true)
-     (some? from) (assoc :from from))))
+     (some? from) (assoc :from from)
+     (some? gap) (assoc :gap gap))))
 
 (def kind p/frame-kind)
 

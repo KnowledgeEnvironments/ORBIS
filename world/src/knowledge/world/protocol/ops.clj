@@ -26,6 +26,7 @@
             [knowledge.world.loop.steer :as steer]
             [knowledge.world.pane.actions]
             [knowledge.world.image-actions]
+            [knowledge.world.retention]
             [knowledge.world.pane.core :as pane]
             [knowledge.world.protocol.frames :as frames]
             [knowledge.world.protocol.session :as session]
@@ -94,7 +95,11 @@
                                                           token-object (assoc :token token-object))))
         (tokens/touch! world token-object now)
         (subscription/wake! world s)
-        {:ok {:session (:id @s) :principal found :resumed resumed? :seq (log/head (:log world))}}))))
+        ;; what a reattach cannot deliver; the pump says the same on the sub, this says it at once
+        (let [gaps (into {} (keep (fn [[sub acked]] (when-let [f (log/gap (:log world) (inc (long acked)))] [sub f])))
+                         subs)]
+          {:ok (cond-> {:session (:id @s) :principal found :resumed resumed? :seq (log/head (:log world))}
+                 (seq gaps) (assoc :gaps gaps))})))))
 
 ;; ---------------------------------------------------------------- before attach
 
@@ -110,6 +115,7 @@
                            ":" (or (:port world) (some-> (:port* world) (deref 0 nil))) "/ws")))
         :format-versions {:log 1 :protocol "v0" :json 1 :transit 1}
         :head (log/head (:log world))
+        :first-seq (log/first-seq (:log world))
         :root (objects/root-id (db ctx))}})
 
 (def pair-max-failures 5)
@@ -160,7 +166,8 @@
           sub (subscription/create args head)]
       (swap! s assoc-in [:subs (:sub args)] sub)
       (subscription/wake! world s)
-      {:ok {:sub (:sub args) :as-of head}})
+      {:ok (cond-> {:sub (:sub args) :as-of head}
+             (:after args) (merge (some->> (log/gap (:log world) (inc (long (:after args)))) (hash-map :gap))))})
     unauthenticated))
 
 (defmethod handle :unsubscribe [ctx _ {:keys [sub]}]
@@ -188,9 +195,11 @@
       (history/history! world p args)
       (let [db (db ctx) limit (min history/max-limit (or limit 256))]
         (if (resolve/resolve! world db p (act/id-name stream) :read)
-          (let [events (log/read-stream (:log world) stream (or after 0) limit)]
+          (let [events (log/read-stream (:log world) stream (or after 0) limit)
+                gap (log/gap (:log world) (inc (long (or after 0))))]
             {:ok (cond-> {:events (mapv #(refs/visible-event db p %) events)}
-                   (= (count events) limit) (assoc :next (:event/seq (peek events))))})
+                   (= (count events) limit) (assoc :next (:event/seq (peek events)))
+                   gap (assoc :gap gap))})
           unresolved)))))
 
 ;; search over what the principal may read, one resolved summary event

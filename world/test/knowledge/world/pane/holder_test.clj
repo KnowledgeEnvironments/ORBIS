@@ -4,10 +4,15 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
+            [knowledge.world.act.core :as act]
             [knowledge.world.fixtures :as fx]
+            [knowledge.world.index.core :as index]
+            [knowledge.world.index.snapshot :as snap]
             [knowledge.world.log.blob :as blob]
             [knowledge.world.log.core :as log]
+            [knowledge.world.log.segment :as seg]
             [knowledge.world.pane.core :as core]
+            [knowledge.world.retention :as retention]
             [knowledge.world.system :as system]
             [knowledge.world.ws-client :as ws]))
 
@@ -91,6 +96,47 @@
               (is (= (map #(str "row-" %) (range 4000)) rows) "every line once, in order"))
             (ws/close! root2))
           (finally (system/stop world2)))))))
+
+(deftest a-terminal-carries-on-through-a-prune-that-took-its-record
+  ;; a quiet terminal's last pane-output can fall below the log's first seq: the holder must not be
+  ;; asked for everything again, and the chain must go on from where it was
+  (with-holder [dir h]
+    (with-redefs [seg/roll-bytes 4096]
+      (let [config (assoc (fx/config dir 0) :retention {:grace-ms 0 :low-water 1.0})
+            world (system/start config)
+            wid (:world-id world)
+            root (fx/attach-root world)
+            p (open! root)
+            outputs (fn [w] (filterv #(= :pane-output (:event/kind %)) (log/read-stream (:log w) p 0 Long/MAX_VALUE)))
+            fill! (fn [] (dotimes [i 8]
+                           (log/append!! (:log world) (log/pending :field-set wid wid {:name (keyword "test" (str "f" i)) :type :string
+                                                                                       :value (apply str (repeat 3000 "x")) :reader :both}))))]
+        (type! root p "echo before-prune\n")
+        (is (until #(str/includes? (str (screen-text root p)) "\nbefore-prune") 5000))
+        (is (until #(do (with-redefs [core/idle-flush-ms 0] (core/sweep! world)) (seq (outputs world))) 5000))
+        (let [{:keys [n chain offset]} (:event/body (peek (outputs world)))]
+          (ws/close! root)
+          (fill!)
+          (snap/write! (:dir (:index world)) (index/applied-seq (:index world)) (index/db (:index world)))
+          (fill!)
+          (retention/sweep! (assoc-in world [:config :retention-gb] 1.0e-9))
+          (is (empty? (outputs world)) "its output events have gone")
+          (is (= offset (:offset (core/field (act/db world) p core/record-field))))
+          (system/stop world)
+          (let [world2 (system/start config)]
+            (try
+              (let [root2 (fx/attach-root world2)]
+                (type! root2 p "echo after-prune\n")
+                (is (until #(str/includes? (str (screen-text root2 p)) "\nafter-prune") 5000))
+                (core/stop-all! world2)
+                (let [first-new (:event/body (first (outputs world2)))
+                      text (String. ^bytes (blob/get (:blobs world2) (:blob first-new)) "UTF-8")]
+                  (is (= (inc n) (:n first-new)) "the count goes on")
+                  (is (= (:chain first-new) (blob/sha256-hex (.getBytes (str chain (:blob first-new)) "UTF-8"))) "so does the chain")
+                  (is (>= (:offset first-new) offset))
+                  (is (not (str/includes? text "before-prune\r\n")) "nothing it already recorded comes again"))
+                (ws/close! root2))
+              (finally (system/stop world2)))))))))
 
 (deftest a-terminal-that-exits-while-the-world-is-down-is-told-to-the-next
   (with-holder [dir h]

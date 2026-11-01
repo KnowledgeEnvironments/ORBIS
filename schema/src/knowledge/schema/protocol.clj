@@ -36,7 +36,9 @@
    ;; a render with no model on this host
    :no-renderer :unconfined :no-speech-model :too-large :unreachable
    ;; an off-the-record session refused something that reaches past it
-   :scratch-readonly])
+   :scratch-readonly
+   ;; the retention sweep took these bytes or these events (docs/log-format.md Retention)
+   :pruned])
 
 (def Err [:map [:code ErrCode] [:message :string] [:data {:optional true} :map]])
 
@@ -179,6 +181,8 @@
            [:lagging {:optional true} :boolean]
            ;; the cursor this page was read from; seqs in (from, first event) were filtered, not lost
            [:from {:optional true} c/Seq]
+           ;; the first seq the log still holds, when this sub's cursor was below it: seqs in between are gone
+           [:gap {:optional true} c/Seq]
            ;; an off-the-record session's events: for the session that opened it, never on the log
            [:scratch {:optional true} :string]])
 (def Ack [:map {:title "Ack"} [:ack :string] [:seq c/Seq]])

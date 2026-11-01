@@ -57,25 +57,30 @@
 
 (defn pump-sub
   "One round for one sub. Pushes what it reads and returns the delta
-   {:cursor :pushed [seqs] :lagging? :more?} to merge into the live sub."
+   {:cursor :pushed [seqs] :lagging? :more?} to merge into the live sub. A cursor below the log's first
+   seq, a client back from a long way behind, moves up to it and the push says `gap`: what fell
+   in between is gone, and it must not look like a run of filtered events."
   [{:keys [log index]} session sub]
   (let [{:keys [window pending cursor]} sub
         budget (min coalesce/max-events (- window (count pending)))]
     (if (<= budget 0)
       {:cursor cursor :pushed [] :lagging? true :more? false}
-      (let [events (read-batch log sub budget)]
-        (if (empty? events)
+      (let [gap (log/gap log (inc cursor))
+            cursor (if gap (dec gap) cursor)
+            sub (assoc sub :cursor cursor)
+            events (read-batch log sub budget)]
+        (if (and (empty? events) (nil? gap))
           {:cursor cursor :pushed [] :lagging? (:lagging? sub) :more? false}
           (let [db (index/db index)
                 principal (:principal @session)
                 matched (filterv #(and (filter-matches? sub %) (resolves-event? db principal %)) events)
                 matched (mapv #(refs/visible-event db principal %) matched)
-                cursor' (:event/seq (peek events))
+                cursor' (or (:event/seq (peek events)) cursor)
                 more? (= (count events) budget)]
-            (if (empty? matched)
+            (if (and (empty? matched) (nil? gap))
               {:cursor cursor' :pushed [] :lagging? (:lagging? sub) :more? more?}
               (let [as-of (log/head log)
-                    frames (coalesce/pushes (partial codec/encode (:format @session)) (:sub sub) matched as-of (:lagging? sub) cursor)]
+                    frames (coalesce/pushes (partial codec/encode (:format @session)) (:sub sub) matched as-of (:lagging? sub) cursor gap)]
                 (send-frames! session frames)
                 {:cursor cursor' :pushed (mapv :event/seq matched) :lagging? false :more? more?}))))))))
 

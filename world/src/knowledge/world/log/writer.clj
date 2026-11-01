@@ -92,8 +92,11 @@
                   (doseq [[_ prom _] entries] (deliver prom st')))
               ;; a subscribe! during the write must survive it: state read before the write and put back
               ;; whole lost the resident loop's subscription on 2 fresh boots of 5, a world that took
-              ;; Messages and never woke
-              (let [now (swap! state (fn [current] (assoc st' :subscribers (:subscribers current))))]
+              ;; Messages and never woke. So must a prune: it would bring back a segment it deleted
+              (let [now (swap! state (fn [current]
+                                       (-> st'
+                                           (assoc :subscribers (:subscribers current) :floor (:floor current))
+                                           (update :segments seg/from-floor (:floor current)))))]
                 (doseq [[ev prom _] entries] (deliver prom (:event/seq ev)))
                 (notify! (:subscribers now) (mapv first entries))))))))
     closing?))

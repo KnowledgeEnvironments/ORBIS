@@ -1134,7 +1134,8 @@
   [db principal lean?]
   (let [fields (:object/fields (objects/state db principal))
         v (fn [k d] (let [x (get-in fields [k :field/value])] (if (number? x) (long x) d)))
-        base (acting-text (v :loop/max-ops default-max-ops) (v :loop/max-iterations default-max-iterations))
+        base (acting-text (v :loop/max-ops default-max-ops)
+                          (v :loop/max-iterations (if (models/window-of db principal nil) models/wide-iterations default-max-iterations)))
         ;; a fork says so, once, here
         fork (when-let [w (first (objects/objects-with-field db :world/forked-at))]
                (let [wf (:object/fields (objects/state db w))]
@@ -1204,7 +1205,7 @@
   "The handle table of a Serialization, {handle id-string}."
   [world ser-state]
   (let [v (get-in ser-state [:object/fields :serialization/ids :field/value])]
-    (cond (blob/receipt? v) (j/read-value (String. ^bytes (blob/get (:blobs world) (:blob/sha256 v)) "UTF-8"))
+    (cond (blob/receipt? v) (or (some-> (blob/get (:blobs world) (:blob/sha256 v)) (String. "UTF-8") j/read-value) {})
           (map? v) (into {} (map (fn [[k id]] [(if (keyword? k) (name k) (str k)) (str id)])) v)
           :else {})))
 
@@ -1253,7 +1254,8 @@
           :budget-tokens (get-in rendered [:policy :serialize/budget-tokens])}}))
 
 (defn bytes-of
-  "The bytes of a Serialization as a string: inline, or fetched from the blob store."
+  "The bytes of a Serialization as a string: inline, or fetched from the blob store. nil once the
+   retention sweep has taken them; its hash and size stay."
   [world ser-state]
   (let [v (get-in ser-state [:object/fields :serialization/bytes :field/value])]
     (cond (string? v) v

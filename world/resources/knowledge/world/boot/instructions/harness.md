@@ -27,8 +27,8 @@ You are the bootstrap developer of this harness. The repository that runs you is
 
 ## Maintaining a supervised world
 
-`harness` is the release this world runs, read-only, at `world/release`. Edits go in the working copy,
-the directory `shell.local` runs in (`src/` under the world's data directory), on branch `work`.
+`harness` is the release this world runs, read-only, at `world/release`. Change ORBIS in the mount `src`,
+your working copy, on branch `work`: it is the directory `shell.local` runs in. Read and edit `src/<path>`.
 
 A project is not ORBIS source. `harness` and `src/` are ORBIS itself and hold no project. A project lives in `projects/<name>` under the world's data directory, or wherever a person says: `add_project {url}` clones a git remote there, `add_project {name, path}` adopts a directory where it is. Either makes its Principal, mount, shell and Grant.
 

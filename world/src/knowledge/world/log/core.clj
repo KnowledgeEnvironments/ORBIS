@@ -3,7 +3,8 @@
    open!, append! / append!!, read-from, read-stream, head, subscribe!, unsubscribe!, close!.
    Every appended event is validated against :ke/PendingEvent before the writer sees it and
    against :ke/Event after seq assignment; a value of type bytes above 4 KiB goes to the blob store."
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [knowledge.schema.registry :as r]
             [knowledge.world.log.blob :as blob]
             [knowledge.world.log.index :as idx]
@@ -12,7 +13,8 @@
             [knowledge.world.log.segment :as seg]
             [knowledge.world.log.writer :as writer]
             [taoensso.timbre :as log])
-  (:import [java.util Date]))
+  (:import [java.io File]
+           [java.util Date]))
 
 (defn- humanize [k v] ((requiring-resolve 'malli.error/humanize) (r/explain k v)))
 
@@ -48,6 +50,16 @@
         files (filter #(<= (seg/first-seq-of %) fork-seq) (seg/segment-files dir))]
     {:dir dir :seq fork-seq :segments (mapv #(open-parent-segment % fork-seq) files)}))
 
+(defn- require-contiguous!
+  "Segments are pruned from the front only, oldest first, so a hole between two of them is damage: the
+   file went some other way. Refuse, as for a bad frame, and a person decides."
+  [segments]
+  (doseq [[a b] (partition 2 1 segments)
+          :let [next-seq (inc (long (get-in a [:idx :last-seq])))]]
+    (when (not= next-seq (long (:first-seq b)))
+      (throw (ex-info "a segment is missing from the middle of the log; refusing to start"
+                      {:after (str (:file a)) :before (str (:file b)) :expected next-seq})))))
+
 (defn open!
   "Open (or create) the log under data-dir. Returns the log component. With opts
    {:parent {:data-dir .. :seq N}} the log is a fork: the parent's events 1..N are
@@ -61,6 +73,7 @@
         segments (if (empty? files)
                    [(assoc (seg/create! dir first-own) :idx (idx/empty-index first-own))]
                    (vec (map-indexed (fn [i f] (open-segment f (= i (dec (count files))))) files)))
+        _ (require-contiguous! segments)
         head (get-in (peek segments) [:idx :last-seq])
         state (atom (cond-> {:dir dir :segments segments :head head :subscribers {}}
                       parent (assoc :parent parent)))]
@@ -101,6 +114,88 @@
   (if mem (mem/read-from mem seq limit) (reader/read-own-from @state seq limit)))
 
 (defn head ^long [{:keys [state mem]}] (if mem (mem/head mem) (:head @state)))
+
+(defn first-seq
+  "The oldest seq this log still holds: 1 until the retention sweep has dropped a segment."
+  ^long [{:keys [state parent]}]
+  (if state (reader/first-seq @state) (first-seq parent)))
+
+(defn gap
+  "The first seq still held when seq falls below it, else nil: what a reader that wanted seq has
+   lost. read-from and read-stream go on from what is there, so a reader that must not skip asks."
+  [log ^long seq]
+  (let [f (first-seq log)]
+    (when (< seq f) f)))
+
+(defn own-gap
+  "The first of a fork's own seqs it still holds, when its own log no longer starts at the fork seq."
+  [{:keys [state]}]
+  (let [st @state
+        own (reader/first-seq (dissoc st :parent))
+        at (get-in st [:parent :seq])]
+    (when (and at (> own (inc (long at)))) own)))
+
+(defn first-seq-of-dir
+  "The oldest seq a world directory holds of its own, read from the segment names (a tool, on a world
+   that may be live). 1 with no log. A fork's parent is not looked at."
+  ^long [data-dir]
+  (or (some-> (first (seg/segment-files (io/file data-dir "log"))) seg/first-seq-of) 1))
+
+(defn- forks-dir ^File [data-dir] (io/file data-dir "forks"))
+
+(defn mark-fork!
+  "Leave a note under the parent that a fork reads its segments up to :seq (tools/fork!)."
+  [data-dir {:keys [fork] :as note}]
+  (.mkdirs (forks-dir data-dir))
+  (spit (io/file (forks-dir data-dir) (str fork ".edn")) (pr-str note)))
+
+(defn fork-ceiling
+  "The lowest seq a living fork of this world reads in place, or nil. A note whose child has gone is
+   removed: a deleted fork must not hold the log forever."
+  [data-dir]
+  (let [alive? (fn [{:keys [child fork]}]
+                 (let [f (io/file (str child) "world.edn")]
+                   (and (.isFile f) (= fork (:fork/id (try (edn/read-string (slurp f)) (catch Exception _ nil)))))))
+        notes (for [^File f (.listFiles (forks-dir data-dir))
+                    :let [n (try (edn/read-string (slurp f)) (catch Exception _ nil))]]
+                [f n])
+        [live gone] ((juxt filter remove) (fn [[_ n]] (alive? n)) notes)]
+    (doseq [[^File f _] gone] (.delete f))
+    (when (seq live) (apply min (map (fn [[_ n]] (long (:seq n))) live)))))
+
+(defn- segment-bytes [{:keys [^File file]}]
+  (+ (.length file) (.length (seg/idx-file file))))
+
+(defn closed-segments
+  "This world's own segments the sweep may look at, oldest first: all but the active one, as
+   {:first-seq :last-seq :bytes}. A fork's parent's are not its own."
+  [{:keys [state]}]
+  (mapv (fn [s] {:first-seq (:first-seq s) :last-seq (get-in s [:idx :last-seq]) :bytes (segment-bytes s)})
+        (butlast (:segments @state))))
+
+(defn own-bytes
+  "What this world's own segments and their indexes weigh."
+  ^long [{:keys [state]}]
+  (reduce + 0 (map segment-bytes (:segments @state))))
+
+(defn prune-oldest!
+  "Drop the oldest segment if it is closed and wholly at or below `through`. Returns {:bytes :first-seq},
+   the bytes freed and the oldest seq left, or nil. Off the writer: it only moves the floor in the
+   state, which the writer carries over, and the delete happens here. The active segment is never
+   dropped, so the log always has a head. Deletes the frames first: a crash leaves an index with no
+   segment, which nothing reads, and never a hole."
+  [{:keys [state]} ^long through]
+  (let [{:keys [segments]} @state
+        s (first segments)]
+    (when (and (> (count segments) 1) (<= (long (get-in s [:idx :last-seq])) through))
+      (let [floor (long (:first-seq (second segments)))
+            bytes (segment-bytes s)]
+        (swap! state (fn [st] (-> st (assoc :floor floor) (update :segments seg/from-floor floor))))
+        (seg/retire! s)
+        (seg/delete-if-exists! (:file s))
+        (seg/delete-if-exists! (seg/idx-file (:file s)))
+        (seg/fsync-dir! (:dir @state))
+        {:bytes bytes :first-seq floor}))))
 
 (defn pending
   "Build a pending event (spec 4.4, 7.1). streams is the extra set when the event belongs on several."

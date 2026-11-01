@@ -276,8 +276,10 @@
         k (keyword (or field "pane/image"))
         receipt (when (= "pane" (namespace k)) (core/field db id k))
         bs (when (blob/receipt? receipt) (blob/get (:blobs world) (:blob/sha256 receipt)))]
-    (if-not bs
-      (act/err :invalid-args (str "this pane holds no bytes in " (subs (str k) 1)))
+    (cond
+      (and (nil? bs) (blob/receipt? receipt)) (act/err :pruned act/pruned-message)
+      (nil? bs) (act/err :invalid-args (str "this pane holds no bytes in " (subs (str k) 1)))
+      :else
       (let [size (alength ^bytes bs)
             from (min size (max 0 (long (or offset 0))))
             n (min (- size from) (max 1 (min bytes-chunk (long (or limit bytes-chunk)))))

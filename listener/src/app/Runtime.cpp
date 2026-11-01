@@ -77,6 +77,7 @@ Runtime::Runtime(const Options& opts, std::unique_ptr<SessionStore> sessionStore
     noToken_ = opts.token.empty();
     tokenProblem_ = opts.tokenProblem;
     foldSub_ = foldSubName();
+    session.logGap = [this](const std::string& sub, Seq firstHeld) { onLogGap(sub, firstHeld); };
     // the session principal's own line addresses the Route's other members, not itself
     chat.setRecipientResolver([this](const std::string& route) {
         const std::string self = session.principal().value_or("");
@@ -340,6 +341,15 @@ void Runtime::fetchOlderHistory() {
         events.prepend(std::move(older));
         foldChanged_ = true;
     }, true);
+}
+
+void Runtime::onLogGap(const std::string& sub, Seq firstHeld) {
+    // The folds missed what the world no longer has: only a snapshot can bring them back. The rows
+    // sub keeps what it holds, with a hole it has been told about.
+    chat.noteCarrier("WORLD LOG // retention dropped events below seq " + std::to_string(firstHeld) + " while this client was behind");
+    if (sub == foldSub_) {
+        startBoot();
+    }
 }
 
 void Runtime::start() {

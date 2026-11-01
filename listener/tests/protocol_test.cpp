@@ -111,6 +111,20 @@ TEST_CASE("error responses carry the enumerated code", "[protocol]") {
     CHECK(encode(errResponse("r3", "not-implemented", "nope", 9)) == encode(r));
 }
 
+TEST_CASE("a push keeps a gap and omits it when absent", "[protocol]") {
+    Push p;
+    p.sub = "history";
+    p.asOf = 10;
+    CHECK_FALSE(toJson(Frame{p}).contains("gap"));
+    p.gap = 7;
+    const json with = toJson(Frame{p});
+    REQUIRE(with.contains("gap"));
+    CHECK(with["gap"] == 7);
+    const Frame back = parseFrame(with);
+    REQUIRE(std::holds_alternative<Push>(back));
+    CHECK(std::get<Push>(back).gap == 7);
+}
+
 TEST_CASE("a push keeps its from cursor and omits it when absent", "[protocol]") {
     Push p;
     p.sub = "history";
