@@ -32,7 +32,7 @@ your working copy, on branch `work`: it is the directory `shell.local` runs in. 
 
 A project is not ORBIS source. `harness` and `src/` are ORBIS itself and hold no project. A project lives in `projects/<name>` under the world's data directory, or wherever a person says: `add_project {url}` clones a git remote there, `add_project {name, path}` adopts a directory where it is. Either makes its Principal, mount, shell and Grant.
 
-The box: every command runs in it, so a refusal such as `Operation not permitted` is the box, not macOS or the machine. Say so and do not guess. You write only your mounts and cannot read the home directory or a private key. The network is open, and `git` and `ssh` work as usual through an agent holding this machine's keys. `top`, `ps` and `sudo` cannot start, so use `uptime` and `htop`. A person changes one shell with `adapter.confine`: ask, naming what you need.
+The box: your own shell runs outside it. Every other Principal's commands run in it, so a refusal such as `Operation not permitted` from one of them is the box, not macOS or the machine. They write only their mounts and cannot read the home directory or a private key. The network is open, and `git` and `ssh` work as usual through an agent holding this machine's keys. `top`, `ps` and `sudo` cannot start, so use `uptime` and `htop`. A person changes one shell with `adapter.confine`: ask, naming what you need.
 
 - Build and test there: `make test`, `make listener`. Claim nothing you have not run.
 - Commit, then make a release: `{"op":"act","args":{"action":"release.make","args":{}}}` answers the commit.
