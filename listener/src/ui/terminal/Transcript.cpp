@@ -893,11 +893,26 @@ void TerminalPane::drawQueue(Tab& tab, const std::vector<chat::QueueRow>& queue,
             }
             ImGui::SameLine();
         }
-        text(r.pending ? Ink::secondary : Ink::primary, chat::firstLine(r.text.empty() ? "<reading>" : r.text));
-        if (!r.from.empty()) {
+        // Who and when keep the right edge: the message gives way, however long it is.
+        const std::string who = r.from.empty() ? std::string() : principals.nameOf(r.from) + "  " + clockPart(r.at);
+        const float whoW = who.empty() ? 0.0f : ImGui::CalcTextSize(who.c_str()).x + ch;
+        const float room = std::max(0.0f, ImGui::GetContentRegionAvail().x - whoW);
+        std::string line = chat::firstLine(r.text.empty() ? "<reading>" : r.text);
+        if (ImGui::CalcTextSize(line.c_str()).x > room) {
+            const std::string ellipsis = "\xe2\x80\xa6";
+            while (!line.empty() && ImGui::CalcTextSize((line + ellipsis).c_str()).x > room) {
+                line.pop_back();
+                while (!line.empty() && (static_cast<unsigned char>(line.back()) & 0xC0) == 0x80) {
+                    line.pop_back(); // never half a character
+                }
+            }
+            line += ellipsis;
+        }
+        text(r.pending ? Ink::secondary : Ink::primary, line);
+        if (!who.empty()) {
             ImGui::SameLine();
-            ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(), ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ch * 22));
-            text(Ink::secondary, principals.nameOf(r.from) + "  " + clockPart(r.at));
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - whoW + ch);
+            text(Ink::secondary, who);
         }
         ImGui::PopID();
     }
