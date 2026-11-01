@@ -203,7 +203,13 @@ void ManualPane::drawNav(chat::Chat& chat, const model::Principals& principals, 
 }
 
 void ManualPane::drawTopic(chat::Chat& chat, const model::Principals& principals, const std::string& self) {
-    if (!status_.empty() && status_ != "reading") { // reading shows as a tape at the bottom: the page never moves
+    if (status_ == "reading") { // a tape at the right of the button row, drawn over nothing: the page never moves
+        const ImVec2 at = ImGui::GetCursorScreenPos();
+        const float right = at.x + ImGui::GetContentRegionAvail().x;
+        const float tall = ImGui::GetFrameHeight();
+        hazardTape(ImGui::GetWindowDrawList(), ImVec2(right - ImGui::CalcTextSize("0").x * 14.0f, at.y + tall * 0.25f),
+                   ImVec2(right, at.y + tall * 0.75f), ImGui::GetTime());
+    } else if (!status_.empty()) {
         text(Ink::secondary, status_);
     }
     if (topic_.empty()) {
@@ -275,11 +281,6 @@ void ManualPane::draw(chat::Chat& chat, const model::Principals& principals, con
     ImGui::BeginChild("manual-topic", ImVec2(0, 0), ImGuiChildFlags_AlwaysUseWindowPadding);
     drawTopic(chat, principals, self);
     ImGui::EndChild();
-    if (status_ == "reading") {
-        const ImVec2 max = ImGui::GetItemRectMax();
-        const float tall = std::floor(ImGui::GetTextLineHeight() * 0.3f);
-        hazardTape(ImGui::GetWindowDrawList(), ImVec2(ImGui::GetItemRectMin().x, max.y - tall), max, ImGui::GetTime());
-    }
     insetRim(ImGui::GetWindowDrawList(), ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
     ImGui::PopFont();
     ImGui::End();
