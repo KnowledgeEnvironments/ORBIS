@@ -120,9 +120,12 @@
     :hint "a directory as a project, Principal to Grant, in one op"
     :handler :project.add
     :gated true
-    :schema [:map [:name :string] [:path :string] [:charter {:optional true} :string]]
+    :schema [:map [:name {:optional true} :string] [:path {:optional true} :string] [:url {:optional true} :string]
+             [:charter {:optional true} :string]]
     :instructions (str "`name` is short and becomes the Principal, the mount and the prefix of a Grant strictly narrower than "
-                       "yours. `path` is the directory; you need no read of it first. One op per project. The result has the "
+                       "yours. `path` is a directory on this machine; you need no read of it first. Or `url`, a git remote "
+                       "such as git@github.com:me/thing.git: the world clones it with the machine's key to projects/<name> under "
+                       "its data directory, and `name` defaults from the URL. One op per project. The result has the "
                        "first lines of its README and its test command. Give `charter`, or set instructions/charter from the "
                        "README afterwards: one paragraph on what it owns.")}
    {:name "workspace.mount"
@@ -396,9 +399,13 @@
     :handler :adapter.confine
     :schema [:map [:adapter :string]
              [:network {:optional true} [:enum "model" "none" "all"]]
-             [:read {:optional true} [:vector :string]]]
-    :instructions (str "Person only. `network`: model (loopback and the Models' ports, the default), none, or all, "
-                       "which is how a LAN is opened. `read`: paths outside the root its commands may read.")}
+             [:read {:optional true} [:vector :string]]
+             [:ssh {:optional true} :boolean]
+             [:leash {:optional true} :boolean]]
+    :instructions (str "A person's, or root's: what a Principal needs, it asks root for. Tightens or opens one shell. `network`: all (the default), model (loopback and the "
+                       "Models' ports), or none. `ssh`: use of this machine's keys through its agent, on by default; the key "
+                       "itself is never readable. `read`: paths outside the root its commands may read. `leash` false puts root's own "
+                       "shell in the box: a person's alone.")}
    {:name "task.decide-many"
     :hint "approve or deny several pending approval Tasks at once"
     :handler :task.decide-many

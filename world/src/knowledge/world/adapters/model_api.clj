@@ -97,8 +97,8 @@
          {:pattern text :path text :glob text :regex {:type "boolean"}})
    (tool "outline" "The headings and functions of a file, the folders of a directory, or with no name every mount you can reach." [] {:name text})
    (tool "projects" "Every project you can see: what it is, its last commit, its Principal's last work." [] {})
-   (tool "add_project" "Make a directory someone named a project of yours: its own Principal, mount, shell, Route and Grant. Call it once per project, before trying to read the directory: nothing outside your mounts can be read until then." ["name" "path"]
-         {:name text :path text :charter text})
+   (tool "add_project" "Make a directory someone named, or a git `url`, which the world clones with the machine's key, a project of yours: its own Principal, mount, shell, Route and Grant. Call it once per project, before trying to read the directory: nothing outside your mounts can be read until then." ["name" "path"]
+         {:name text :path text :url text :charter text})
    (tool "delegate" "Hand one Task to a temporary subagent. `task` must say everything it needs. It is retired when done, and its result wakes you." ["task"]
          {:task text :deadline-s {:type "integer"}})
    (tool "progress" "Record how your Task is going. It wakes nobody." ["text"] {:text text})
@@ -107,7 +107,7 @@
    (tool "edit" "Replace exact text in a file, once, and get the diff. `at` top or end inserts. `name` and `new` alone create a new file." ["name" "new"]
          {:name text :old text :new text :all {:type "boolean"} :at text})
    (tool "test" "Run this project's tests from nothing to results, with its own test command, in one step. Use it when asked to run the build or the tests." [] {})
-   (tool "run" "Run a command in your shell Adapter. To read a file use `read` with a range, not sed or cat." ["cmd"] {:cmd text :adapter text :cwd text :timeout-s {:type "integer"}})
+   (tool "run" "Run a command in your shell Adapter. It runs in ORBIS's box: you write only your mounts and cannot read the home directory, but `git` and `ssh` work, through an agent holding this machine's keys. To read a file use `read` with a range, not sed or cat." ["cmd"] {:cmd text :adapter text :cwd text :timeout-s {:type "integer"}})
    (tool "act" "A named action from your Actions list; read {name: \"action/<name>\"} gives its args. Prefer a tool of its own where there is one." ["action"]
          {:object text :action text :args {:type "object"}})
    (tool "send" "A Message to another Principal. Never your reply to the asker: that is your final text." ["to" "route" "text"]

@@ -22,6 +22,7 @@
             [knowledge.world.act.gates-defaults :as gates-defaults]
             [knowledge.world.act.handlers]
             [knowledge.world.act.perform :as perform]
+            [knowledge.world.authority :as authority]
             [knowledge.world.models :as models]
             [knowledge.world.adapters.fs :as fs]
             [knowledge.world.evaluate.core :as evaluate]
@@ -181,7 +182,7 @@
 (defmethod step! :default [_ k]
   (throw (ex-info "kernel-zero step not implemented" {:step k})))
 
-(def steps [:name-itself :actions :read-and-write-instructions :bind-model-and-evaluate :arm-heartbeat :answer-listener :first-person :notifications :manual :know-the-harness :memory-defaults :approval-defaults])
+(def steps [:name-itself :actions :read-and-write-instructions :bind-model-and-evaluate :arm-heartbeat :answer-listener :first-person :notifications :manual :know-the-harness :memory-defaults :approval-defaults :root-leash])
 
 (defn- ok!
   "Unwrap an act result or throw with the step."
@@ -456,6 +457,21 @@
                                                             :value gates-defaults/default-policy :reader :both})))
     {:principals (count ps)}))
 
+(defmethod step! :root-leash [{:keys [log world-id config] :as world} _]
+  ;; root is who runs, tests and configures everyone else, and who agents escalate to. A person ends the
+  ;; leash with adapter.confine; this runs once, and a policy a person changed stands.
+  (let [db (act/db world)
+        wide? (not (false? (:root-leash config)))
+        root (objects/root-id db)
+        shell (objects/lookup db (:world-id world) "shell.local")
+        put! (fn [object k type v]
+               (log/append!! log (log/pending :field-set object world-id {:name k :type type :value v :reader :both})))]
+    (put! root :principal/wide-leash :boolean wide?)
+    (when (and wide? shell) (put! shell authority/leash-field :boolean true))
+    (when (and wide? (= gates-defaults/default-policy (get-in (objects/fields db root) [:policy/approval :field/value])))
+      (put! root :policy/approval (gates-defaults/types :policy/approval) []))
+    {:root-leash wide?}))
+
 (def ^:private old-template-sentence "Answer the Message in plain prose, briefly. Every claim about yourself or the world must cite the")
 
 (defn routes-on-old-template
@@ -554,7 +570,9 @@
    :kinds (fn [world] (empty? (kinds-undescribed (act/db world) (:world-id world))))
    :harness-read-only (fn [world] (nil? (harness-unmarked (act/db world) (:world-id world))))
    :shell-gate (fn [world] (empty? (principals-on-old-policy (act/db world))))
-   :route-template (fn [world] (empty? (routes-on-old-template (act/db world))))})
+   :route-template (fn [world] (empty? (routes-on-old-template (act/db world))))
+   :root-leash (fn [world] (let [db (act/db world)]
+                             (some? (get-in (objects/fields db (objects/root-id db)) [:principal/wide-leash :field/value]))))})
 
 (defn ensure-shipped-instructions!
   "Shipped instruction Fields on root, for a world born before some of them shipped: a missing one

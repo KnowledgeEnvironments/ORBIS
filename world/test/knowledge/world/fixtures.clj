@@ -19,7 +19,7 @@
   (doseq [f (reverse (file-seq (io/file dir)))] (.delete ^java.io.File f)))
 
 (defn config [dir port]
-  {:port port :data dir :fsync :never :format :transit :log-level :warn})
+  {:port port :data dir :fsync :never :format :transit :log-level :warn :root-leash false})
 
 (defn start-world
   ([] (start-world (temp-dir) 0))

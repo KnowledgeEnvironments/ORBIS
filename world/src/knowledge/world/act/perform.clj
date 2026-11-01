@@ -80,7 +80,7 @@
       ;; reported a harness with no sandbox
       (not (.isDirectory ^java.io.File dir))
       (act/err :invalid (str "cwd `" cwd "` is no directory here: a run's paths start at the project's root and do not carry the mount's name"))
-      (:err (unsafe/box-for world adapter)) {:err (:err (unsafe/box-for world adapter))}
+      (:err (unsafe/box-for world adapter p)) {:err (:err (unsafe/box-for world adapter p))}
       :else
       (try
         (let [object (random-uuid)
@@ -102,11 +102,12 @@
           (put! :task/adapter [:ref :adapter] adapter)
           (put! :task/started-at :instant (Date.))
           (move! :active)
-          (let [{:keys [exit stdout stderr stdout-total stderr-total timed-out duration-ms]}
-                (shell/run! {:cmd cmd :cwd (.getPath ^java.io.File dir) :timeout-s timeout-s
-                             :box (:box (unsafe/box-for world adapter))})
+          (let [box (:box (unsafe/box-for world adapter p))
+                {:keys [exit stdout stderr stdout-total stderr-total timed-out duration-ms]}
+                (shell/run! {:cmd cmd :cwd (.getPath ^java.io.File dir) :timeout-s timeout-s :box box})
                 [ot ov] (output-field stdout)
-                [et ev] (output-field stderr)]
+                [et ev] (output-field stderr)
+                refused (shell/box-note stderr stdout box)]
             (put! :task/exit :number exit)
             (put! :task/stdout ot ov)
             (put! :task/stderr et ev)
@@ -119,12 +120,14 @@
               (put! :task/failing :string failing))
             (when-let [t (tail stdout inline-cap tail-cap)] (put! :task/stdout-tail :string t))
             (when-let [t (tail stderr (quot inline-cap 2) (quot tail-cap 2))] (put! :task/stderr-tail :string t))
+            (when refused (put! :task/box :string refused))
             (put! :task/ended-at :instant (Date.))
             (let [{:keys [seq]} (move! (if timed-out :cancelled :done))]
               {:ok {:result (cond-> {:task object :exit exit :state (if timed-out "cancelled" "done") :timed-out timed-out
                                      :duration-ms duration-ms :stdout (clip stdout inline-cap) :stderr (clip stderr (quot inline-cap 2))
                                      :stdout-total stdout-total :stderr-total stderr-total}
                               (not= 0 exit) (assoc :outcome (str "FAILED, exit " exit))
+                              refused (assoc :box refused)
                               (and (not= 0 exit) (shell/failing-lines stderr stdout))
                               (assoc :failing (shell/failing-lines stderr stdout))
                               (tail stdout inline-cap tail-cap) (assoc :stdout-tail (tail stdout inline-cap tail-cap))

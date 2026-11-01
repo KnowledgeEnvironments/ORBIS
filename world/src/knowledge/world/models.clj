@@ -207,6 +207,13 @@
           (assoc f :fell-back-from (:model chosen) :source :fallback)
           chosen)))))
 
+(defn endpoint
+  "Where a Model's calls go, in words a person can check: what reads the prompt."
+  [db model]
+  (cond (nil? model) nil
+        (= :chatgpt-plan (field db model :model/api)) "OpenAI, on your ChatGPT plan"
+        :else (some-> (field db model :model/base-url) str)))
+
 (defn window
   "A Model's context window in tokens: what the provider's catalogue says for this id, else what its
    server reports, else model/context-tokens, else nil, when nothing has said."

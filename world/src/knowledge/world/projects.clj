@@ -136,7 +136,7 @@
     (cond
       (seq ps) (str "Your projects: " (str/join ", " (map #(str (:name %) " (" (:path %) ")") ps))
                     ". For status across them call `projects`, then answer from what it returns.")
-      can-add? "No projects yet: a directory a person names is add_project {name, path}, before any read or shell.")))
+      can-add? "No projects yet: a directory a person names is add_project {name, path}, a git remote add_project {url}, before any read or shell.")))
 
 (defn source-line
   "Where p's own source is, when it can read it. Asked about the harness it runs in, root ran a shell at

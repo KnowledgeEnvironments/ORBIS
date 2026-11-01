@@ -21,6 +21,8 @@
    ;; a supervised instance: the running release's commit, and its working copy
    :release nil
    :work-root nil
+   ;; root is the operator: outside the box and without routine cards, unless a person says otherwise
+   :root-leash true
    ;; how this world introduces itself (hello): a name and the ws URL clients reach it at
    :world-name nil
    :public-url nil})
@@ -47,6 +49,7 @@
                :model-key (env "KE_MODEL_KEY")
                :model-id (env "KE_MODEL_ID")
                :harness-root (env "KE_HARNESS_ROOT")
+               :root-leash (not (#{"0" "false" "off"} (some-> (env "KE_ROOT_LEASH") str/lower-case)))
                :release (env "KE_RELEASE")
                :work-root (env "KE_WORK")
                :world-name (env "KE_WORLD_NAME")

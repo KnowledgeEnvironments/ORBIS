@@ -100,7 +100,7 @@
       (and ok (map? res) (contains? res :exit))
       (update log :runs (fnil conj [])
               {:turn i :cmd (str (or (:command res) (get-in r [:args :args :cmd])))
-               :exit (:exit res) :task (:task res) :failing (:failing res) :key (run-key r)
+               :exit (:exit res) :task (:task res) :failing (:failing res) :key (run-key r) :box (:box res)
                :no-tests (boolean (re-find ran-nothing (str (:stdout res) "\n" (:stderr res) "\n"
                                                             (:stdout-tail res) "\n" (:stderr-tail res))))
                :timed-out (or (:timed-out res) (= -1 (:exit res)))
@@ -269,13 +269,14 @@
 (defn- run-block
   "A run for the note: the newest with what it said, an older one as its line. What failed says it
    once: the failing lines and not the tails they came from, which were a third of a build's note."
-  [{:keys [turn cmd exit task out err failing no-tests]} newest?]
+  [{:keys [turn cmd exit task out err failing no-tests box]} newest?]
   (str "- turn " turn ": `" cmd "` " (cond no-tests "exit 0, but it RAN NO TESTS: the command did not reach your test"
                                            (= 0 exit) "exit 0"
                                            (= -1 exit) "TIMED OUT: run it again with a longer timeout-s, or a narrower command"
                                            :else (str "FAILED, exit " exit))
        (when newest?
-         (str (when (seq failing) (str "\nfailing lines:\n" failing))
+         (str (when (seq box) (str "\n" box))
+              (when (seq failing) (str "\nfailing lines:\n" failing))
               (when (and (empty? failing) (seq err)) (str "\nstderr:\n" err))
               (when (and (empty? failing) (seq out)) (str "\nstdout:\n" out))
               (when task (str "\nwhole output: read {object " task ", field task/stdout}"))))))

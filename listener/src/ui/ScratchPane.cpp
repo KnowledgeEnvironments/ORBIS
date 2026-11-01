@@ -15,6 +15,14 @@ namespace {
 constexpr long kMaxSeconds = 7200; // the world's default :scratch-max-s
 constexpr const char* kTools = "it can read and search, and may write Fields that vanish; it cannot run anything";
 
+// `gpt-5.6-luna at OpenAI, on your ChatGPT plan`, or `glm at http://localhost:8000/v1`: the Model and what reads the words.
+std::string endpointLine(const std::string& model, const std::string& endpoint) {
+    if (endpoint.empty()) {
+        return model;
+    }
+    return model.empty() ? endpoint : model + " at " + endpoint;
+}
+
 const json& resultOf(const Response& r) {
     return r.result.contains("result") ? r.result["result"] : r.result;
 }
@@ -75,8 +83,20 @@ void ScratchPane::drawConfirm(const model::Principals& principals, chat::Chat& c
         text(Ink::strong, "You talk to a private copy of it, forked from now. Nothing you say or it answers is written to "
                              "the log, its memory or this client, and it all goes when you end.");
         text(Ink::strong, kTools);
+        if (endpointOf_ != asked_) {
+            // Asked once for this Principal: what reads the words is the thing to know before saying them.
+            endpointOf_ = asked_;
+            endpoint_.clear();
+            chat.actNamed("model.chosen", json{{"principal", asked_}}, [this](const Response& r) {
+                if (r.ok) {
+                    const json& v = resultOf(r);
+                    endpoint_ = endpointLine(v.value("id", std::string()), v.value("endpoint", std::string()));
+                }
+            });
+        }
         text(Ink::inspected, "Not private from the model server: the Model still receives the text, and whatever it logs is "
                              "outside this world. The log records that a session happened, with no content.");
+        text(Ink::unresolved, endpoint_.empty() ? std::string("Goes to: unknown") : "Goes to: " + endpoint_);
         ImGui::PopTextWrapPos();
         if (!error_.empty()) {
             text(Ink::inspected, error_);
@@ -96,6 +116,7 @@ void ScratchPane::drawConfirm(const model::Principals& principals, chat::Chat& c
                 scratch_ = v.value("scratch", "");
                 principal_ = who;
                 fold_.setPrincipal(v.value("principal", who));
+                endpoint_ = endpointLine(v.value("model-id", std::string()), v.value("endpoint", std::string()));
                 asked_.clear();
                 began_ = std::chrono::steady_clock::now();
                 ImGui::CloseCurrentPopup();
@@ -137,6 +158,7 @@ void ScratchPane::draw(const model::Principals& principals, chat::Chat& chat, Im
         const long spent = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - began_).count();
         const long left = std::max(0L, kMaxSeconds - spent);
         dimText("%s", kTools);
+        text(Ink::unresolved, endpoint_.empty() ? std::string("Goes to: unknown") : "Goes to: " + endpoint_);
         const std::string ctx = fold_.status();
         text(Ink::secondary, ctx.empty() ? std::string("CTX none yet") : ctx);
         dimText("%lld in \xc2\xb7 %lld out this session \xc2\xb7 ends in %ld h %02ld m", fold_.tokensIn(), fold_.tokensOut(), left / 3600, (left % 3600) / 60);

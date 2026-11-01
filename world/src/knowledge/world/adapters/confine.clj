@@ -103,17 +103,28 @@
 (defn spec
   "What one Adapter's commands may touch. root is its locator; scratch is made here, under the data
    dir, and is the command's TMPDIR."
-  [{:keys [root data-dir adapter read data-read network ports]}]
+  [{:keys [root data-dir adapter read data-read network ports ssh]}]
   (let [data (real data-dir)
         scratch (io/file data "scratch" (subs (str adapter) 0 8))]
     (.mkdirs scratch)
     {:root (real root) :data-dir data :scratch (real scratch)
-     :read (into (mapv real read) (git-dirs (real root))) :data-read (mapv real data-read)
-     :network (or network "model") :ports (vec ports)}))
+     :read (into (mapv real read) (git-dirs (real root)))
+     :data-read (mapv real data-read)
+     :network (or network "all") :ports (vec ports) :ssh ssh}))
 
 (defn- q [s] (str "\"" (-> (str s) (str/replace "\\" "\\\\") (str/replace "\"" "\\\"")) "\""))
 (defn- subpaths [paths] (str/join " " (map #(str "(subpath " (q %) ")") paths)))
 (defn- rw [paths] (str "(allow file-read* file-write* " (subpaths paths) ")"))
+
+(defn- ssh-rules
+  "The agent's socket. The port is open whenever the network is: a key is used through this and never read."
+  [{:keys [ssh network ports]}]
+  (when ssh
+    (concat [(str "(allow network-outbound (literal " (q (real (:sock ssh))) "))")
+             (str "(allow file-read* file-write* (literal " (q (real (:sock ssh))) "))")
+             ;; whose keys these are is not a secret, and ssh refuses a host it cannot check
+             (str "(allow file-read* (literal " (q (str (home) "/.ssh/known_hosts")) "))")]
+            (when (= "model" (str network)) ["(allow network-outbound (remote ip \"*:22\"))"]))))
 
 (defn- network-rules [{:keys [network ports]}]
   (let [loopback ["(allow network-bind (local ip \"localhost:*\"))"
@@ -156,7 +167,8 @@
             ")")
        ;; a command's own scratch holds nothing but what it made: a project's tests make a world there,
        ;; root.token and all, and the box stopped ORBIS's own suite from running at all
-       (rw [scratch])]))))
+       (rw [scratch])]
+      (ssh-rules s)))))
 
 (defn- bwrap-args
   "bwrap's form of the same box. Hides by name what Seatbelt denies by regex: what exists at start."
@@ -192,4 +204,9 @@
     (when s (.put env "TMPDIR" (str (:scratch s) "/")))
     ;; a build can tell it has no network, and use what is on disk
     (when s (.put env "ORBIS_BOX" "1"))
+    (when-let [{:keys [sock]} (:ssh s)]
+      (.put env "SSH_AUTH_SOCK" (str sock))
+      ;; a host not in known_hosts is learned in scratch: ssh could not write it to ~/.ssh
+      (.put env "GIT_SSH_COMMAND" (str "ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="
+                                       (:scratch s) "/known_hosts -o GlobalKnownHostsFile=" (home) "/.ssh/known_hosts")))
     env))

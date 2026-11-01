@@ -27,6 +27,7 @@
             [knowledge.world.index.core :as index]
             [knowledge.world.log.core :as log]
             [knowledge.world.loop.core :as rloop]
+            [knowledge.world.models :as models]
             [knowledge.world.protocol.codec :as codec]
             [knowledge.world.protocol.frames :as frames]
             [knowledge.world.protocol.session :as session]
@@ -126,7 +127,10 @@
         (log/subscribe! (:log child) ::push (fn [batch] (deliver! entry batch)))
         (swap! (:scratches world) assoc id entry)
         (audit! world :scratch-began person {:scratch id :principal t :forked-at base})
-        {:ok {:result {:scratch id :principal t :forked-at base :route route}}}))))
+        (let [{:keys [model model-id]} (models/for-wake db ts nil)]
+          {:ok {:result {:scratch id :principal t :forked-at base :route route
+                         :model-id (or model-id (some->> model (#(get-in (objects/fields db %) [:model/id :field/value]))))
+                         :endpoint (models/endpoint db model)}}})))))
 
 (defn- wake!
   "The Principal's cycle on its own virtual thread, logging nothing."

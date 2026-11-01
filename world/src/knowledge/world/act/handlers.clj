@@ -31,6 +31,7 @@
             [knowledge.world.code :as code]
             [knowledge.world.cost :as cost]
             [knowledge.world.chatgpt :as chatgpt]
+            [knowledge.world.adapters.git :as git]
             [knowledge.world.models :as models]
             [knowledge.world.fold.objects :as objects]
             [knowledge.world.gateway.core :as gateway]
@@ -464,20 +465,37 @@
   (str "You own the project " name (when what (str ": " what)) ". Work inside your mount `" name
        "`, answer from its files, and ask " creator-name " on your Route for anything beyond it."))
 
+(defn- project-dir
+  "Where a cloned project lives: under the world, apart from the ORBIS source."
+  ^File [world name]
+  (io/file (:data-dir world) "projects" (str name)))
+
+(defn- with-name
+  "project.add's args with the name a URL implies."
+  [{:keys [name url] :as args}]
+  (cond-> args (and url (not name)) (assoc :name (git/name-of url))))
+
 (defmethod actions/preflight! :project.add
-  [_ world p {:keys [name path]}]
-  (let [db (act/db world)]
+  [_ world p args]
+  (let [db (act/db world)
+        {:keys [name path url]} (with-name args)]
     (cond
-      (not (and (string? path) (canonical-dir path)))
+      (and url path) (act/err :invalid-args "give `url` or `path`, not both")
+      (and url (not (git/url-ok? url))) (act/err :invalid-args (str "not a git remote: " url))
+      (and (not url) (not (and (string? path) (canonical-dir path))))
       (act/err :invalid-args (str "path is not a directory: " path))
       (not (root-scoped? db p))
       (act/err :outside-mount "only a Principal whose Grant is scope everything adds a project")
+      (not (re-matches #"[\w][\w.-]*" (str name)))
+      (act/err :invalid-args (str "`" name "` cannot name a project"))
+      (and url (.exists (project-dir world name)))
+      (act/err :conflict (str "projects/" name " is already there; give another `name`"))
       (or (objects/lookup db (:world-id world) (str name)) (objects/lookup db (:world-id world) (str name ".fs")))
       (act/err :conflict (str "name " name " is taken; `projects` shows what you have")))))
 
-(defmethod actions/handle! :project.add
-  [_ world p {:keys [name path charter] :as args} opts]
-  (when-let [{:keys [err]} (actions/preflight! :project.add world p args)] (throw (ex-info (:message err) {:err err})))
+(defn- adopt-project!
+  "A directory as a project: its Principal, mount, shell and Grant."
+  [world p {:keys [name path charter url]} opts]
   (let [dir (.getPath ^File (canonical-dir path))
         readme (projects/head-of-readme dir)
         what (projects/about dir)
@@ -498,6 +516,21 @@
                     readme (assoc :readme readme)
                     tests (assoc :tests tests))
           :object (:principal made)}}))
+
+(defmethod actions/handle! :project.add
+  [_ world p args opts]
+  (when-let [{:keys [err]} (actions/preflight! "project.add" world p args)] (throw (ex-info (:message err) {:err err})))
+  (let [{:keys [name url] :as args} (with-name args)]
+    (if-not url
+      (adopt-project! world p args opts)
+      (let [dest (project-dir world name)
+            {:keys [error]} (git/clone! url dest)]
+        (when error (fail! :invalid (str "the clone failed: " error)))
+        (try (adopt-project! world p (assoc args :path (.getPath dest)) opts)
+             ;; a clone with no project is a directory nothing owns, and it blocks the next try
+             (catch Exception e
+               (doseq [^File f (reverse (file-seq dest))] (.delete f))
+               (throw e)))))))
 
 ;; ---------------------------------------------------------------- routes
 
@@ -791,14 +824,19 @@
     (unsafe/unconfine! world (if session? p (field db via :task/decided-by)) a args)))
 
 (defmethod actions/handle! :adapter.confine
-  [_ world p {:keys [adapter network read]} opts]
+  [_ world p {:keys [adapter network read ssh leash]} opts]
   (let [db (act/db world)]
-    (authority/require-person! db p opts)
+    (authority/require-person-or-root! db p opts)
+    ;; root's own leash is not root's to keep or give
+    (when (some? leash) (authority/require-person! db p opts))
     (let [a (writable-adapter! world db p adapter)
           put! (fn [k type v] (act/append! world (log/pending :field-set a p {:name k :type type :value v :reader :both})))]
       (when network (put! :adapter/network :string network))
       (when read (put! :adapter/read [:list :string] (vec read)))
-      {:ok {:result {:adapter a :network (or network (field (act/db world) a :adapter/network) "model")
+      (when (some? ssh) (put! :adapter/ssh :boolean ssh))
+      (when (some? leash) (put! authority/leash-field :boolean leash))
+      {:ok {:result {:adapter a :network (or network (field (act/db world) a :adapter/network) "all")
+                     :ssh (not (false? (field (act/db world) a :adapter/ssh)))
                      :read (vec (or read (field (act/db world) a :adapter/read) []))}
             :object a}})))
 
@@ -883,6 +921,7 @@
                     model (assoc :model model :name (models/label-of db model)
                                  :id (or model-id (field db model :model/id))
                                  :compress-at (conversation/compress-at db target (->uuid thread))
+                                 :endpoint (models/endpoint db model)
                                  :status (field db model :model/status)
                                  :plan (= :chatgpt-plan (field db model :model/api)))
                     (= :chatgpt-plan (some->> model (#(field db % :model/api))))

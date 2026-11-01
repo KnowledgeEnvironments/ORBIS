@@ -192,7 +192,8 @@ class PrivateWorld:
         threading.Thread(target=self.model.serve_forever, daemon=True).start()
         env = dict(os.environ, KE_PORT=str(self.port), KE_DATA=self.data, KE_FSYNC="never",
                    KE_MODEL_URL=f"http://127.0.0.1:{self.port + 1}/v1", KE_MODEL_KEY="x", KE_MODEL_ID="scripted",
-                   KE_WORLD_NAME="private", KE_PUBLIC_URL=self.url)
+                   KE_WORLD_NAME="private", KE_PUBLIC_URL=self.url,
+                   KE_ROOT_LEASH=os.environ.get("KE_ROOT_LEASH", "0"))
         if self.holder_wanted:
             binary = os.path.join(REPO, "holder", "build", "holder")
             if not os.access(binary, os.X_OK):

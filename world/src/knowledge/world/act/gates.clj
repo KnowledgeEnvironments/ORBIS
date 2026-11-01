@@ -169,7 +169,8 @@
       (contains? pol o) o
       (and a (contains? pol a)) a
       (and h (contains? pol h)) h
-      (action-gated? db a) a
+      ;; root decides for itself and for those who escalate to it, but what must be a person's still is
+      (and (action-gated? db a) (or (not (true? (field db p :principal/wide-leash))) (authority/must-card? db (keyword o) args))) a
       (and (contains? pol "shell") (shell-run? db op args)) "shell"
       (and (contains? pol "fs:write") (fs-write? db op args)) "fs:write"
       ;; a model at a terminal is a model at a shell, and a pane writes a mount as set-field does

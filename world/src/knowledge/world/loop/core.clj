@@ -1054,12 +1054,14 @@
   #{"project.add" "workspace.mount" "adapter.unconfine" "grant" "principal.create" "delegate"})
 
 (defn- refuse-widening
-  "The op with its refusal, in a wake another agent started. An agent stopped by its box asked root to
-   mount what it could not reach, and root raised a card (seen live, twice): reach comes from a person."
-  [world {:keys [sender]} {:keys [op args] :as o}]
+  "The op with its refusal, in a wake another agent started: reach comes from a person or from root.
+   Root on a wide leash is who an agent escalates to, and decides for itself; a Principal that holds a
+   wide Grant it was given is not."
+  [world {:keys [sender]} p {:keys [op args] :as o}]
   (let [db (act/db world)
         what (str (or (some-> (:action args) name) (some-> op name)))]
-    (if (and (widening what) sender (= :process (:principal/driven-by (objects/entity db sender))))
+    (if (and (widening what) sender (= :process (:principal/driven-by (objects/entity db sender)))
+             (not (true? (get-in (objects/fields db p) [:principal/wide-leash :field/value]))))
       (assoc o :err {:code :not-from-a-person
                      :message (str "not run: " (name-of db sender) " asked for this, and an agent cannot widen its reach "
                                    "through you. Answer it that a person must grant this from their own session.")})
@@ -1193,7 +1195,7 @@
                                          :message "You wrote no answer. Write it now as plain text, not a tool call: what you found, with file:line, and what is unfinished."}}]))
                 (and (seq ops) (not answering?))
                 (let [st' (run-ops! world p ctx st evaluation
-                                    (mapv #(if (held %) (assoc % :err answer-too-soon) (refuse-widening world ctx (refuse-unmounted world p ctx %))) ops))]
+                                    (mapv #(if (held %) (assoc % :err answer-too-soon) (refuse-widening world ctx p (refuse-unmounted world p ctx %))) ops))]
                   (if (:interim? st')
                     (wait-for-approval! world p ctx st' evaluation)
                     (recur st')))

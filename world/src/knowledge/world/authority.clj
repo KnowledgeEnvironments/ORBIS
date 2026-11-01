@@ -51,6 +51,8 @@
   [db p session? task]
   (or (person-session? db p session?) (person-approved? db task)))
 
+(def leash-field "On root's shell: it runs outside the box, for root alone. A person ends it with adapter.confine." :adapter/leash)
+
 (defn require-person!
   "Throws person-only unless p is a person acting through their own session."
   [db p {:keys [session?]}]
@@ -163,16 +165,26 @@
 (def unsafe-index "Every armed Principal, on the world." :world/unsafe)
 (def confined-field "Whether an Adapter runs in the box." :adapter/confined)
 
+(defn root?
+  "Is p the world's root? Root is the operator: what agents need, they escalate to it, and it decides."
+  [db p]
+  (= p (objects/root-id db)))
+
+(defn require-person-or-root!
+  "Throws person-only unless a person is acting, or root is."
+  [db p opts]
+  (when-not (root? db p) (require-person! db p opts)))
+
 (def kernel-fields
   "Fields that say what a Principal is, not what it knows. No set-field writes them, from any session
    (decisions 2026-10-31): person-only rests on driven-by and attach on token-hash, so write on an
    Object must not reach either, and every Principal holds write on itself. The kernel sets these at
    creation and token.issue rotates credentials. A forged world/release would make a new kernel look
    like a plain restart."
-  #{:principal/driven-by :principal/namespace :principal/token-hash :principal/ephemeral :world/root
+  #{:principal/driven-by :principal/namespace :principal/token-hash :principal/ephemeral :principal/wide-leash :world/root
     :world/release :world/restart :world/notifications :world/manual
     ;; the box: changed by adapter.confine and adapter.unconfine, never by writing the Adapter
-    :adapter/locator confined-field :adapter/network :adapter/read
+    :adapter/locator confined-field :adapter/network :adapter/read :adapter/ssh :adapter/leash
     ;; a person's terminal: write on the pane must not open it, and root holds write on everything
     pane-person pane-shares})
 

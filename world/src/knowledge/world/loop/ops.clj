@@ -670,6 +670,7 @@
       (out :task/stdout :task/stdout-tail) (assoc :stdout-tail (out :task/stdout :task/stdout-tail))
       (out :task/stderr :task/stderr-tail) (assoc :stderr-tail (out :task/stderr :task/stderr-tail))
       (v :task/failing) (assoc :failing (v :task/failing))
+      (v :task/box) (assoc :box (v :task/box))
       (v :task/timed-out) (assoc :timed-out true))))
 
 (defn thread-record

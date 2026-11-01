@@ -3,6 +3,7 @@
    Part B of the project's own notes went 0 of 12 for want of both."
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
+            [knowledge.world.log.core :as log]
             [clojure.test :refer [deftest is testing]]
             [knowledge.world.act.core :as act]
             [knowledge.world.act.gates :as gates]
@@ -166,15 +167,21 @@
     (spit (io/file d "go.mod") "module x")
     (is (= "go test ./..." (code/test-command (.getPath d))))))
 
-(deftest an-agent-cannot-widen-through-root
+(deftest an-agent-escalates-to-root-on-its-leash
   (fx/with-world [{:keys [world root witness]}]
     (let [made (ws/request!! root :act {:class :principal :action :create :args {:driven-by :process :name "asker"}})
           asker (get-in made [:result :object])
-          refuse #'loop/refuse-widening
+          p (:principal root)
+          refuse (fn [ctx o] (#'loop/refuse-widening world ctx p o))
           op {:op "act" :args {:action "project.add" :args {:name "x" :path "/tmp/x"}}}]
-      (is (= :not-from-a-person (get-in (refuse world {:sender asker} op) [:err :code])))
-      (is (nil? (:err (refuse world {:sender (:id witness)} op))) "a person may ask")
-      (is (nil? (:err (refuse world {:sender asker} {:op "read" :args {:name "a"}}))) "a read widens nothing"))))
+      (testing "with no leash, reach comes from a person"
+        (is (= :not-from-a-person (get-in (refuse {:sender asker} op) [:err :code])))
+        (is (nil? (:err (refuse {:sender (:id witness)} op))) "a person may ask")
+        (is (nil? (:err (refuse {:sender asker} {:op "read" :args {:name "a"}}))) "a read widens nothing"))
+      (testing "on its leash root decides what an agent asks for"
+        (log/append!! (:log world) (log/pending :field-set p (:world-id world)
+                                                {:name :principal/wide-leash :type :boolean :value true :reader :both}))
+        (is (nil? (:err (refuse {:sender asker} op))))))))
 
 (deftest a-denial-covers-the-end
   (fx/with-world [{:keys [world root]}]

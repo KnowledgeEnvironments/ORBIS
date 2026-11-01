@@ -30,6 +30,7 @@ class ScratchPane {
     void send(chat::Chat& chat);
 
     std::string asked_;
+    std::string endpoint_, endpointOf_; // the Model and where its calls go, as the world says
     std::string scratch_;
     std::string principal_;
     std::string error_;

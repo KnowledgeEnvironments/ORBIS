@@ -3,7 +3,7 @@ export JAVA_HOME ?= /opt/homebrew/opt/openjdk@25
 export PATH := $(JAVA_HOME)/bin:/opt/homebrew/bin:$(PATH)
 CLJ := clojure
 
-.PHONY: holder test-holder deps world nrepl listener android test test-schema test-unit test-exit kz schema-json schema-check fmt
+.PHONY: smoke holder test-holder deps world nrepl listener android test test-schema test-unit test-exit kz schema-json schema-check fmt
 
 holder:          ## the terminal holder: needs Zig, see holder/PIN
 	$(MAKE) -C holder
@@ -36,6 +36,9 @@ test: test-schema test-unit test-exit kz
 
 test-schema:
 	cd schema && $(CLJ) -M:test
+
+smoke:           ## before a deploy, about two minutes: a wake, a prompt, a gate, a boot. The full suite is for a release
+	cd world && $(CLJ) -M:test --focus knowledge.world.loop.answer-test --focus knowledge.world.loop.worklog-test --focus knowledge.world.loop.realwork-test --focus knowledge.world.serialize.wake-economy-test --focus knowledge.world.act.gates-test --focus knowledge.world.window-test --focus knowledge.world.adapters.git-test --focus knowledge.world.protocol.resume-test
 
 test-unit: holder
 	cd world && $(CLJ) -M:test --focus :unit

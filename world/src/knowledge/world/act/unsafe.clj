@@ -14,6 +14,7 @@
             [knowledge.world.act.core :as act]
             [knowledge.world.act.rules :as rules]
             [knowledge.world.adapters.confine :as confine]
+            [knowledge.world.adapters.ssh :as ssh]
             [knowledge.world.fold.objects :as objects]
             [knowledge.world.log.core :as log]
             [knowledge.world.resolve.core :as resolve])
@@ -74,11 +75,14 @@
 (defn box-for
   "How adapter's commands run now: {:box spec}, {:box nil} when a person lifted confinement, or {:err}
    when no shell may start at all: this host has no sandbox, or the root is too wide to box."
-  [world adapter]
+  ([world adapter] (box-for world adapter nil))
+  ([world adapter p]
   (let [db (act/db world)
         root (field db adapter :adapter/locator)]
     (cond
       (unconfined? db adapter (Date.)) {:box nil}
+      ;; root's leash: its own shell and no one else's, so a Grant on shell.local carries no way out
+      (and p (= p (objects/root-id db)) (true? (field db adapter authority/leash-field))) {:box nil}
       (nil? (confine/primitive))
       {:err {:code :unconfined :message "this host has no sandbox, so no shell starts; a person can lift that with adapter.unconfine"}}
       (confine/too-wide? root)
@@ -86,7 +90,8 @@
       :else
       {:box (confine/spec {:root root :data-dir (:data-dir world) :adapter adapter
                            :read (field db adapter :adapter/read) :network (field db adapter :adapter/network)
-                           :ports (confine/model-ports db)})})))
+                           :ports (confine/model-ports db)
+                           :ssh (when-not (false? (field db adapter :adapter/ssh)) (ssh/for-world (:data-dir world)))})}))))
 
 (defn live-shares
   "The shares of pane that hold at now."

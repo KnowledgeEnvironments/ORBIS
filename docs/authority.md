@@ -116,11 +116,15 @@ so deleting it after first delivery would break them, and the box already keeps 
 
 TeX source can come from a model. A formula passes a deny-list of what opens files, runs commands or redefines the language, then compiles in the box: no network, tectonic `--untrusted --only-cached`, writing only to a job directory, with a limit of 4096 characters, 20 seconds and 2 MiB of output, and two at once. `sips` rasterizes in the same box. Packages come from a machine cache, read-only in the box, filled once outside it from a fixed document no model wrote. Only a person's own session can ask, and a test proves a source reading `root.token` or running a command fails with the deny-list bypassed.
 
+The first box was too strict to work in: no network, and no way for a Principal to reach a remote or another machine. The defaults now are these. The network is open. `git` and `ssh` work in every shell through an `ssh-agent` the world keeps outside the box, so a command can use this machine's keys and cannot read them. A command still writes only its mounts, and still cannot read the home directory or a secret by name. `adapter.confine {network, ssh, read}` tightens or opens one shell.
+
+Root is the operator, on a wide leash (`principal/wide-leash`, on by default, `KE_ROOT_LEASH=0` to start without). Its own shell runs outside the box, with no card for ordinary work, because it runs, tests and configures everyone else. What a Principal needs, it asks root for, and root decides: it grants, mounts and uses `adapter.confine` without a person, on the log. What stays a person's: a kernel swap, `adapter.unconfine`, revoking a person's Grant, and root's own leash, which `adapter.confine {adapter, leash: false}` ends. The trade: an agent reading hostile text can ask root for something, and root's judgment is then all that stands between them.
+
 What is not confined: the priming run, which has network and runs outside the box, on that fixed document; and the rendered PNG, which a client decodes with stb_image.
 
 ## What a wake may do for another agent
 
-In a wake another process Principal started, nothing that widens reach runs: `project.add`, `workspace.mount`, `adapter.unconfine`, `grant`, `principal.create` and `delegate` are refused with `not-from-a-person`, before any card. An agent stopped by its box does not get through by asking root. A card raised in such a wake says which agent asked.
+In a wake another process Principal started, a Principal not on root's leash widens nothing: `project.add`, `workspace.mount`, `adapter.unconfine`, `grant`, `principal.create` and `delegate` are refused with `not-from-a-person`, before any card. An agent stopped by its box does not get through by asking root. A card raised in such a wake says which agent asked.
 
 A denial covers its end. For an hour, any op of that Principal reaching a file the denied card named is gated as `after-denial`, whatever its policy says. No rule and no unsafe mode admits it, and the card says what was denied.
 

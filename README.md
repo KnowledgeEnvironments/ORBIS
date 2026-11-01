@@ -1,6 +1,10 @@
-# ORBIS
+<p align="center">
+  <img src="listener/assets/server.png" alt="The ORBIS server" width="280">
+</p>
 
-A shared knowledge environment for doing work with people, computers, and artificial intelligence.
+<h1 align="center">ORBIS</h1>
+
+<p align="center">A shared knowledge environment for doing work with people, computers, and artificial intelligence.</p>
 
 ORBIS is the On-line Relative Basis Information System. It is shared here with invited friends, to
 play with. It is not open source: see [License](#license).

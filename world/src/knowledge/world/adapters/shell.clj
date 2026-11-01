@@ -43,6 +43,21 @@
     (when (seq ls)
       (str/join "\n" (map #(subs % 0 (min 200 (count %))) (take 12 (concat compiler other)))))))
 
+(def ^:private box-refused
+  "What a command says when the box stops it. Seen live: `ssh: connect to host github.com port 22:
+   Operation not permitted`, reported to a person as macOS, then as the environment."
+  #"(?i)operation not permitted|sandbox|could not resolve host|network is unreachable")
+
+(defn box-note
+  "When a command's output shows the box refused it, what that means, or nil. Whatever the exit: a
+   pipe to `head` or an `|| true` hides the failure and not the words."
+  [stderr stdout box]
+  (when (and box (re-find box-refused (str stderr "\n" stdout)))
+    (str "That refusal is ORBIS's box around every command, not macOS or the machine. Commands write only your mounts "
+         "and cannot read the home directory or a private key; `git` and `ssh` work through an agent, so never read a "
+         "key. Say so plainly and do not guess at another cause. What a person chose to close, or a path you need "
+         "opened, is theirs to change with adapter.confine: ask, naming what you need.")))
+
 (defn run!
   "{:cmd :cwd :timeout-s} -> {:exit :stdout :stderr :stdout-total :stderr-total :timed-out
    :duration-ms}. stdout and stderr are strings of at most output-cap bytes (UTF-8, lossy).
