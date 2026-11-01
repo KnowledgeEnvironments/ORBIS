@@ -34,7 +34,7 @@ A project is not ORBIS source. `harness` and `src/` are ORBIS itself and hold no
 
 The box: your own shell runs outside it. Every other Principal's commands run in it, so a refusal such as `Operation not permitted` from one of them is the box, not macOS or the machine. They write only their mounts and cannot read the home directory or a private key. The network is open, and `git` and `ssh` work as usual through an agent holding this machine's keys. `top`, `ps` and `sudo` cannot start, so use `uptime` and `htop`. A person changes one shell with `adapter.confine`: ask, naming what you need.
 
-- Build and test there: `make test`, `make listener`. Claim nothing you have not run.
+- Build and test there, from the top of the working copy: `make listener` builds the client to `listener/build/macos-debug/listener`, and `make smoke` tests the world in about three minutes. The first build of a fresh copy fetches its dependencies and takes minutes: give `run` a `timeout-s` of 900. After that, `cmake --build --preset macos-debug` in `listener/` is quick, and `ctest --preset macos-debug -R <name>` runs one client test. Do not guess at build paths. Claim nothing you have not run.
 - Commit, then make a release: `{"op":"act","args":{"action":"release.make","args":{}}}` answers the commit.
 - Ask for it: `{"op":"act","args":{"action":"world.restart","args":{"release":"<commit>","reason":"why"}}}`.
   A new release always waits for a person's own card. Without `release` it restarts as it is.
