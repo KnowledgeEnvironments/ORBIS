@@ -83,6 +83,9 @@ class Multiplexer final : public Host {
     void readBytes(const std::string& pane, const std::string& field,
                    std::function<void(std::vector<unsigned char>, std::string)> done) override;
 
+    bool followMouse = true; // the pointer moves focus between panes, with no click
+    bool pointerOverView(const std::string& view) const; // the view's body on screen is under the mouse
+
   private:
     struct Instance {
         std::unique_ptr<Module> module;
@@ -136,6 +139,7 @@ class Multiplexer final : public Host {
     std::map<std::string, model::PaneInfo> local_; // what pane.open answered, until the fold catches up
     std::map<std::string, std::string> pendingKeys_;
     std::map<std::string, int> pendingLine_; // a citation's line, until the pane's module is there
+    std::string takeKeyboard_;               // a pane just opened, until it is drawn and has the keys
     void takeLine(const std::string& pane, Instance& inst);
     std::map<std::string, ui::TabBarState> tabStates_;
     std::string menuPane_; // the tab a right click opened a menu on

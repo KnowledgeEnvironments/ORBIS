@@ -27,6 +27,7 @@ struct Prefs {
     std::string fontUi, fontMono;
     std::string labelCase; // VIEW, LABELS: caps or sentence; "" keeps the theme's
     bool mapTwilight = false; // VIEW, TWILIGHT MAP: the map at dusk
+    bool focusFollowsMouse = true; // VIEW, FOCUS FOLLOWS MOUSE: typing goes where the pointer is, with no click
     bool osNotices = true; // WORLD, OS NOTIFICATIONS: loud notices reach the desktop's own centre
     float fontUiSize = 14.0f, fontMonoSize = 14.0f;
     std::string searchLast;     // the last query typed in the search box, offered again next time

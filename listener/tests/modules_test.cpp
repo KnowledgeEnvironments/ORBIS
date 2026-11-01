@@ -11,6 +11,8 @@
 #include "ui/Fonts.hpp"
 #include "ui/Markdown.hpp"
 
+#include "modules/TermGlyphs.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 
 using namespace ke::modules;
@@ -327,4 +329,13 @@ TEST_CASE("text commands read as Markdown", "[modules]") {
     CHECK(texProse("\\section*{The \\texttt{grid} Project}") == "# The `grid` Project");
     CHECK(texProse("`\\textbf{a}` stays") == "`\\textbf{a}` stays");
     CHECK(texProse("\\frac{a}{b}") == "\\frac{a}{b}");
+}
+
+TEST_CASE("a terminal cell's one code point") {
+    CHECK(soleCodePoint("a") == 'a');
+    CHECK(soleCodePoint("\xe2\x94\x80") == 0x2500u); // box light horizontal
+    CHECK(soleCodePoint("\xe2\x96\x87") == 0x2587u); // lower seven eighths
+    CHECK(soleCodePoint("") == 0u);
+    CHECK(soleCodePoint("ab") == 0u);
+    CHECK(soleCodePoint("e\xcc\x81") == 0u); // a letter and its accent
 }

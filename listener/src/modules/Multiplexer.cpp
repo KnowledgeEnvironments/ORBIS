@@ -283,6 +283,7 @@ void Multiplexer::open(const FileRef& file) {
             layout_.activate(id);
             focus_ = id;
             bringForward_ = id;
+            takeKeyboard_ = id;
             if (file.line > 0) {
                 pendingLine_[id] = file.line;
             }
@@ -337,6 +338,7 @@ void Multiplexer::open(const FileRef& file) {
         p.state = "open";
         local_[id] = p;
         pendingKeys_[id] = key;
+        takeKeyboard_ = id;
         if (file.line > 0) {
             pendingLine_[id] = file.line;
         }
@@ -349,6 +351,11 @@ void Multiplexer::open(const FileRef& file) {
         bringForward_ = id;
         saveSoon();
     });
+}
+
+bool Multiplexer::pointerOverView(const std::string& view) const {
+    const auto it = bodies_.find(view);
+    return it != bodies_.end() && hoveredRect(it->second);
 }
 
 std::string Multiplexer::takeBringForward() {
@@ -605,9 +612,24 @@ void Multiplexer::drawLeaf(const model::LayoutLeaf& leaf, int index) {
         }
         if (inst != nullptr) {
             ImGui::PushID(active.c_str());
+            const ImGuiIO& io = ImGui::GetIO();
+            const bool moved = io.MouseDelta.x != 0.0f || io.MouseDelta.y != 0.0f;
             if (hoveredRect(Rect{r.x, r.y, r.w, r.h}) &&
-                (ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right))) {
+                (ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
+                 (followMouse && moved && !ImGui::IsAnyMouseDown() && !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup)))) {
                 focus_ = active;
+                if (followMouse && moved && !ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
+                    ImGui::SetWindowFocus();
+                }
+                if (followMouse && moved && io.WantTextInput) {
+                    ImGui::ClearActiveID(); // a field elsewhere still holds the keys
+                }
+            }
+            // A pane just opened takes the keys from whatever had them: nothing should need a click first.
+            if (takeKeyboard_ == active) {
+                takeKeyboard_.clear();
+                ImGui::SetWindowFocus();
+                ImGui::ClearActiveID();
             }
             const bool windowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
             if (focused && windowFocused && !ImGui::GetIO().WantTextInput) {

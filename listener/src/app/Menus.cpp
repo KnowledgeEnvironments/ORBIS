@@ -103,6 +103,10 @@ std::vector<Item> items(MenuHost h) {
     add("VIEW", "CHAT", "", "the conversation area", [] { bringDockWindowFront("CHAT"); });
     add("VIEW", "GRAPH", "", "the world as a graph", [] { bringDockWindowFront("GRAPH"); });
     add("VIEW", "PANES", "", "terminals, files, editors and viewers", [] { bringDockWindowFront("PANES"); });
+    add("VIEW", "FOCUS FOLLOWS MOUSE", "", "typing goes to what is under the pointer, with no click", [&] {
+        in.prefs.focusFollowsMouse = !in.prefs.focusFollowsMouse;
+        in.saveWhimsy();
+    }, {}, &in.prefs.focusFollowsMouse);
     add("VIEW", "TWILIGHT MAP", "", "the map over a starfield and a low dusk", [&] {
         in.prefs.mapTwilight = !in.prefs.mapTwilight;
         in.saveWhimsy();

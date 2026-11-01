@@ -354,7 +354,8 @@ std::string PrincipalsPane::drawBody(const model::Principals& principals, const 
     }
     // FLAT: fixed columns with horizontal scroll, so the name is never squeezed out by the counters.
     const float ch = ImGui::CalcTextSize("0").x;
-    const ImGuiTableFlags flags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_ScrollY | (flat ? ImGuiTableFlags_ScrollX : 0) |
+    const ImGuiTableFlags flags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY |
+                                  (flat ? ImGuiTableFlags_ScrollX : 0) |
                                   ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoPadOuterX;
     if (ImGui::BeginTable("principals", flat ? 6 : 3, flags)) {
         if (flat) {

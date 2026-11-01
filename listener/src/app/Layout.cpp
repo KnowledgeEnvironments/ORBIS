@@ -657,6 +657,22 @@ std::optional<std::pair<std::string, std::string>> WorldPicker::takeAttach() {
 // give it focus. A no-op when the window is not docked or already in front.
 static modules::Multiplexer* g_layout = nullptr;
 
+// Focus follows the pointer between windows. Not while a button is held, so a drag or a selection
+// keeps its window, and not over a menu or a dialog, which has the keys for a reason.
+static void focusUnderPointer() {
+    const ImGuiIO& io = ImGui::GetIO();
+    if ((io.MouseDelta.x == 0.0f && io.MouseDelta.y == 0.0f) || ImGui::IsAnyMouseDown() ||
+        ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup)) {
+        return;
+    }
+    const ImGuiContext& g = *ImGui::GetCurrentContext();
+    ImGuiWindow* over = g.HoveredWindow;
+    if (over == nullptr || (g.NavWindow != nullptr && g.NavWindow->RootWindow == over->RootWindow)) {
+        return;
+    }
+    ImGui::FocusWindow(over);
+}
+
 void bringDockWindowFront(const char* name) {
     if (g_layout == nullptr) {
         return;
@@ -896,6 +912,9 @@ void DesktopFrame::draw(FrameInputs& in) {
         }
     };
     p.graph.twilight = in.prefs.mapTwilight;
+    // the drive holds the pointer still and types by name, so a test keeps focus where it put it
+    const bool followMouse = in.prefs.focusFollowsMouse && SDL_getenv("ORBIS_TEST") == nullptr;
+    p.mux.followMouse = followMouse;
     p.mux.bind(&rt);
     p.mux.terminalTabs = [&p] { return p.terminal.tabIds(); };
     p.mux.restoreTerminalTab = [&p](const std::string& id) { p.terminal.open(id); };
@@ -922,6 +941,15 @@ void DesktopFrame::draw(FrameInputs& in) {
             ImGui::SetWindowFocus();
         }
         ImGui::End();
+    }
+    if (followMouse) {
+        focusUnderPointer();
+        // over the chat, its input line takes the keys
+        const ImGuiIO& io = ImGui::GetIO();
+        if ((io.MouseDelta.x != 0.0f || io.MouseDelta.y != 0.0f) && !io.WantTextInput && !ImGui::IsAnyMouseDown() &&
+            !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup) && p.mux.viewInFront("view:chat") && p.mux.pointerOverView("view:chat")) {
+            p.terminal.requestFocus();
+        }
     }
     leftHidden = !p.mux.viewOpen("view:principals");
     leftWanted = !leftHidden;

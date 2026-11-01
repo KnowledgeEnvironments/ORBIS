@@ -2,6 +2,7 @@
 // `pane.subscribe`, drawn cell by cell in theme colours, with input encoded for the program and
 // sent through `pane.send`.
 #include "modules/Module.hpp"
+#include "modules/TermGlyphs.hpp"
 #include "modules/ModuleUi.hpp"
 #include "modules/TerminalScreen.hpp"
 
@@ -217,6 +218,17 @@ class TerminalModule final : public Module {
                 }
                 if (cell.text.empty() || cell.text == " ") {
                     flushRun();
+                    x += w;
+                    runX = x;
+                    continue;
+                }
+                // Only ASCII runs together: a font's other glyphs need not be a cell wide, and a run
+                // lets one of them move everything after it off the grid.
+                if (static_cast<unsigned char>(cell.text[0]) >= 0x80 || cell.text.size() > 1) {
+                    flushRun();
+                    if (!drawCellGlyph(dl, soleCodePoint(cell.text), ImVec2(x, y), w, ch, fg)) {
+                        dl->AddText(font, fontSize, ImVec2(x, y), fg, cell.text.c_str());
+                    }
                     x += w;
                     runX = x;
                     continue;
