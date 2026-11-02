@@ -592,6 +592,77 @@
           (= text before) (act/err :no-change "the new text equals the old; nothing changed")
           :else {:file f :name located :before before :text text :created? created?})))))
 
+;; ---------------------------------------------------------------- names an edit introduces
+
+(def ^:private cpp-exts #{"c" "cc" "cpp" "cxx" "h" "hh" "hpp" "hxx" "mm"})
+(def ^:private cpp-name-re #"\b([A-Za-z_]\w*)((?:::[A-Za-z_]\w*)+)(\s*\()?")
+(def ^:private names-checked "Names looked up per edit." 4)
+(def ^:private names-ms 3000)
+
+(defn- introduced
+  "Qualified names `new` brings to a C or C++ file that neither `old` nor the file had:
+   [{:name :qualifier :segment :call?}]. Every benchmark round had one: `log::debug` written
+   against a `Log.hpp` that was never read."
+  [ext ^String new ^String old ^String before]
+  (when (cpp-exts ext)
+    (let [had (str old "\n" before)]
+      (->> (re-seq cpp-name-re (str new))
+           (map (fn [[_ head tail call]]
+                  (let [segs (rest (str/split tail #"::"))]
+                    {:name (str head tail) :qualifier (str/join "::" (cons head (butlast segs)))
+                     :segment (last segs) :call? (some? call)})))
+           (remove #(str/includes? had (:name %)))
+           distinct
+           (take names-checked)))))
+
+(defn- source-texts
+  "The source files under the places with their text, the edited file left out, until the deadline."
+  [places ^File edited deadline]
+  (let [skip (.getCanonicalPath edited)
+        budget (atom max-files)]
+    (->> (for [{:keys [locator rel]} places
+               :let [^File base (fs/safe-file locator (str rel))]
+               :when (and base (.exists base))
+               ^File f (if (.isDirectory base) (walk base budget) [base])
+               :when (and (source-exts (ext-of (.getName f))) (not= skip (.getCanonicalPath f)))
+               :let [t (text-of f)]
+               :when t]
+           t)
+         (take-while (fn [_] (< (System/currentTimeMillis) deadline))))))
+
+(defn- guessed-names
+  "Of the names an edit introduced, those the tree cannot have meant: the qualifier is declared or
+   used in the tree, the member is nowhere in it. A qualifier the tree does not know is a library's,
+   and a member found anywhere is given the benefit of the doubt."
+  [places edited names]
+  (when (seq names)
+    (let [q (fn [{:keys [qualifier]}]
+              (let [own (last (str/split qualifier #"::"))]
+                (re-pattern (str "\\b(?:namespace|class|struct|enum(?:\\s+class)?)\\s+" (Pattern/quote own) "\\b|"
+                                 (Pattern/quote qualifier) "::"))))
+          s (fn [{:keys [segment call?]}] (re-pattern (str "\\b" (Pattern/quote segment) (if call? "\\s*\\(" "\\b"))))
+          res (map (fn [n] [n (q n) (s n)]) names)
+          seen (reduce (fn [acc ^String t]
+                         (let [acc (reduce (fn [acc [n qr sr]]
+                                             (cond-> acc
+                                               (and (not (get-in acc [n :q])) (re-find qr t)) (assoc-in [n :q] true)
+                                               (and (not (get-in acc [n :s])) (re-find sr t)) (assoc-in [n :s] true)))
+                                           acc res)]
+                           (if (every? #(get-in acc [% :s]) names) (reduced acc) acc)))
+                       {} (source-texts places edited (+ (System/currentTimeMillis) names-ms)))]
+      (filter #(and (get-in seen [% :q]) (not (get-in seen [% :s]))) names))))
+
+(defn- unknown-names
+  "What an edit's result says about names it introduced that the tree does not have, or nil."
+  [db p located ^File file ^String before {:keys [old new]}]
+  (try
+    (let [names (introduced (ext-of located) (str new) (str old) (str before))
+          places (when (seq names) (under db p (first (str/split (str located) #"/"))))]
+      (seq (for [{:keys [name qualifier segment call?]} (guessed-names places file names)]
+             (str name ": the tree knows `" qualifier "` and has no `" segment (when call? "(") "` anywhere. "
+                  "It will not build. Read where `" qualifier "` is declared before using it"))))
+    (catch Exception _ nil)))
+
 (defn edit-refusal
   "Why this edit cannot land, as {:err}, or nil. Reads the file; writes nothing."
   [db p args]
@@ -611,6 +682,9 @@
               diff (diff-of before text)]
           (when object
             (act/set-field! world p {:object object :field :file/last-edit :type :string :value diff :reader :both :via via}))
-          {:ok {:name located :created created? :bytes (count (.getBytes ^String text "UTF-8")) :diff diff}})
+          {:ok (cond-> {:name located :created created? :bytes (count (.getBytes ^String text "UTF-8")) :diff diff}
+                 (not created?) (as-> r (if-let [u (unknown-names (act/db world) p located file before args)]
+                                          (assoc r :unknown-names (vec u))
+                                          r)))})
         (catch java.io.IOException e
           (act/err :not-allowed (str "the file could not be written: " (ex-message e))))))))

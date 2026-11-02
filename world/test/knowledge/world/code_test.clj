@@ -120,6 +120,26 @@
               o (objects/lookup db (objects/world-id db) "proj/README.md")]
           (is (str/includes? (str (get-in (objects/fields db o) [:file/last-edit :field/value])) "+two")))))))
 
+(deftest a-name-the-tree-does-not-have-is-flagged
+  (fx/with-world [{:keys [world root]}]
+    (let [dir (project!)
+          _ (put! dir "src/Log.hpp" "namespace log {\nvoid info(int);\nvoid warn(int);\n}\nenum class Level { Info, Warn };\n")
+          p (principal! root "proj" dir)
+          edit (fn [new] (code/edit! world p {:name "proj/src/boot.cpp" :old "  return 0;" :new (str "  " new "\n  return 0;")}))
+          flagged (fn [r] (get-in r [:ok :unknown-names]))]
+      (testing "a member the tree has nowhere, of a namespace it knows: the guess every round made"
+        (let [u (flagged (edit "log::debug(1);"))]
+          (is (= 1 (count u)) (pr-str u))
+          (is (str/includes? (first u) "log::debug"))
+          (is (str/includes? (first u) "`log`"))))
+      (testing "an enumerator the tree has nowhere"
+        (is (str/includes? (first (flagged (edit "Level l = Level::Debug;"))) "Level::Debug")))
+      (testing "a member the tree has, and a library's namespace, pass in silence"
+        (is (nil? (flagged (edit "log::info(1);"))))
+        (is (nil? (flagged (edit "std::puts(\"x\");")))))
+      (testing "a name the file already had is not new"
+        (is (nil? (flagged (edit "log::debug(2);")))) "the first edit put it in the file"))))
+
 (deftest an-edit-is-behind-the-same-gate-as-a-shell
   (fx/with-world [{:keys [world root]}]
     (let [p (principal! root "proj" (project!))
