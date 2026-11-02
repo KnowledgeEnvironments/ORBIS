@@ -26,3 +26,6 @@ listener/platform/android/local.properties
 
 # a world's projects, when its working copy holds them
 /projects/
+
+# a test leaves these beside the repository root while it runs
+/soul*.md
