@@ -19,8 +19,8 @@ bool EventStore::append(const std::string& sub, Event event) {
             if (onHole) {
                 onHole(hole);
             } else {
-                log::info("store: sub {} skipped seq {}..{} ({}): filtered by resolution", hole.sub, hole.expected,
-                           hole.got - 1, hole.withinPush ? "within a push" : "across pushes");
+                log::debug("store: sub {} skipped seq {}..{} ({}): filtered by resolution", hole.sub, hole.expected,
+                            hole.got - 1, hole.withinPush ? "within a push" : "across pushes");
             }
         }
         it->second = event.seq;

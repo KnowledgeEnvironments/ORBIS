@@ -14,7 +14,7 @@
 
 namespace ke::log {
 
-enum class Level { Info, Warn, Error };
+enum class Level { Debug, Info, Warn, Error };
 
 namespace detail {
 inline std::mutex& mutex() {
@@ -30,17 +30,26 @@ constexpr std::size_t kRing = 400;
 } // namespace detail
 
 inline void write(Level level, std::string_view msg) {
+#ifdef NDEBUG
+    if (level == Level::Debug) {
+        return;
+    }
+#endif
     static const auto start = std::chrono::steady_clock::now();
     const auto ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start)
             .count();
-    const char* tag = level == Level::Info ? "info" : level == Level::Warn ? "warn" : "error";
+    const char* tag = level == Level::Debug ? "debug"
+                      : level == Level::Info ? "info"
+                      : level == Level::Warn ? "warn"
+                                             : "error";
     std::lock_guard<std::mutex> lock(detail::mutex());
     std::fprintf(stderr, "orbis [%8lld ms] %-5s %.*s\n", static_cast<long long>(ms), tag,
                  static_cast<int>(msg.size()), msg.data());
     std::fflush(stderr);
 #if defined(__ANDROID__)
-    __android_log_print(level == Level::Info   ? ANDROID_LOG_INFO
+    __android_log_print(level == Level::Debug  ? ANDROID_LOG_DEBUG
+                        : level == Level::Info ? ANDROID_LOG_INFO
                         : level == Level::Warn ? ANDROID_LOG_WARN
                                                : ANDROID_LOG_ERROR,
                         "orbis", "%.*s", static_cast<int>(msg.size()), msg.data());
@@ -65,6 +74,9 @@ inline std::string recent(std::size_t n) {
     return out;
 }
 
+template <class... Args> void debug(std::format_string<Args...> fmt, Args&&... args) {
+    write(Level::Debug, std::format(fmt, std::forward<Args>(args)...));
+}
 template <class... Args> void info(std::format_string<Args...> fmt, Args&&... args) {
     write(Level::Info, std::format(fmt, std::forward<Args>(args)...));
 }
