@@ -45,6 +45,18 @@
     (ws/request!! w :subscribe {:sub "inbox" :stream (:id witness) :kinds #{:delivered}})
     {:route route :w w}))
 
+(deftest a-card-for-an-edit-names-the-file-first
+  (let [sum (fn [args] (gates/summary nil :act {:action "file.edit" :args args}))
+        long-new (str/join "\n" (repeat 40 "    log::info(\"store: sub {} skipped seq {}..{} ({}): filtered by resolution\", hole.sub);"))]
+    (testing "a long `new` no longer pushes the path past the clip"
+      (let [s (sum {:new long-new :old "x\ny" :name "proj/listener/src/util/Log.hpp"})]
+        (is (str/starts-with? s "edit `proj/listener/src/util/Log.hpp`: 2 lines to 40"))
+        (is (< (count s) 200))))
+    (testing "the shapes"
+      (is (= "create `proj/new.md`: 1 line" (subs (sum {:new "hello\n" :name "proj/new.md"}) 0 (count "create `proj/new.md`: 1 line"))))
+      (is (str/includes? (sum {:new "x" :at "top" :name "p/a"}) "insert 1 line at top"))
+      (is (str/includes? (sum {:new "two" :old "second line" :all true :name "p/a"}) "replace every `second line`")))))
+
 (deftest a-long-approved-run-does-not-hold-the-card
   (fx/with-world [{:keys [world root witness]}]
     (let [{:keys [route w]} (setup root witness world)

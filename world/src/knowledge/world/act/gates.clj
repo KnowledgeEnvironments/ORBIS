@@ -262,6 +262,17 @@
       (= a "pane.frob") (str (:verb inner) " " (clip (j/write-value-as-string (:args inner)) 160)
                              " through pane " (name-of db (->uuid (:pane inner))))
       (= a "workspace.mount") (str "workspace.mount " (:path inner) " as " (:name inner) " for " (:principal inner))
+      ;; the path first: as JSON, a long `new` pushed it past the clip, and a person decided on an edit
+      ;; without seeing which file (the project's own notes, GPT's second round)
+      (= a "file.edit") (let [n-lines (fn [s] (if (str/blank? (str s)) 0 (count (str/split-lines (str s)))))
+                              lines (fn [s] (let [n (n-lines s)] (str n " line" (when (not= 1 n) "s"))))
+                              first-line (some #(when-not (str/blank? %) (str/trim %)) (str/split-lines (str (:new inner))))]
+                          (str (if (and (nil? (:old inner)) (nil? (:at inner))) "create `" "edit `") (:name inner) "`: "
+                               (cond (:at inner) (str "insert " (lines (:new inner)) " at " (:at inner))
+                                     (:all inner) (str "replace every `" (clip (:old inner) 40) "`")
+                                     (nil? (:old inner)) (lines (:new inner))
+                                     :else (str (lines (:old inner)) " to " (n-lines (:new inner))))
+                               (when first-line (str ", from `" (clip first-line 80) "`"))))
       a (str a " " (clip (j/write-value-as-string inner) 160))
       (= :grant (keyword (name op))) (str "grant " (name-of db (->uuid (:grantee args))) " "
                                           (pr-str (:scope args)) " " (str/join "," (map name (:ops args))))
