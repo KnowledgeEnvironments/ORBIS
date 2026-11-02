@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="listener/assets/server.png" alt="The ORBIS server" width="288">
+  <img src="listener/assets/server.png" alt="The ORBIS server" width="280">
 </p>
 
 <h1 align="center">ORBIS</h1>
