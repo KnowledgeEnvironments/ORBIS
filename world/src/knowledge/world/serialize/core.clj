@@ -101,7 +101,8 @@
 (def policy-defaults
   {:serialize/budget-tokens 8000 :serialize/messages-verbatim 4 :serialize/evaluations-verbatim 1
    :serialize/self-field-cap 2000 :serialize/standing-cap 0
-   :serialize/message-cap recent-message-cap :serialize/evaluation-cap evaluation-cap :serialize/open-chars 5000}) ; budget 8000, the waking Message and 3 before it, only the iteration just run whole ; chars per Field of the Principal itself outside instructions/* and memory/*; 0 = whole (2000, the prompt floor)
+   :serialize/message-cap recent-message-cap :serialize/evaluation-cap evaluation-cap :serialize/open-chars 5000
+   :serialize/result-cap result-cap :serialize/run-result-cap run-result-cap}) ; budget 8000, the waking Message and 3 before it, only the iteration just run whole ; chars per Field of the Principal itself outside instructions/* and memory/*; 0 = whole (2000, the prompt floor)
 
 (defn- window-policy
   "The prompt when the Model's window is known: the window is the limit. The defaults above are for a
@@ -110,7 +111,7 @@
   [window]
   {:serialize/budget-tokens window :serialize/messages-verbatim 100000 :serialize/evaluations-verbatim 100000
    :serialize/self-field-cap 0 :serialize/message-cap window :serialize/evaluation-cap window
-   :serialize/open-chars (* window 2)})
+   :serialize/open-chars (* window 2) :serialize/result-cap window :serialize/run-result-cap window})
 
 (defn policy
   "The Principal's serializer policy: its serialize/* Fields over what its Model's window allows, over
@@ -372,7 +373,9 @@
                             (and ok (= "send" (str op))) (send-line db principal r)
                             (and ok (read-of-object? op result)) (str "- read ok " (read-text result args))
                             ok (str "- " op " ok" (when seq (str " seq=" seq))
-                                    (when (some? result) (str " " (take-lines! (op-result-lines result) (if (or (run-op? op args) (= "projects" (some-> (:action args) name))) run-result-cap result-cap)))))
+                                    (when (some? result) (str " " (take-lines! (op-result-lines result) (if (or (run-op? op args) (= "projects" (some-> (:action args) name)))
+                                                                                            (:serialize/run-result-cap (:policy out) run-result-cap)
+                                                                                            (:serialize/result-cap (:policy out) result-cap))))))
                             :else (str "- " op " err " (json-str err)))))
                   (into (keep gated-line results))
                   (cond-> (string? draft) (conj (str field-marker " evaluation/outcome (draft)") (clip draft draft-cap)))
@@ -795,7 +798,8 @@
             (let [[recent older] (split-at 2 (drop n-e wake-evals))]
               (concat (map (fn [o] {:object o :mode :line :keep? true :earlier? true :turn? true}) (reverse older))
                       (map (fn [o] {:object o :mode :ops :keep? true :earlier? true :turn? true}) (reverse recent))))
-            (map (fn [o] {:object o :mode :full :keep? true :turn? true}) (take n-e wake-evals))
+            ;; oldest first: on a Model with a real window these are the conversation, in order
+            (map (fn [o] {:object o :mode :full :keep? true :turn? true}) (reverse (take n-e wake-evals)))
             (full others)
             (line (concat (drop n-m messages) other-evals)))))
 

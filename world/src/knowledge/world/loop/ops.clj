@@ -352,8 +352,8 @@
 
 (defn- test-command
   "The test command recorded on p's shell, else what the project's own files say, or nil."
-  [{:keys [db] :as wake}]
-  (when-let [shell (sole-shell wake)]
+  [{:keys [db p] :as wake}]
+  (when-let [shell (and (not (true? (get-in (objects/fields db p) [:principal/wide-leash :field/value]))) (sole-shell wake))]
     (let [fields (objects/fields db (parse-uuid shell))]
       (or (get-in fields [:adapter/test :field/value])
           (some-> (get-in fields [:adapter/locator :field/value]) code/test-command)))))
@@ -363,6 +363,12 @@
    :message (str "this project has no test command that I can find: no Makefile, CMake, Cargo, npm, Go, Maven, "
                  "Gradle, pytest or tests/run.sh in its root. Find how it builds with outline, then `run` that "
                  "command, or say it has no tests.")})
+
+(def ^:private operator-test
+  ;; seen live: root called `test` after editing a project, and sat for minutes in ORBIS's whole suite
+  {:code :no-test-command
+   :message (str "you work across projects, so `test` has no one project to mean. `run` the test command in the project's "
+                 "own directory: `cd <path> && <command>`.")})
 
 (defn- unwrapped
   "Tool arguments as a map. Seen live: the whole op as the tool's name, and args nested in args as a
@@ -448,7 +454,10 @@
       (j/write-value-as-string {:op "act" :args {:action "task.run"
                                                  :args {"adapter" (sole-shell wake) "cmd" (test-command wake)
                                                         "timeout-s" test-timeout-s}}})
-      (= "test" name) (j/write-value-as-string {:op name :args {} :refused no-test-command})
+      (= "test" name) (j/write-value-as-string {:op name :args {}
+                                                :refused (if (true? (get-in (objects/fields (:db wake) (:p wake)) [:principal/wide-leash :field/value]))
+                                                           operator-test
+                                                           no-test-command)})
       action (j/write-value-as-string
               {:op "act" :args {:action action
                                 :args (if (and (= "run" name) (map? args) (str/blank? (str (get args "adapter"))))

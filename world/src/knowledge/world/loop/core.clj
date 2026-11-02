@@ -1168,9 +1168,13 @@
   (note-choice! world p ctx)
   (set-loop-field! world p :loop/turn-limit :number (turn-limit ctx {}))
   ;; a card ends a wake and its decision starts the next, so the work is the thread's, not the wake's
-  (let [ctx (assoc ctx :work? (worklog/work? (str (field (:m-state ctx) :message/text) " "
+  ;; With a real window a wake is a plain conversation: every call and result stays in the prompt, in
+  ;; order. The work log's note, its reading limits and its forced moves exist to survive 8k; on a
+  ;; window they took the model's own history away. At turn 89 it could see four turns.
+  (let [ctx (assoc ctx :work? (and (not (models/window-of (:db ctx) p (:thread-id ctx)))
+                                   (worklog/work? (str (field (:m-state ctx) :message/text) " "
                                                   (some->> (:thread-id ctx) (objects/state (:db ctx))
-                                                           (#(field % :message/text))))))]
+                                                           (#(field % :message/text)))))))]
   (loop [{:keys [i] :as st} {:i 1 :evaluations [] :prev-failed? false :made [] :done [] :interim? false :failed []
                              :log (when (:work? ctx) (thread-log world p ctx))
                              :approved-edit (approved-edit (act/db world) (:m-state ctx))}]

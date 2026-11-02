@@ -108,3 +108,17 @@
         (is (empty? (spans "```\nREADME.md:1\n```"))))
       (testing "an offset counts code points"
         (is (= 2 (:start (first (spans "é README.md:1")))))))))
+
+(deftest a-wake-on-a-real-window-is-the-whole-conversation
+  (fx/with-world [{:keys [world root witness]}]
+    (let [p (:principal root)
+          route (get-in (ws/request!! root :resolve {:name "root.route" :op :read}) [:result :object])
+          w (fx/attach-as world (:token witness))
+          _ (fx/grant! root (:id witness) #{route} #{:transmit})
+          ops (str "```ops\n" (str/join "\n" (for [i (range 12)] (str "{\"op\": \"read\", \"args\": {\"object\": \"" p "\"}}"))) "\n```")]
+      (is (some? ops) "the shape of the test: twelve reads")
+      (with-redefs [models/window-of (fn [_ _ _] 1000000)]
+        (let [db (act/db world)
+              pol (ser/policy db p)]
+          (is (> (:serialize/evaluations-verbatim pol) 1000) "every turn of a wake stays whole")
+          (is (> (:serialize/run-result-cap pol) 100000) "and a run's output is not cut to 2 KiB"))))))
