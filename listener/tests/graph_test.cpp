@@ -281,7 +281,7 @@ TEST_CASE("evaluations: usage, serialization size, ops and results", "[evaluatio
     CHECK(epochSeconds("2026-10-30T15:18:00.500Z") == epochSeconds("2026-10-30T15:17:00.500Z") + 60.0);
     CHECK(epochSeconds("garbage") < 0);
     const double now = epochSeconds("2026-10-30T15:18:47.900Z");
-    CHECK(progressLine(v, kRoot, "root", 2, now) == "root thinking · turn 2/8 · 47 s · last call 3.4K in"); // running, nothing received yet
+    CHECK(progressLine(v, kRoot, "root", 2, now) == "root thinking · turn 2/8 · set-field · 47 s · last call 3.4K in"); // running, nothing received yet
     // Streaming: deltas accumulate in order, duplicates and reorders drop, nothing after done.
     CHECK(v.streaming(kRoot) == nullptr);
     v.apply(ev(132, "evaluated", kEval3, kRoot, {{"evaluation", kEval3}, {"state", "streaming"}, {"delta", "The loop "}, {"seq-in-stream", 1}}));
