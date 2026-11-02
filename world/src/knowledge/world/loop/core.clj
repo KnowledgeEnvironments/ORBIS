@@ -141,20 +141,29 @@
   [db id]
   (or (first (sort (map second (objects/names db id)))) (subs (str id) 0 8)))
 
+(def ^:private other-threads-limit
+  "Messages of the Route's other threads a wake sees, newest first, a line each: enough to know what
+   else went on, not enough to take a past thread's denial for a standing rule." 12)
+
 (defn recent-messages
-  "The newest Messages on the Route before `message`, newest first, up to n: the
-   conversation this wake continues, rendered by the serializer as Messages, never as Evaluations."
+  "The newest Messages on the Route before `message`, newest first: the waking thread's up to n, then
+   other-threads-limit from the Route's other threads. The serializer renders the thread whole and the
+   rest as lines (serialize/plan). On a known window n is the window, and a `/new` thread began with
+   every Message the Route had: a read question cost 180k tokens, and a denial in the task before read
+   as standing (A6, the project's own notes)."
   [db route message n]
   (if (or (nil? route) (not (pos? (long n))))
     []
-    (->> (d/q '[:find ?id ?s :in $ ?route :where
-                [?f :field/name :message/route] [?f :field/value ?route]
-                [?o :object/fields ?f] [?o :object/id ?id] [?o :object/created-seq ?s]]
-              db route)
-         (remove (fn [[id _]] (= id message)))
-         (sort-by second >)
-         (take n)
-         (mapv first))))
+    (let [thread-id (thread/thread-of db message)
+          all (->> (d/q '[:find ?id ?s :in $ ?route :where
+                          [?f :field/name :message/route] [?f :field/value ?route]
+                          [?o :object/fields ?f] [?o :object/id ?id] [?o :object/created-seq ?s]]
+                        db route)
+                   (remove (fn [[id _]] (= id message)))
+                   (sort-by second >)
+                   (map first))
+          {mine true others false} (group-by #(= thread-id (thread/thread-of db %)) all)]
+      (-> [] (into (take n mine)) (into (take other-threads-limit others))))))
 
 (defn known-objects
   "Objects p created (Principals, Adapters, Models, Routes, Groups, plain Objects) or is bound to,

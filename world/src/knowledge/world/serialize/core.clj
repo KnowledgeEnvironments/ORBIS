@@ -776,6 +776,12 @@
         tagged (into (set input-tags) attached)
         rest-set (remove (cond-> (conj tagged principal message) sender (conj sender)) working-set)
         messages (by-seq (filter #(= :message (class-of %)) rest-set))
+        ;; the waking thread is the conversation; the Route's other threads are a line each, whatever
+        ;; the budget: a new thread that saw an old one whole took its denial for a standing rule
+        thread-id (when message (thread/thread-of db message))
+        [messages other-threads] (if message
+                                   ((juxt filter remove) #(= thread-id (thread/thread-of db %)) messages)
+                                   [messages []])
         evaluations (by-seq (filter #(= :evaluation (class-of %)) rest-set))
         of-wake? (fn [e] (and message (= message (get-in (objects/state db e) [:object/fields :evaluation/message :field/value]))))
         wake-evals (filter of-wake? evaluations)
@@ -802,7 +808,7 @@
             ;; oldest first: on a Model with a real window these are the conversation, in order
             (map (fn [o] {:object o :mode :full :keep? true :turn? true}) (reverse (take n-e wake-evals)))
             (full others)
-            (line (concat (drop n-m messages) other-evals)))))
+            (line (concat (drop n-m messages) other-threads other-evals)))))
 
 (defn- shell-reach
   "The Principal's shell Adapters as `name (cwd)`, scoped or not. A command run through one is confined

@@ -6,6 +6,7 @@
             [knowledge.world.act.core :as act]
             [knowledge.world.fixtures :as fx]
             [knowledge.world.fold.objects :as objects]
+            [knowledge.world.loop.core :as loop]
             [knowledge.world.serialize.core :as ser]
             [knowledge.world.thread :as thread]
             [knowledge.world.ws-client :as ws]))
@@ -71,6 +72,25 @@
         (is (:ok (ws/request!! root :set-field {:object root-id :field :serialize/conversation-idle-s :type :number :value 1800})))
         (let [c (get-in (ws/request!! w :send {:to #{root-id} :route route :text "back to the first" :in-reply-to a}) [:result :message])]
           (is (= a (thread/thread-of (act/db world) c))))))))
+
+(deftest a-new-thread-sees-the-old-one-as-a-line
+  (fx/with-world [{:keys [world root witness]}]
+    (let [root-id (:principal root)
+          {:keys [route w]} (setup root witness world)
+          a (say! w root-id route "a person denied exactly this, do not ask again")
+          _ (is (until #(answered? world root-id a) 8000))
+          _ (say! w root-id route "/new")
+          c (do (Thread/sleep 500) (say! w root-id route "run the tests"))
+          _ (is (until #(answered? world root-id c) 8000))
+          db (act/db world)]
+      (is (not= (thread/thread-of db a) (thread/thread-of db c)) "two threads")
+      (testing "the old thread is gathered after the new one's own Messages, and planned as a line, whatever the budget"
+        (let [recent (loop/recent-messages db route c 100000)
+              items (ser/plan db root-id (set (conj recent c root-id)) [] c (ser/policy db root-id))
+              mode (fn [o] (:mode (first (filter #(= o (:object %)) items))))]
+          (is (some #{a} recent) "still in view")
+          (is (= :line (mode a)) "as a line: A6 took a past thread's denial for a standing rule")
+          (is (= :full (mode c))))))))
 
 (deftest a-new-line-is-a-new-exchange
   (fx/with-world [{:keys [world root witness]}]
