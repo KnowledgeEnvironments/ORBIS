@@ -821,7 +821,7 @@
 (def ^:private offers-next-re
   "A reply that stops at a step and offers the rest. Seen live, on `Run the build or tests`: the
    configure step passed, no compile or test run has happened yet. The asker wanted the end state."
-  #"(?i)\b(?:next step|next,? (?:i|we) (?:can|could|should)|would you like|want me to|shall i|should i|if you(?:'d| would)? (?:like|want)|let me know if|i can (?:now|then|next)|has(?:n't| not) (?:happened|run)(?: yet)?|no [a-z ]{1,40}(?:has|have) (?:happened|run|been)|ha(?:s|ve) not (?:yet )?(?:been )?(?:built|compiled|run)|not (?:yet )?(?:been )?(?:built|compiled|run)|still need(?:s)? to)\b")
+  #"(?i)\b(?:next step|next,? (?:i|we) (?:can|could|should)|would you like|want me to|shall i|should i|if you(?:'d| would)? (?:like|want)|let me know if|i can (?:now|then|next)|has(?:n't| not) (?:happened|run)(?: yet)?|no [a-z ]{1,40}(?:has|have) (?:happened|run|been)|ha(?:s|ve) not (?:yet )?(?:been )?(?:built|compiled|run)|not (?:yet )?(?:been )?(?:built|compiled|run)|still need(?:s)? to|(?:that\W?s|this is|which is) where i\W?ll|i\W?ll (?:read|look|start|go|open|check) (?:there|that|those|these|it|next|now)\b)")
 
 (defn- stopped-short
   "The wake did some work and the reply ends by offering the rest. Asked once."

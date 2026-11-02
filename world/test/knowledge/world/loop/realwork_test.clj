@@ -35,6 +35,16 @@
 (defn- result-of [t]
   {:object/fields {:message/kind {:field/value :approval-result} :message/task {:field/value t}}})
 
+(deftest a-reply-that-names-where-it-will-read-next-is-not-an-answer
+  (let [stopped #'loop/stopped-short
+        st {:done [(read-of "p/a.clj")] :challenged? false}]
+    (testing "GLM's B3, r8: forty greps, then where it would read to write the page"
+      (is (string? (stopped st "The grep came back with a single hit. The real definitions live elsewhere. That's where I'll read to write the migration page."))))
+    (testing "a report of work done passes"
+      (is (nil? (stopped st "The page is written at p/docs/migrations.md and registered; the manual tests pass."))))
+    (testing "asked once"
+      (is (nil? (stopped (assoc st :challenged? true) "That's where I'll read next."))))))
+
 (deftest what-a-card-did-reaches-the-work-log
   (fx/with-world [{:keys [world root]}]
     (let [approved #'loop/approved-result
