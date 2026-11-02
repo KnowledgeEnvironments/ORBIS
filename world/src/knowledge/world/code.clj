@@ -631,22 +631,24 @@
          (take-while (fn [_] (< (System/currentTimeMillis) deadline))))))
 
 (defn- guessed-names
-  "Of the names an edit introduced, those the tree cannot have meant: the qualifier is declared or
-   used in the tree, the member is nowhere in it. A qualifier the tree does not know is a library's,
-   and a member found anywhere is given the benefit of the doubt."
+  "Of the names an edit introduced, those the tree cannot have meant: some file declares the qualifier
+   (`namespace ke::log`, `enum class Level`), and no file that declares it has the member. A qualifier
+   no file declares is a library's. Only the declaring files count for the member: a call-shaped
+   `debug(` elsewhere (`DebugHooks debug(started)` in App.cpp) excused GLM's `log::debug` once."
   [places edited names]
   (when (seq names)
     (let [q (fn [{:keys [qualifier]}]
               (let [own (last (str/split qualifier #"::"))]
-                (re-pattern (str "\\b(?:namespace|class|struct|enum(?:\\s+class)?)\\s+" (Pattern/quote own) "\\b|"
-                                 (Pattern/quote qualifier) "::"))))
+                (re-pattern (str "\\b(?:namespace\\s+(?:\\w+::)*|class\\s+|struct\\s+|enum\\s+(?:class\\s+)?)"
+                                 (Pattern/quote own) "\\b"))))
           s (fn [{:keys [segment call?]}] (re-pattern (str "\\b" (Pattern/quote segment) (if call? "\\s*\\(" "\\b"))))
           res (map (fn [n] [n (q n) (s n)]) names)
           seen (reduce (fn [acc ^String t]
                          (let [acc (reduce (fn [acc [n qr sr]]
-                                             (cond-> acc
-                                               (and (not (get-in acc [n :q])) (re-find qr t)) (assoc-in [n :q] true)
-                                               (and (not (get-in acc [n :s])) (re-find sr t)) (assoc-in [n :s] true)))
+                                             (if (and (not (get-in acc [n :s])) (re-find qr t))
+                                               (cond-> (assoc-in acc [n :q] true)
+                                                 (re-find sr t) (assoc-in [n :s] true))
+                                               acc))
                                            acc res)]
                            (if (every? #(get-in acc [% :s]) names) (reduced acc) acc)))
                        {} (source-texts places edited (+ (System/currentTimeMillis) names-ms)))]

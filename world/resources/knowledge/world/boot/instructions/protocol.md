@@ -7,7 +7,8 @@ response `{id ok result seq}` or `{id ok=false err seq}`, push `{sub events as-o
 - `attach {token}` first; `detach {}`; a dropped socket keeps the session 300 s and
   `attach {token session subs}` resumes with no gap. `subscribe {sub stream after? window?}` then `{ack}`.
 - Read through resolution: `read {object}` or `read {name}` (a mounted name materializes its file),
-  `read {object field range [first last]}` pages any text or bytes Field; `history {stream after? limit}` (limit ≤ 1000).
+  `read {object field range [first last]}` pages any text or bytes Field; `history {stream after? limit}` (limit ≤ 1000)
+  pages from the oldest; for the newest, `history {last n}`, and `before` for the page before that.
 - Write through resolution: `set-field {object field type value reader}`, `bind {name object}`,
   `grant {grantee scope ops}`, `send {to route text}`, `move {task to}`,
   `act {class action create args}` to create, `act {object action args}` for `run`, `index`, `cancel`,

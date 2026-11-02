@@ -123,7 +123,9 @@
 (deftest a-name-the-tree-does-not-have-is-flagged
   (fx/with-world [{:keys [world root]}]
     (let [dir (project!)
-          _ (put! dir "src/Log.hpp" "namespace log {\nvoid info(int);\nvoid warn(int);\n}\nenum class Level { Info, Warn };\n")
+          _ (put! dir "src/Log.hpp" "namespace ke::log {\nvoid info(int);\nvoid warn(int);\n}\nenum class Level { Info, Warn };\n")
+          ;; a call-shaped `debug(` in a file that uses the namespace: not a declaration, no excuse
+          _ (put! dir "src/App.cpp" "DebugHooks debug(started);\nlog::info(1);\n")
           p (principal! root "proj" dir)
           edit (fn [new] (code/edit! world p {:name "proj/src/boot.cpp" :old "  return 0;" :new (str "  " new "\n  return 0;")}))
           flagged (fn [r] (get-in r [:ok :unknown-names]))]
