@@ -115,6 +115,7 @@ int runApp(const Options& optsIn) {
     std::string linkLine;           // the SESSION pane's LINK row: reconnects, backoff, or why we stopped
     int framesToRender = 3;         // a few frames after any event lets hover/focus settle, then idle
     bool done = false;
+    long long pinsSeenSeq = -1; // the `view/pinned` write last applied to the fold and Prefs
     int exitCode = 0;
     const auto started = Clock::now();
     auto seconds = [&](Clock::time_point t) { return std::chrono::duration<double>(t - started).count(); };
@@ -343,12 +344,45 @@ int runApp(const Options& optsIn) {
         if (panes.principals.takeRetiredRequested()) {
             rt->fetchRetired();
         }
+        // Pins live on the person's own Principal, in `view/pinned`, so every client of theirs shows the
+        // same list; Prefs is the copy for before attach. A pick writes the Field; the fold's echo of it
+        // (and another client's change) comes back through the same sync.
+        constexpr const char* kPinned = "view/pinned";
+        const std::string self = rt->session.principal().value_or("");
+        if (const model::PrincipalInfo* me = self.empty() ? nullptr : rt->principals.get(self)) {
+            if (auto it = me->fields.find(kPinned);
+                it != me->fields.end() && it->second.value.is_array() && it->second.seq != pinsSeenSeq) {
+                pinsSeenSeq = it->second.seq;
+                std::set<std::string> ids;
+                for (const json& v : it->second.value) {
+                    if (v.is_string()) {
+                        ids.insert(v.get<std::string>());
+                    }
+                }
+                if (ids != panes.principals.pinnedIds) {
+                    panes.principals.pinnedIds = ids;
+                    rt->principals.setPins(ids);
+                    prefs.pinned.assign(ids.begin(), ids.end());
+                    saveWhimsy();
+                }
+            }
+        }
         std::string pinnedId, unpinnedId;
+        bool pinsChanged = false;
         if (panes.principals.takePinned(pinnedId)) {
             rt->principals.pin(pinnedId);
+            pinsChanged = true;
         }
         if (panes.principals.takeUnpinned(unpinnedId)) {
             rt->principals.unpin(unpinnedId);
+            pinsChanged = true;
+        }
+        if (pinsChanged && !self.empty() && rt->session.attached()) {
+            json list = json::array();
+            for (const std::string& id : panes.principals.pinnedIds) {
+                list.push_back(id);
+            }
+            rt->chat.setField(self, kPinned, json::array({"list", "string"}), list, "human", [](const Response&) {});
         }
         if (panes.principals.takePrefsDirty()) {
             prefs.treeFlat = panes.principals.flat;

@@ -91,10 +91,12 @@ class Principals {
     void setApplied(Seq seq) { applied_ = std::max(applied_, seq); }
 
     const PrincipalInfo* get(std::string_view id) const;
-    // The ids the person has pinned to the top of the PRINCIPALS list. A person's own setting, not
-    // a fact of the world: it lives in their Prefs, so it survives a restart and is per client.
+    // The ids the person has pinned to the top of the PRINCIPALS list. The person's own setting, kept
+    // on their own Principal in `view/pinned` so every client of theirs shows the same; Prefs holds a
+    // copy for before attach (App syncs the two).
     void pin(const std::string& id) { pins_.insert(id); ++namesVersion_; }
     void unpin(const std::string& id) { pins_.erase(id); ++namesVersion_; }
+    void setPins(std::set<std::string> ids) { pins_ = std::move(ids); ++namesVersion_; }
     bool pinned(const std::string& id) const { return pins_.count(id) != 0; }
     // All Principals: pinned first (creation order among them), then the rest in creation order.
     std::vector<const PrincipalInfo*> ordered() const;
