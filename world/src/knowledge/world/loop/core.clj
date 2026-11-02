@@ -525,7 +525,9 @@
                                                     :wake-note (if (:work? ctx)
                                                                  (or (worklog/render (:log st) i (turn-limit ctx st) (asked-goal ctx))
                                                                      (named-directory-note world p ctx))
-                                                                 (or (work-note st) (named-directory-note world p ctx)))})]
+                                                                 ;; no running count on a real window: it changes the prompt every turn
+                                                                 (or (when-not (models/window-of db p (:thread-id ctx)) (work-note st))
+                                                                     (named-directory-note world p ctx)))})]
     (if err
       {:err err}
       (do (steer/applied! world (:evaluation ok) (:new steered))

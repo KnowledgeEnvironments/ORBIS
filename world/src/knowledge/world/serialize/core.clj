@@ -111,7 +111,8 @@
   [window]
   {:serialize/budget-tokens window :serialize/messages-verbatim 100000 :serialize/evaluations-verbatim 100000
    :serialize/self-field-cap 0 :serialize/message-cap window :serialize/evaluation-cap window
-   :serialize/open-chars (* window 2) :serialize/result-cap window :serialize/run-result-cap window})
+   :serialize/open-chars (* window 2) :serialize/result-cap window :serialize/run-result-cap window
+   :serialize/conversation true})
 
 (defn policy
   "The Principal's serializer policy: its serialize/* Fields over what its Model's window allows, over
@@ -1052,7 +1053,10 @@
         budget-chars (- (* chars-per-token (:serialize/budget-tokens pol))
                         (if sees? (* chars-per-token image/tokens-per-image (+ (count attached) (count asked))) 0) (count (str template)) (count acting) (count (str text)) (count (str identity)) (count (str steering)) 256)
         items (plan db principal working-set input-tags message pol)
+        ;; a conversation's prompt must not change above its newest turn: a counter in the system text
+        ;; sent 80k tokens back through the model on every turn, 80 s each, for want of a cache hit
         pol (cond-> (assoc pol :standing/trim (standing-trim db principal pol))
+              (:serialize/conversation pol) (update :standing/trim into lean-trim)
               lean? (-> (update :standing/trim into lean-trim) (assoc :lean? true)))
         rendered-items (cond-> (render-items db principal items depth budget-chars pol message)
                          tools? (lift-turns db))
