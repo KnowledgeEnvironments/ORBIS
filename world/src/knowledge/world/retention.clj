@@ -17,7 +17,9 @@
             [datascript.core :as d]
             [knowledge.world.act.actions :as actions]
             [knowledge.world.act.core :as act]
+            [knowledge.world.act.gates :as gates]
             [knowledge.world.authority :as authority]
+            [knowledge.world.notify :as notify]
             [knowledge.world.fold.objects :as objects]
             [knowledge.world.index.snapshot :as snap]
             [knowledge.world.log.blob :as blob]
@@ -308,15 +310,36 @@
 
 ;; ---------------------------------------------------------------- the sweep
 
+(defn notice-for
+  "What the people who own the world are told when a sweep's standing changes, or nil: over the limit
+   with nothing left to take, once, and again only when what blocks it changes; back under, once. Until
+   this, being stuck over the limit showed in retention/last-sweep and the world's log alone."
+  [was r]
+  (let [gb (fn [b] (format "%.1f GB" (/ (double b) 1e9)))]
+    (cond
+      (and (:over r) (or (nil? (:over was)) (not= (:blocked r) (:blocked was))))
+      (str "ORBIS is " (gb (:over r)) " over its disk limit of " (:limit-gb r) " GB and nothing more can go: "
+           (:blocked r) ". Raise the limit with retention.set, or retire what holds it.")
+      (and (:over was) (not (:over r)))
+      (str "ORBIS is back under its disk limit of " (:limit-gb r) " GB.")
+      :else nil)))
+
 (defn- record!
-  "retention/last-sweep, the world as actor, when a sweep did something or what stops it changed."
+  "retention/last-sweep, the world as actor, when a sweep did something or what stops it changed; and
+   a word to the people who own the world when its standing changes."
   [world {:keys [bytes releases logs-rotated blocked] :as r}]
   (let [wid (:world-id world)
         was (field (act/db world) wid sweep-field)]
     (when (or (pos? (long bytes)) (pos? (long releases)) (pos? (long logs-rotated)) (not= blocked (:blocked was)))
       (log/append!! (:log world)
                     (log/pending :field-set wid wid {:name sweep-field :type :map :reader :both
-                                                     :value (into {} (remove (comp nil? val)) r)})))))
+                                                     :value (into {} (remove (comp nil? val)) r)})))
+    (when-let [text (notice-for was r)]
+      (try
+        (let [root (gates/root-of (act/db world))]
+          (gates/tell-person! world root text)
+          (when (:over r) (notify/send! world root {:level "urgent" :text text})))
+        (catch Exception e (timbre/warn e "retention notice not delivered"))))))
 
 (defn- housekeeping
   "A step that must not stop the disk limit being kept: a log that cannot rotate is no reason to fill
