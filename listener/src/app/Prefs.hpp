@@ -21,6 +21,7 @@ struct Prefs {
     std::string filter = "all"; // the transcript filter: all | chat | system (heartbeats, approval results)
     bool treeFlat = false;      // PRINCIPALS: the flat table instead of the tree
     std::vector<std::string> treeExpanded; // PRINCIPALS: rows unfolded
+    std::vector<std::string> pinned; // PRINCIPALS: ids pinned to the top, in pin order
     bool historyOpen = false; // HISTORY whole; the desktop starts with the strip
     std::string theme = "prometheus"; // a theme file in the data dir, when there is one; per client
     // VIEW, FONT, per client: "" keeps the theme's face. Sizes in points.

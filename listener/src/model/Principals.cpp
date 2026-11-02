@@ -434,7 +434,14 @@ std::vector<const PrincipalInfo*> Principals::ordered() const {
             out.push_back(&p);
         }
     }
-    std::sort(out.begin(), out.end(), [](const PrincipalInfo* a, const PrincipalInfo* b) { return a->created < b->created; });
+    // Pinned first (in creation order among themselves), then the rest; creation order overall.
+    std::stable_sort(out.begin(), out.end(), [this](const PrincipalInfo* a, const PrincipalInfo* b) {
+        const bool pa = pins_.count(a->id) != 0, pb = pins_.count(b->id) != 0;
+        if (pa != pb) {
+            return pa; // a pinned row precedes an unpinned one
+        }
+        return a->created < b->created; // within each group, creation order
+    });
     return out;
 }
 

@@ -44,6 +44,13 @@ std::optional<Prefs> loadPrefs(const std::filesystem::path& file) {
                 }
             }
         }
+        if (j["view"].contains("pinned") && j["view"]["pinned"].is_array()) {
+            for (const auto& id : j["view"]["pinned"]) {
+                if (id.is_string()) {
+                    p.pinned.push_back(id.get<std::string>());
+                }
+            }
+        }
         if (p.filter != "all" && p.filter != "chat" && p.filter != "system") {
             p.filter = "all";
         }
@@ -63,7 +70,7 @@ bool savePrefs(const std::filesystem::path& file, const Prefs& prefs) {
                         {"view", {{"thinking", prefs.thinking}, {"filter", prefs.filter}, {"search-last", prefs.searchLast},
                                   {"tree-flat", prefs.treeFlat}, {"theme", prefs.theme},
                                   {"font-ui", prefs.fontUi}, {"label-case", prefs.labelCase}, {"focus-follows-mouse", prefs.focusFollowsMouse}, {"tooltips", prefs.tooltips}, {"os-notices", prefs.osNotices}, {"map-twilight", prefs.mapTwilight}, {"font-mono", prefs.fontMono},
-                                  {"font-ui-size", prefs.fontUiSize}, {"font-mono-size", prefs.fontMonoSize}, {"history-open", prefs.historyOpen}, {"tree-expanded", prefs.treeExpanded}}}};
+                                  {"font-ui-size", prefs.fontUiSize}, {"font-mono-size", prefs.fontMonoSize}, {"history-open", prefs.historyOpen}, {"tree-expanded", prefs.treeExpanded}, {"pinned", prefs.pinned}}}};
     if (prefs.principal) {
         j["principal"] = *prefs.principal;
     }

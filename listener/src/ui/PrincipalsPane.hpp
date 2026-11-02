@@ -31,9 +31,13 @@ class PrincipalsPane {
     bool takeNewRequested() { const bool r = newRequested_; newRequested_ = false; return r; }
     // [ SHOW DELETED ] was turned on (a snapshot leaves retired objects out: the app asks the world).
     bool takeRetiredRequested() { const bool r = retiredRequested_; retiredRequested_ = false; return r; }
+    // PIN TO TOP / UNPIN was chosen this frame: the app applies it to the fold and saves prefs.
+    bool takePinned(std::string& out) { out = pinned_; const bool r = !pinned_.empty(); pinned_.clear(); return r; }
+    bool takeUnpinned(std::string& out) { out = unpinned_; const bool r = !unpinned_.empty(); unpinned_.clear(); return r; }
     // Persisted by the app.
     bool flat = false;
     std::set<std::string> expanded; // everything starts folded
+    std::set<std::string> pinnedIds; // rows pinned to the top of the list
     std::string self;               // who this client is: their row says `you`
     bool takePrefsDirty() { const bool r = prefsDirty_; prefsDirty_ = false; return r; }
 
@@ -45,6 +49,7 @@ class PrincipalsPane {
     bool showDeleted_ = false;
     bool retiredRequested_ = false;
     bool prefsDirty_ = false;
+    std::string pinned_, unpinned_; // the menu's pick this frame, taken by takePinned/takeUnpinned
     const model::Evaluations* evals_ = nullptr;
     const model::Tasks* tasks_ = nullptr;
     const std::map<std::string, model::Activity>* activity_ = nullptr;

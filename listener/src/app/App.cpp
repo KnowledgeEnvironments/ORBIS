@@ -52,6 +52,7 @@ int runApp(const Options& optsIn) {
         p.filter = prefs.filter;
         p.treeFlat = prefs.treeFlat;
         p.treeExpanded = prefs.treeExpanded;
+        p.pinned = prefs.pinned;
         p.theme = prefs.theme;
         p.labelCase = prefs.labelCase;
         p.osNotices = prefs.osNotices;
@@ -101,6 +102,10 @@ int runApp(const Options& optsIn) {
     panes.terminal.filter = prefs.filter;
     panes.principals.flat = prefs.treeFlat;
     panes.principals.expanded = std::set<std::string>(prefs.treeExpanded.begin(), prefs.treeExpanded.end());
+    panes.principals.pinnedIds = std::set<std::string>(prefs.pinned.begin(), prefs.pinned.end());
+    for (const std::string& id : panes.principals.pinnedIds) {
+        rt->principals.pin(id); // the fold sorts pinned rows first, from boot and re-attach
+    }
     panes.history.setQuery(prefs.searchLast);
 #if !LISTENER_PHONE
     panes.history.collapsed = !prefs.historyOpen;
@@ -338,9 +343,17 @@ int runApp(const Options& optsIn) {
         if (panes.principals.takeRetiredRequested()) {
             rt->fetchRetired();
         }
+        std::string pinnedId, unpinnedId;
+        if (panes.principals.takePinned(pinnedId)) {
+            rt->principals.pin(pinnedId);
+        }
+        if (panes.principals.takeUnpinned(unpinnedId)) {
+            rt->principals.unpin(unpinnedId);
+        }
         if (panes.principals.takePrefsDirty()) {
             prefs.treeFlat = panes.principals.flat;
             prefs.treeExpanded.assign(panes.principals.expanded.begin(), panes.principals.expanded.end());
+            prefs.pinned.assign(panes.principals.pinnedIds.begin(), panes.principals.pinnedIds.end());
             saveWhimsy();
         }
         if (panes.terminal.showThinking != prefs.thinking || panes.terminal.filter != prefs.filter) { // the status bar's switches

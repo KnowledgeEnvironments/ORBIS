@@ -126,8 +126,13 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
                       ImGuiWindowFlags_HorizontalScrollbar * 0);
     if (ImGui::GetScrollMaxY() > 0.0f) {
         const bool atBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 2.0f;
-        if (ImGui::IsWindowHovered() && ImGui::GetIO().MouseWheel != 0.0f) {
-            tab.stick = atBottom && ImGui::GetIO().MouseWheel < 0.0f;
+        // Scrolling up lets go of the bottom, and being at the bottom takes hold of it again, however
+        // you got there: a trackpad's last event lands before the scroll does, so a test on the wheel
+        // alone left the transcript loose at the very bottom.
+        if (ImGui::IsWindowHovered() && ImGui::GetIO().MouseWheel > 0.0f) {
+            tab.stick = false;
+        } else if (atBottom) {
+            tab.stick = true;
         }
         if (touchDragScroll()) {
             tab.stick = ImGui::GetScrollY() - ImGui::GetIO().MouseDelta.y >= ImGui::GetScrollMaxY() - 2.0f;

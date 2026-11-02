@@ -18,6 +18,7 @@ ImU32 ink(bool inverse, ImU32 color) {
 std::string PrincipalsPane::draw(const model::Principals& principals, const std::string& current, const Anim& anim, ImFont* mono) {
     std::string clicked;
     if (beginPane("PRINCIPALS")) {
+        // The pins live on the fold; the menu edits the set, and `ordered()` sorts pinned first.
         clicked = drawBody(principals, current, anim, mono);
     }
     endPane();
@@ -26,6 +27,18 @@ std::string PrincipalsPane::draw(const model::Principals& principals, const std:
 
 void PrincipalsPane::drawMenu(const model::Principals& principals, const std::string& id, const std::string& route, std::string& clicked) {
     if (ImGui::BeginPopupContextItem("principal-menu")) {
+        const bool pin = menuItem(principals.pinned(id) ? "UNPIN" : "PIN TO TOP");
+        drive::hit("menu:pin", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        if (pin) {
+            if (principals.pinned(id)) {
+                unpinned_ = id;
+                pinnedIds.erase(id);
+            } else {
+                pinned_ = id;
+                pinnedIds.insert(id);
+            }
+            prefsDirty_ = true;
+        }
         const bool inspect = menuItem("INSPECT");
         drive::hit("menu:inspect", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
         if (inspect) {

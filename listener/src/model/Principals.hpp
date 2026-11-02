@@ -14,6 +14,7 @@
 
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -90,7 +91,12 @@ class Principals {
     void setApplied(Seq seq) { applied_ = std::max(applied_, seq); }
 
     const PrincipalInfo* get(std::string_view id) const;
-    // All Principals in creation order.
+    // The ids the person has pinned to the top of the PRINCIPALS list. A person's own setting, not
+    // a fact of the world: it lives in their Prefs, so it survives a restart and is per client.
+    void pin(const std::string& id) { pins_.insert(id); ++namesVersion_; }
+    void unpin(const std::string& id) { pins_.erase(id); ++namesVersion_; }
+    bool pinned(const std::string& id) const { return pins_.count(id) != 0; }
+    // All Principals: pinned first (creation order among them), then the rest in creation order.
     std::vector<const PrincipalInfo*> ordered() const;
     std::size_t size() const { return principals_.size(); }
     // The one rule for showing an object: its latest bound name; else an `object/name` or `name`
@@ -148,6 +154,7 @@ class Principals {
     std::map<std::string, std::string> messageKinds_;
     std::map<std::string, RetiredInfo> retired_;
     std::map<std::string, std::string> descriptions_; // schema Object -> class/description
+    std::set<std::string> pins_;                      // this client's pinned ids, in `ordered()`
     Seq applied_ = -1;
     unsigned long long namesVersion_ = 0;
 };
