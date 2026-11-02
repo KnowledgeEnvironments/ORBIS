@@ -389,11 +389,12 @@
    {:name "retention.set"
     :hint "how much disk a world's blobs and log may take; a person's own session"
     :handler :retention.set
-    :schema [:map [:gb [:or [:enum "infinite"] :int :double]]]
+    :schema [:map [:gb [:or [:enum "infinite"] :int :double]] [:confirm {:optional true} :boolean]]
     :instructions (str "Person only, from their own session. `gb` is the limit on blobs and log segments together, in GiB, "
                        "or \"infinite\" for no pruning. Over it the least recently used blobs go first, then the oldest "
-                       "log segments, and what they held does not come back. Saved in retention/limit-gb on the world; "
-                       "retention/last-sweep says what the last sweep took.")}
+                       "log segments, and what they held does not come back. A limit below what the world uses now answers "
+                       "with what the next sweep would take and sets nothing until `confirm` is true. Saved in "
+                       "retention/limit-gb on the world; retention/last-sweep says what the last sweep took.")}
    {:name "adapter.unconfine"
     :hint "run one Adapter's shells outside the sandbox, for a limited time"
     :handler :adapter.unconfine

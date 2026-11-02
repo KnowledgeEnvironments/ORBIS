@@ -969,6 +969,17 @@
             (is (= 1 (retention/limit-gb world))))
           (is (:ok (act! client "retention.set" {:gb "infinite"})))
           (is (= "infinite" (retention/limit-gb world))))
+        (testing "a limit below what the world uses is a preview until confirmed"
+          (put-blob! world "big" 20000)
+          (let [tiny (/ 1.0 1024 1024) ; a kilobyte, in GiB
+                r (act! client "retention.set" {:gb tiny})]
+            (is (:ok r) (pr-str r))
+            (is (true? (get-in r [:result :result :not-set])))
+            (is (pos? (long (get-in r [:result :result :would-go]))))
+            (is (= "infinite" (retention/limit-gb world)) "nothing set, nothing pruned")
+            (is (:ok (act! client "retention.set" {:gb tiny :confirm true})))
+            (is (= tiny (retention/limit-gb world)))
+            (is (:ok (act! client "retention.set" {:gb "infinite"})))))
         (testing "nonsense"
           (is (= :invalid-args (code (act! client "retention.set" {:gb 0}))))
           (is (some? (:err (act! client "retention.set" {:gb "lots"}))))

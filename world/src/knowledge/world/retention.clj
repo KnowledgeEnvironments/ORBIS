@@ -420,14 +420,34 @@
 
 ;; ---------------------------------------------------------------- the action
 
+(defn- would-go
+  "What a limit `gb` below today's use would take at the next sweep, in bytes, or nil when it is not
+   below: a person lowering the limit by a lot pruned at once, with no word of what went."
+  [world gb]
+  (let [l (:log world)
+        blob-bytes (reduce + 0 (map :size (blob/inventory (:blobs world))))
+        log-bytes (log/own-bytes l)
+        used (+ blob-bytes log-bytes)
+        limit (gb->bytes gb)]
+    (when (> used limit)
+      {:used used :limit limit :would-go (- used (long (* limit (double (:low-water (options world))))))
+       :blobs blob-bytes :log log-bytes :first-seq (log/first-seq l)})))
+
 (defmethod actions/handle! :retention.set
-  [_ world p {:keys [gb]} opts]
+  [_ world p {:keys [gb confirm]} opts]
   (authority/require-person! (act/db world) p opts)
   (when-not (valid-gb? gb)
     (throw (ex-info "gb is a positive number or \"infinite\""
                     {:err {:code :invalid-args :message "gb is a positive number or \"infinite\""}})))
-  (let [wid (:world-id world)
-        seq-no (act/append! world (log/pending :field-set wid p {:name limit-field :type (if (number? gb) :number :string)
-                                                                 :value gb :reader :both}))]
-    (kick! world)
-    {:ok {:result {:gb gb :bytes (when (number? gb) (gb->bytes gb))} :object wid :seq seq-no}}))
+  (if-let [preview (and (number? gb) (not (true? confirm)) (would-go world gb))]
+    {:ok {:result (assoc preview :gb gb :not-set true
+                         :next (str "the limit is below what the world uses: the next sweep would take about "
+                                    (format "%.1f MB" (/ (double (:would-go preview)) 1e6))
+                                    ", the least recently used blobs first, then the oldest log segments, and it does not come back. "
+                                    "retention.set again with confirm true to go ahead"))
+          :object (:world-id world)}}
+    (let [wid (:world-id world)
+          seq-no (act/append! world (log/pending :field-set wid p {:name limit-field :type (if (number? gb) :number :string)
+                                                                   :value gb :reader :both}))]
+      (kick! world)
+      {:ok {:result {:gb gb :bytes (when (number? gb) (gb->bytes gb))} :object wid :seq seq-no}})))
