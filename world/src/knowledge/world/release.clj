@@ -93,6 +93,12 @@
         out (slurp (.getInputStream p))]
     (when-not (zero? (.waitFor p)) (throw (ex-info (str (first argv) " failed: " out) {})))))
 
+(defn- behind?
+  "Does commit lack the release running now? No running release, no question."
+  [world ^File src commit]
+  (when-let [now (:commit (running (:config world)))]
+    (not (zero? (long (:exit (boxed-git (:data-dir world) src nil ["merge-base" "--is-ancestor" now commit])))))))
+
 (defn make!
   "A release of rev in the working copy, by the world: a confined command cannot write under releases/,
    and must not be able to, or it could change the running kernel with no card. The tree comes out of
@@ -112,6 +118,12 @@
         (cond
           (or (not (zero? exit)) (not (re-matches #"[0-9a-f]{40}" commit)))
           (act/err :unresolved (str "no commit " rev " in the working copy"))
+          ;; seen live: root's first release was cut from a copy behind the running code, and the
+          ;; restart quietly took two fixes back out
+          (behind? world src commit)
+          (act/err :conflict (str "this commit lacks what is running (" (subs (str (:commit (running (:config world))) "            ") 0 12)
+                                  "), so a restart onto it would undo that work. Bring it in first: "
+                                  "`git fetch origin && git merge origin/main`, build, test, then release.make again."))
           (.isDirectory (io/file (releases-dir data) commit))
           {:ok {:result {:commit commit :log-version (:log-version (manifest (io/file (releases-dir data) commit)))}}}
           :else

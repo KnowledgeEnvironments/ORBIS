@@ -70,6 +70,8 @@ The child holds no copy of the parent's events. Its log reader walks the parent'
 
 ## Retention
 
+`scripts/backup-world.sh <data>` copies a world's log, snapshots, anchor and blobs to `/path/to/backups/worlds/<name>`, at most once a day, keeping three. The supervisor runs it at each start. A pruned world can depend on `anchor/` alone, so this is what stands behind it.
+
 A world has one limit on its blobs and its log segments with their `.idx` together: 16 GiB, or `KE_RETENTION_GB`, until a person sets another with `retention.set {gb}`, kept in `retention/limit-gb` on the world. `gb` may be `"infinite"`, which turns this section off. No agent can change it: `retention/*` Fields refuse every write but the action's, and the action wants a person's own session. Snapshots, `anchor/`, `releases/` and `logs/` are outside the limit.
 
 A sweep runs at start and every 15 minutes, on a thread of its own: it never runs on the writer, holds no lock over its work, and appends only as any Principal does.

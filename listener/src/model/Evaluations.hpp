@@ -78,6 +78,9 @@ double epochSeconds(const std::string& iso);
 //   thinking-chars reported     `root thinking · 1.2K chars · 31 s`
 //   content deltas arriving     `root replying · 420 chars · 34 s`
 // `nowEpoch` is the wall clock in seconds. The loop cap (8) is the world's (loop/ops.clj).
+// What a turn did, in a few words: `read Prefs.cpp`, `edit App.cpp`, `run cmake --build`. "" for nothing.
+std::string opSummary(const json& ops);
+
 std::string progressLine(const Evaluations& all, std::string_view principal, std::string_view name, int iteration,
                          double nowEpoch, int turnLimit = 0);
 constexpr int kLoopIterationCap = 8;
@@ -133,6 +136,8 @@ class Evaluations {
     }
     // The Principal's most recently created Evaluation, or nullptr.
     const EvaluationInfo* latest(std::string_view principal) const;
+    // The newest finished turn of this Principal that did something, nullptr for none.
+    const EvaluationInfo* latestWithOps(std::string_view principal) const;
     // Its Evaluation that is live right now (created, not done), or nullptr: what a cancel targets.
     const EvaluationInfo* running(std::string_view principal) const;
     // Cancelled Evaluations of the Principal created after `after` (the orphans a transcript shows

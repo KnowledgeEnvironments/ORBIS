@@ -107,6 +107,7 @@ while [ -z "$STOPPING" ]; do
   fi
   start_holder
   say "starting ${CUR:0:12} on $KE_PORT"
+  ( "$(dirname "$0")/backup-world.sh" "$D" >> "$D/logs/supervise.log" 2>&1 & )
   touch "$D/.started"
   START=$SECONDS
   ( cd "$D/releases/$CUR/world" && export KE_HARNESS_ROOT="$D/releases/$CUR" KE_RELEASE="$CUR" && exec clojure -M:run ) >> "$D/logs/world.log" 2>&1 &

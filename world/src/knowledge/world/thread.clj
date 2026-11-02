@@ -94,6 +94,17 @@
 
 (def ^:private not-an-answer #{:status :approval :approval-result :trigger})
 
+(defn replied-since?
+  "Has p said anything that counts, anywhere in this thread, after `message`? A reply to the approval
+   that came of a request answers the request too, though it is in-reply-to the decision."
+  [db thread message p]
+  (let [seq-of #(:object/created-seq (objects/entity db %))
+        after (long (or (seq-of message) 0))]
+    (boolean (some #(and (= p (field db % :message/from))
+                         (> (long (or (seq-of %) 0)) after)
+                         (not (contains? not-an-answer (some-> (field db % :message/kind) name keyword))))
+                   (messages db thread)))))
+
 (defn answered-by?
   "Has p replied to `message` with an answer: a Message of p's in-reply-to it that is neither a
    status note nor kernel traffic (an approval card, a decision, a Trigger firing)? Those sit in the

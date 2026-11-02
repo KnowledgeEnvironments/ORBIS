@@ -1162,6 +1162,20 @@
         (update :interim? #(or % (boolean (some pending? results))))
         (update :failed into (remove :ok results)))))
 
+(defn- turns-so-far
+  "A resumed wake's own turns, oldest first, so it goes on instead of starting again: a restart is
+   routine now that a world moves itself onto new releases, and the conversation should outlive it."
+  [db p {:keys [m-state message]}]
+  (when (and (pos? (long (or (field m-state :message/resumed) 0))) (:serialize/conversation (ser/policy db p (thread/thread-of db message))))
+    (->> (objects/objects-with-field db :evaluation/message)
+         (filter (fn [e] (let [f (objects/fields db e)]
+                           (and (= message (get-in f [:evaluation/message :field/value]))
+                                (= p (get-in f [:evaluation/initiator :field/value]))
+                                (= :done (some-> (get-in f [:evaluation/state :field/value]) name keyword))
+                                (seq (get-in f [:evaluation/ops :field/value]))))))
+         (sort-by #(:object/created-seq (objects/entity db %)))
+         vec)))
+
 (defn- run-iterations!
   "Evaluate, run the ops the model emitted, evaluate again with their results in the working set,
    until an outcome carries no ops (spec 9.8 steps 3 to 6). A steered call was cut for new
@@ -1177,7 +1191,8 @@
                                    (worklog/work? (str (field (:m-state ctx) :message/text) " "
                                                   (some->> (:thread-id ctx) (objects/state (:db ctx))
                                                            (#(field % :message/text)))))))]
-  (loop [{:keys [i] :as st} {:i 1 :evaluations [] :prev-failed? false :made [] :done [] :interim? false :failed []
+  (loop [{:keys [i] :as st} {:i 1 :evaluations (or (turns-so-far (:db ctx) p ctx) []) :prev-failed? false :made [] :done []
+                             :interim? false :failed []
                              :log (when (:work? ctx) (thread-log world p ctx))
                              :approved-edit (approved-edit (act/db world) (:m-state ctx))}]
     (if-let [stop (stop-reason world p ctx st)]
@@ -1261,6 +1276,12 @@
     (drop-wake! world p w)
     (let [{:keys [model] :as ctx} (prepare-wake world p w)
           interrupted? (volatile! false)]
+     (if (and (pos? (long (or (field (:m-state ctx) :message/resumed) 0)))
+              (thread/replied-since? (:db ctx) (:thread-id ctx) message p))
+      ;; it came back from a restart, and the thread has had its answer since: seen live, root
+      ;; reported a release done, then read all its files again to do the work it had finished
+      {:stalled "answered before this resume"}
+      (do
       (set-loop-field! world p :loop/current [:ref :message] message)
       (set-loop-field! world p :loop/iteration :number 1)
       (try
@@ -1278,7 +1299,7 @@
           {:stalled (ex-message t)})
         (finally
           (when-not @interrupted?
-            (try (set-loop-field! world p :loop/iteration :number 0) (catch Throwable _ nil))))))))
+            (try (set-loop-field! world p :loop/iteration :number 0) (catch Throwable _ nil))))))))))
 
 (defn accepts-from
   "Principals whose loop-sent Messages wake p: the Field loop/accepts-from when set, else p's

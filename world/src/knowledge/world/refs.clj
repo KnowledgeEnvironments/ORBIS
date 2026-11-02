@@ -107,7 +107,7 @@
 
 (def ^:private scan-re
   ;; a fence (closed or running off the end), inline code, or a reference
-  #"(?s)```.*?(?:```|\z)|`[^`\n]*`|\[\[([^\[\]\n]{1,200})\]\]")
+  #"(?s)```.*?(?:```|\z)|`[^`\n]*`|\[\[([^\[\]\n]{1,200})\]\]|(?<!\[)\[([0-9a-f]{2,12})\](?![\[(\]])")
 
 (defn- cp-len ^long [^CharSequence s] (Character/codePointCount s 0 (count s)))
 
@@ -147,7 +147,10 @@
     (loop [pos 0 cp 0]
       (if (.find m)
         (let [whole (.group m)
-              body (.group m 1)
+              ;; one pair of brackets round a handle is a reference too, seen live: `skyHAB [7e]`.
+              ;; Only a handle of this table: [ab] in prose is prose
+              lone (let [g (.group m 2)] (when (and g (contains? table g)) g))
+              body (or (.group m 1) lone)
               t (when body (target db author table body))
               ;; a model writes the name and then a reference to it: the name once (seen live: `shell.local shell.local`)
               before (let [b (subs text pos (.start m))
@@ -157,6 +160,7 @@
                          b))
               cp (+ cp (cp-len before))
               ;; nothing resolved: what it was called, never the brackets (seen live: [[0d|person|principal]])
+              ;; a lone handle after its own name says nothing more: `skyHAB [7e]` is one name
               out (cond t (:text t)
                         (and body (str/includes? body "|")) (second (str/split body #"\|"))
                         :else whole)

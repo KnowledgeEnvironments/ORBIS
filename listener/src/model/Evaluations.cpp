@@ -413,6 +413,16 @@ const EvaluationInfo* Evaluations::streaming(std::string_view principal) const {
     return v && !v->done() && (!v->partial.empty() || !v->thinkingPartial.empty()) ? v : nullptr;
 }
 
+const EvaluationInfo* Evaluations::latestWithOps(std::string_view principal) const {
+    const EvaluationInfo* best = nullptr;
+    for (const auto& [id, v] : evaluations_) {
+        if (v.principal == principal && v.ops.is_array() && !v.ops.empty() && (!best || v.created > best->created)) {
+            best = &v;
+        }
+    }
+    return best;
+}
+
 const EvaluationInfo* Evaluations::latestWithUsage(std::string_view principal) const {
     const EvaluationInfo* best = nullptr;
     for (const auto& [id, v] : evaluations_) {
@@ -440,6 +450,44 @@ double epochSeconds(const std::string& iso) {
     return t < 0 ? -1.0 : static_cast<double>(t) + s;
 }
 
+std::string opSummary(const json& ops) {
+    if (!ops.is_array() || ops.empty() || !ops.back().is_object()) {
+        return {};
+    }
+    const json& o = ops.back();
+    const std::string op = o.value("op", std::string());
+    const json args = o.contains("args") && o["args"].is_object() ? o["args"] : json::object();
+    const std::string action = args.value("action", std::string());
+    const json inner = args.contains("args") && args["args"].is_object() ? args["args"] : args;
+    const auto word = [&](const char* k) { return inner.contains(k) && inner[k].is_string() ? inner[k].get<std::string>() : std::string(); };
+    const auto base = [](std::string s) {
+        const std::size_t slash = s.rfind('/');
+        return slash == std::string::npos ? s : s.substr(slash + 1);
+    };
+    std::string out;
+    if (action == "task.run" || action == "run") {
+        out = "run " + word("cmd");
+    } else if (action == "file.edit") {
+        out = "edit " + base(word("name"));
+    } else if (action == "code.search") {
+        out = "search " + word("pattern");
+    } else if (op == "read") {
+        out = "read " + base(word("name"));
+    } else if (!action.empty()) {
+        out = action;
+    } else {
+        out = op;
+    }
+    while (!out.empty() && out.back() == ' ') {
+        out.pop_back();
+    }
+    const std::size_t newline = out.find('\n');
+    if (newline != std::string::npos) {
+        out.resize(newline);
+    }
+    return out.size() > 48 ? out.substr(0, 47) + "\xe2\x80\xa6" : out;
+}
+
 std::string progressLine(const Evaluations& all, std::string_view principal, std::string_view name, int iteration,
                          double nowEpoch, int turnLimit) {
     // The phase is read from the latest Evaluation: running with nothing received is thinking
@@ -451,6 +499,12 @@ std::string progressLine(const Evaluations& all, std::string_view principal, std
     std::string s = std::string(name) + (replying ? " replying" : thinking ? " thinking" : " working");
     if (iteration > 0) {
         s += " · turn " + std::to_string(iteration) + "/" + std::to_string(turnLimit > 0 ? turnLimit : kLoopIterationCap);
+    }
+    // A long wake is quiet in the chat, so the bar says what it last did: working and stuck look alike otherwise.
+    if (const EvaluationInfo* acted = all.latestWithOps(principal)) {
+        if (const std::string did = opSummary(acted->ops); !did.empty()) {
+            s += " · " + did;
+        }
     }
     bool charsShown = false;
     if (replying) {

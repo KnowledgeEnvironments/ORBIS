@@ -290,3 +290,16 @@
       (is (= (str "through " n " today") text))
       (is (= 1 (count refs)))
       (is (= (str "see " n) (:text (refs/parse db id table "see [[aa]]")))))))
+
+(deftest a-lone-bracket-handle-is-a-reference
+  (fx/with-world [{:keys [world root]}]
+    (let [db (act/db world)
+          p (:principal root)
+          id (str p)
+          table {"7e" id}
+          {:keys [text refs]} (refs/parse db p table "the agent [7e] is here")]
+      (is (= 1 (count refs)) (pr-str refs))
+      (is (not (str/includes? text "[7e]")) text)
+      (testing "[ab] that is no handle stays prose, and a link stays a link"
+        (is (= "see [ab] here" (:text (refs/parse db p table "see [ab] here"))))
+        (is (= "[7e](http://x)" (:text (refs/parse db p table "[7e](http://x)"))))))))

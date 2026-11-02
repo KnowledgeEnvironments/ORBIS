@@ -100,7 +100,9 @@ void PrincipalsPane::drawActor(const model::Principals& principals, const model:
     if (ImGui::Selectable("##row", inverse, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap)) {
         clicked = root.id;
     }
-    drive::hit("principal:" + name, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+    // the name, not the row's middle: the row's middle can be a column's resize handle
+    drive::hit("principal:" + name, ImGui::GetItemRectMin(),
+               ImVec2(ImGui::GetItemRectMin().x + ImGui::GetFontSize() * 6.0f, ImGui::GetItemRectMax().y));
     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
         LinkRequest r;
         r.kind = LinkRequest::Label;
@@ -273,7 +275,8 @@ void PrincipalsPane::drawRow(const model::Principals& principals, const std::str
     if (ImGui::Selectable("##row", inverse, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap)) {
         clicked = id;
     }
-    drive::hit("principal:" + principals.nameOf(id), ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+    drive::hit("principal:" + principals.nameOf(id), ImGui::GetItemRectMin(),
+               ImVec2(ImGui::GetItemRectMin().x + ImGui::GetFontSize() * 6.0f, ImGui::GetItemRectMax().y));
     if (ImGui::IsItemHovered()) {
         std::string tip = principals.nameOf(id) + "\n" + id;
         if (const std::string what = principals.describe(id, cls); !what.empty()) {

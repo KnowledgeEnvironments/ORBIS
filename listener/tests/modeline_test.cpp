@@ -1,4 +1,5 @@
 #include "model/Modeline.hpp"
+#include "model/Evaluations.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -41,3 +42,12 @@ TEST_CASE("the newest thing that happened is the line") {
     CHECK(line.find("set instructions/own") != std::string::npos);
     CHECK(line.find("sent") == std::string::npos);
 }
+
+TEST_CASE("the bar says what a turn did") {
+    using ke::json;
+    CHECK(ke::model::opSummary(json::array({json{{"op", "read"}, {"args", {{"name", "src.fs/listener/src/app/App.cpp"}}}}})) == "read App.cpp");
+    CHECK(ke::model::opSummary(json::array({json{{"op", "act"}, {"args", {{"action", "file.edit"}, {"args", {{"name", "a/b.c"}}}}}}})) == "edit b.c");
+    CHECK(ke::model::opSummary(json::array({json{{"op", "act"}, {"args", {{"action", "task.run"}, {"args", {{"cmd", "make\nmore"}}}}}}})) == "run make");
+    CHECK(ke::model::opSummary(json::array()).empty());
+}
+

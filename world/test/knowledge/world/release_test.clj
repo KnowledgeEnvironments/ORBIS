@@ -3,6 +3,7 @@
    supervisor reads and the report when it comes back (decisions 2026-10-31). The whole loop, a real
    supervisor and a real restart, is scripts/test-selfhost.sh."
   (:require [clojure.java.io :as io]
+            [clojure.java.shell :as sh]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [knowledge.world.authority :as authority]
@@ -140,3 +141,19 @@
       (let [status (filter #(= :status (some-> (field w % :message/kind) name keyword))
                            (objects/objects-of-class (act/db w) :message))]
         (is (some #(str/includes? (str (field w % :message/text)) "health check failed") status))))))
+
+(deftest a-release-behind-the-running-code-is-refused
+  (let [data (doto (java.io.File/createTempFile "orbis-rel" "") .delete .mkdirs)
+        src (doto (io/file data "src") .mkdirs)
+        git (fn [& args] (let [r (apply sh/sh "git" (concat args [:dir src]))] (assert (zero? (:exit r)) (pr-str r)) (str/trim (:out r))))
+        commit (fn [m] (git "-c" "user.name=t" "-c" "user.email=t@t" "commit" "-q" "--allow-empty" "-m" m) (git "rev-parse" "HEAD"))]
+    (git "init" "-q" "-b" "work")
+    (let [old (commit "one")
+          newer (commit "two")
+          world {:data-dir (.getCanonicalPath data) :config {:release newer}}
+          err (release/make! world {:rev old})]
+      (is (= :conflict (get-in err [:err :code])) (pr-str err))
+      (is (str/includes? (str (get-in err [:err :message])) "git merge origin/main"))
+      (testing "a commit that has the running code in it is not refused for that"
+        (is (not= :conflict (get-in (release/make! world {:rev newer}) [:err :code])))))))
+
