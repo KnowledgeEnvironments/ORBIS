@@ -548,6 +548,13 @@ void TerminalPane::rebuildView(Tab& tab, const model::PrincipalInfo* info, model
             }
         }
     }
+    // A line from outside the thread can land inside its span, such as the world saying it restarted:
+    // it hangs right of the rail like the rest, or the rail runs through its words.
+    for (const View::Rail& r : v.rails) {
+        for (std::size_t pi = r.firstPara; pi <= r.lastPara && pi < doc.paras.size(); ++pi) {
+            doc.paras[pi].indent = std::max(doc.paras[pi].indent, railGutter);
+        }
+    }
     int extraBlock = static_cast<int>(lines.size());
     // Cancelled wakes no reply followed: a dim block each, with whatever text had arrived.
     const Seq lastLineSeq = lines.empty() ? 0 : lines.back().seq;
