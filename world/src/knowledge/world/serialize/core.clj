@@ -1022,7 +1022,7 @@
    plan order until the policy budget is spent; the Principal itself and the waking Message always
    render; everything after the budget is dropped and counted. The budget covers the whole
    Serialization: the body gets what the template, acting section and user turn leave."
-  [db {:keys [model wake-note principal working-set depth route message known off-the-record steers thinking-so-far last-turn? tools? changes lean?]}]
+  [db {:keys [nudge model wake-note principal working-set depth route message known off-the-record steers thinking-so-far last-turn? tools? changes lean?]}]
   (let [summary (conversation-summary db principal message)
         working-set (cond->> (visible-working-set db working-set message summary) lean? (keep-work db principal))
         known (seq (remove #(objects/retired? db %) known))
@@ -1074,7 +1074,7 @@
     {:template template
      :identity identity
      :steering steering
-     :closing (when last-turn? last-turn-sentence)
+     :closing (if last-turn? last-turn-sentence nudge)
      :steer-text (when (seq steers)
                    (strip-directives (str (refs/text-of db principal (objects/fields db (:message (peek (vec steers)))) :message/text))))
      :acting acting

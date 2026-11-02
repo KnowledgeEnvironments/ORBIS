@@ -258,16 +258,21 @@
       (is (nil? (field world shell :adapter/confined)))
       (is (empty? (field world (:world-id world) :world/unsafe))))))
 
-(deftest network-is-a-person's-to-open
+(deftest the-network-is-open-and-root-or-a-person-sets-it
   (fx/with-world [{:keys [world root witness]}]
     (let [person (fx/attach-as world (:token witness))
           shell (shell-of root)]
       (may-act! root witness shell)
-      (is (= "model" (:network (:box (unsafe/box-for world shell)))))
-      (is (= :person-only (code (act! root "adapter.confine" {:adapter (str shell) :network "all"}))))
-      (is (:ok (act! person "adapter.confine" {:adapter (str shell) :network "all" :read ["/tmp"]})))
-      (is (= "all" (:network (:box (unsafe/box-for world shell)))))
-      (is (str/includes? (confine/seatbelt-profile (:box (unsafe/box-for world shell))) "*:*")))))
+      (testing "open by default"
+        (is (= "all" (:network (:box (unsafe/box-for world shell)))))
+        (is (nil? (.get (confine/environment (:box (unsafe/box-for world shell))) "ORBIS_BOX")) "so a build may fetch"))
+      (testing "root may tighten a shell, and so may a person"
+        (is (:ok (act! root "adapter.confine" {:adapter (str shell) :network "model"})))
+        (is (= "1" (.get (confine/environment (:box (unsafe/box-for world shell))) "ORBIS_BOX")) "a build uses what is on disk")
+        (is (:ok (act! person "adapter.confine" {:adapter (str shell) :network "all" :read ["/tmp"]})))
+        (is (str/includes? (confine/seatbelt-profile (:box (unsafe/box-for world shell))) "*:*")))
+      (testing "root's own leash is a person's"
+        (is (= :person-only (code (act! root "adapter.confine" {:adapter (str shell) :leash false}))))))))
 
 (deftest a-loop-is-boxed-too
   (fx/with-world [{:keys [world root]}]

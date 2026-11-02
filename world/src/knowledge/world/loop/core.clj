@@ -499,6 +499,17 @@
   [{:keys [work?]} {:keys [log]}]
   (boolean (and work? (pos? (long (or (:n log) 0))))))
 
+(def ^:private reading-turns "Turns without a change before a conversation is told to make one." 25)
+
+(defn- still-reading
+  "A line at the very end of the prompt, every few turns, for a wake that reads and never writes. Seen
+   live: 216 turns, 155 reads and no test. At the end it costs the model's cache nothing."
+  [{:keys [work?]} {:keys [i changed-at]}]
+  (let [quiet (- (long i) (long (or changed-at 0)))]
+    (when (and (not work?) (>= quiet reading-turns) (zero? (mod quiet 5)))
+      (str "You have gone " quiet " turns without changing anything. You have read enough. Make the change now, "
+           "or say plainly what stops you."))))
+
 (defn- call-model!
   "One iteration's model call, with any steering that has arrived. A steered wake answers to its
    newest steer, not to the Message that opened it: a /think on the question does not carry over
@@ -520,6 +531,7 @@
                                                     :steers (:all steered) :ids ids
                                                     :thinking-so-far thinking-so-far :retry-of retry-of
                                                     :last-turn? (> i (turn-limit ctx st))
+                                                    :nudge (still-reading ctx st)
                                                     :hold-tools (when (and (:work? ctx) (:log st)) (worklog/held-tools (:log st)))
                                                     :lean? (lean? ctx st)
                                                     :wake-note (if (:work? ctx)
@@ -1154,6 +1166,7 @@
         (assoc :seen seen :shown results)
         (cond-> log (assoc :log log))
         (cond-> fresh? (assoc :progress-at i))
+        (cond-> (some writes? (filter :ok results)) (assoc :changed-at i))
         (update :i inc)
         (update :evaluations conj evaluation)
         (assoc :prev-failed? (boolean (some failed? results)))

@@ -202,8 +202,9 @@
       (when-let [v (System/getenv k)] (.put env k v)))
     (.put env "TERM" "xterm-256color")
     (when s (.put env "TMPDIR" (str (:scratch s) "/")))
-    ;; a build can tell it has no network, and use what is on disk
-    (when s (.put env "ORBIS_BOX" "1"))
+    ;; a build can tell it has no network, and use what is on disk. With the network open it must not
+    ;; think so: a fresh copy then skipped every dependency and no agent could build its own work
+    (when (and s (not= "all" (str (:network s)))) (.put env "ORBIS_BOX" "1"))
     (when-let [{:keys [sock]} (:ssh s)]
       (.put env "SSH_AUTH_SOCK" (str sock))
       ;; a host not in known_hosts is learned in scratch: ssh could not write it to ~/.ssh

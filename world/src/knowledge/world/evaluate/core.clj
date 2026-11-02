@@ -273,7 +273,7 @@
    :thinking-so-far and :retry-of retry a call cut at model/reasoning-max-chars: the reasoning
    already paid for goes back in, and the model answers from it.
    Returns at queued with the Evaluation id and a future of the outcome, or {:err ...}."
-  [world {:keys [lean? hold-tools model-id changes wake-note max-tokens thinking-so-far last-turn? retry-of principal working-set model route policy depth message via sync? wake reasoning known rendered compressed steers ids] :as args}]
+  [world {:keys [nudge lean? hold-tools model-id changes wake-note max-tokens thinking-so-far last-turn? retry-of principal working-set model route policy depth message via sync? wake reasoning known rendered compressed steers ids] :as args}]
   (let [db (act/db world)
         model-state (objects/state db model)
         residency (get-in model-state [:object/fields :model/residency :field/value])]
@@ -303,7 +303,7 @@
                 {ser-ok :ok ser-err :err} (ser/serialize! world {:changes changes :tools? tools? :principal principal :working-set working-set :model model :ids ids
                                                                  :depth depth :route route :message message :known known :steers steers
                                                                  :thinking-so-far thinking-so-far
-                                                                 :last-turn? last-turn? :wake-note wake-note :lean? lean?
+                                                                 :last-turn? last-turn? :nudge nudge :wake-note wake-note :lean? lean?
                                                                  :rendered rendered :via evaluation :grant grant})]
             (if ser-err
               {:err ser-err}

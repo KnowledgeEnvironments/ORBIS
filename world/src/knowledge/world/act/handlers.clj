@@ -461,9 +461,17 @@
   "A project's Principal holds its own names, and nothing else."
   ["read" "reference" "transmit" "write" "evaluate" "create"])
 
+(def ^:private working-habits
+  "What every project's charter says, the agent's own words or not. The commands are the project's:
+   seen live, a Clojure project tested with `lein`, a command nothing in it mentions."
+  (str " Before changing code, find how this project builds and tests in its AGENTS.md, README or Makefile, and use "
+       "those commands exactly: never guess one. Read a function's definition before calling it. Build and run the "
+       "tests after a change, and report only what they showed."))
+
 (defn- project-charter [name creator-name what]
   (str "You own the project " name (when what (str ": " what)) ". Work inside your mount `" name
-       "`, answer from its files, and ask " creator-name " on your Route for anything beyond it."))
+       "`, answer from its files, and ask " creator-name " on your Route for anything beyond it."
+       working-habits))
 
 (defn- project-dir
   "Where a cloned project lives: under the world, apart from the ORBIS source."
@@ -503,7 +511,7 @@
         short? (< (count (str/trim (str charter))) 40)
         made (:result (ok! (actions/handle! :principal.create world p
                                             {:name name
-                                             :charter (if short? (project-charter name (name-of (act/db world) p) what) charter)
+                                             :charter (if short? (project-charter name (name-of (act/db world) p) what) (str charter working-habits))
                                              :grant {:scope {:prefix name} :ops project-grant}}
                                             opts)))
         mounted (:result (ok! (mount! world p {:principal (str (:principal made)) :path dir :name name} opts)))

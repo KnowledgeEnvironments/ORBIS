@@ -122,3 +122,12 @@
               pol (ser/policy db p)]
           (is (> (:serialize/evaluations-verbatim pol) 1000) "every turn of a wake stays whole")
           (is (> (:serialize/run-result-cap pol) 100000) "and a run's output is not cut to 2 KiB"))))))
+
+(deftest a-conversation-that-only-reads-is-told-to-write
+  (let [nudge #'knowledge.world.loop.core/still-reading]
+    (is (nil? (nudge {} {:i 10})) "early on it is left alone")
+    (is (re-find #"25 turns" (nudge {} {:i 25})))
+    (is (nil? (nudge {} {:i 26})) "and it is not said every turn")
+    (is (nil? (nudge {} {:i 30 :changed-at 28})) "a change resets it")
+    (is (nil? (nudge {:work? true} {:i 25})) "an 8k wake has its own note")))
+
