@@ -818,6 +818,9 @@ void TerminalPane::drawContextBar(Tab& tab, const model::Evaluations& evals) {
     const float avail = ImGui::GetContentRegionAvail().x;
     const float barW = g.known ? std::min(cw * 14.0f, avail - words) : 0.0f;
     if (avail < words || (g.known && barW < cw * 4.0f)) {
+        // The row is full (a plan adds "Using ChatGPT plan" and "manage usage"): the gauge stays out,
+        // and the line is ended here, or the input line lands to the right of the row, off the pane.
+        ImGui::NewLine();
         return;
     }
     ImGui::SameLine(ImGui::GetCursorPosX() + avail - words - barW);
