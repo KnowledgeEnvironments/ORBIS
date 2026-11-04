@@ -141,7 +141,7 @@
 (deftest a-status-reaches-the-model-whole
   (let [lines @#'knowledge.world.serialize.core/op-result-lines
         p {:name "atlas" :path "/p/atlas" :owner "atlas" :state "idle" :about "a control plane"
-           :git {:branch "main" :last-commit "abc fix" :uncommitted 2} :tests "ctest"
+           :git {:branch "master" :last-commit "abc fix" :uncommitted 2} :tests "ctest"
            :last-run {:command "ctest" :exit 0} :last-said "done" :contents ["a/" "b"]}
         ls (lines {:result {:projects [(assoc p :name "grid") p] :next "answer"} :object "x"})
         text (str/join "\n" ls)]

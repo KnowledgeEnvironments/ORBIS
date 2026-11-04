@@ -153,7 +153,7 @@
           world {:data-dir (.getCanonicalPath data) :config {:release newer}}
           err (release/make! world {:rev old})]
       (is (= :conflict (get-in err [:err :code])) (pr-str err))
-      (is (str/includes? (str (get-in err [:err :message])) "git merge origin/main"))
+      (is (str/includes? (str (get-in err [:err :message])) "git merge origin/master"))
       (testing "a commit that has the running code in it is not refused for that"
         (is (not= :conflict (get-in (release/make! world {:rev newer}) [:err :code])))))))
 

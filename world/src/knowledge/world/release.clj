@@ -123,7 +123,7 @@
           (behind? world src commit)
           (act/err :conflict (str "this commit lacks what is running (" (subs (str (:commit (running (:config world))) "            ") 0 12)
                                   "), so a restart onto it would undo that work. Bring it in first: "
-                                  "`git fetch origin && git merge origin/main`, build, test, then release.make again."))
+                                  "`git fetch origin && git merge origin/master`, build, test, then release.make again."))
           (.isDirectory (io/file (releases-dir data) commit))
           {:ok {:result {:commit commit :log-version (:log-version (manifest (io/file (releases-dir data) commit)))}}}
           :else

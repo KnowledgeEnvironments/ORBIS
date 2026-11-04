@@ -21,15 +21,15 @@
 (defn- act! [c action args] (ws/request!! c :act {:action (keyword action) :args args} 30000))
 
 (defn- bare-with-a-commit
-  "A bare remote holding main."
+  "A bare remote holding master."
   []
   (let [seed (temp-dir) bare (temp-dir)]
-    (git! seed "init" "-q" "-b" "main")
+    (git! seed "init" "-q" "-b" "master")
     (spit (io/file seed "README.md") "# skyHAB\n\nA project.\n")
     (git! seed "add" "-A")
     (git! seed "-c" "user.name=t" "-c" "user.email=t@t" "commit" "-q" "-m" "one")
-    (git! bare "init" "-q" "--bare" "-b" "main")
-    (git! seed "push" "-q" (str "file://" bare) "main:main")
+    (git! bare "init" "-q" "--bare" "-b" "master")
+    (git! seed "push" "-q" (str "file://" bare) "master:master")
     {:seed seed :bare bare :url (str "file://" bare "/skyHAB.git")
      :plain (str "file://" bare)}))
 
