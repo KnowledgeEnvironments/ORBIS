@@ -5,6 +5,7 @@
 #include "modules/Registry.hpp"
 #include "platform/Platform.hpp"
 #include "ui/Fonts.hpp"
+#include "ui/Textures.hpp"
 #include "ui/TextMenu.hpp"
 #include "ui/Themes.hpp"
 #include "ui/Theme.hpp"
@@ -92,6 +93,134 @@ void resetViewSettings(FrameInputs& in) {
     p.history.collapsed = !v.historyOpen;
 #endif
     in.saveWhimsy();
+}
+
+// Text centred in a column `width` wide that starts at `left`, wrapped at words.
+void centeredText(const std::string& s, ImU32 color, float left, float width) {
+    std::vector<std::string> lines;
+    std::string cur;
+    std::size_t at = 0;
+    while (at <= s.size()) {
+        const std::size_t sp = std::min(s.find(' ', at), s.size());
+        const std::string word = s.substr(at, sp - at);
+        const std::string tried = cur.empty() ? word : cur + " " + word;
+        if (!cur.empty() && ImGui::CalcTextSize(tried.c_str()).x > width) {
+            lines.push_back(cur);
+            cur = word;
+        } else {
+            cur = tried;
+        }
+        at = sp + 1;
+    }
+    if (!cur.empty()) {
+        lines.push_back(cur);
+    }
+    for (const std::string& l : lines) {
+        ImGui::SetCursorPosX(left + std::floor((width - ImGui::CalcTextSize(l.c_str()).x) * 0.5f));
+        ui::text(color, l);
+    }
+}
+
+// A dim rule across the column, with air above and below.
+void aboutRule(float left, float width) {
+    const float line = ImGui::GetTextLineHeight();
+    ImGui::Dummy(ImVec2(width, line * 0.5f));
+    const ImVec2 at = ImGui::GetCursorScreenPos();
+    const float x0 = at.x + left - ImGui::GetCursorPosX();
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(x0, std::floor(at.y) + 0.5f), ImVec2(x0 + width, std::floor(at.y) + 0.5f), ui::Ink::secondary);
+    ImGui::Dummy(ImVec2(width, line * 0.5f));
+}
+
+// HELP, ABOUT. One centred column: the logo, the name large, what it stands for and what it is; a
+// rule; the world this client is attached to and the Clojure world's release, as a small table; a
+// rule; the copyright; CLOSE.
+void drawAbout(FrameInputs& in) {
+    if (std::exchange(g_popups.about, false)) {
+        ImGui::OpenPopup("ABOUT");
+    }
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(ImGui::GetTextLineHeight() * 2.0f, ImGui::GetTextLineHeight() * 1.5f));
+    const bool open = ImGui::BeginPopupModal("ABOUT", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::PopStyleVar();
+    if (!open) {
+        return;
+    }
+    const float line = ImGui::GetTextLineHeight();
+    const float width = std::floor(ImGui::CalcTextSize("0").x * 46.0f);
+    const float left = ImGui::GetCursorPosX();
+    ImGui::Dummy(ImVec2(width, 0.0f)); // the column's width, whatever is in it
+    if (const ui::textures::Texture& logo = ui::textures::asset("server.png"); logo.valid()) {
+        const float h = std::floor(line * 8.0f);
+        const float w = std::floor(h * static_cast<float>(logo.w) / static_cast<float>(logo.h));
+        ImGui::SetCursorPosX(left + std::floor((width - w) * 0.5f));
+        ImGui::Image(logo.id, ImVec2(w, h));
+        ImGui::Dummy(ImVec2(width, line * 0.25f));
+    }
+    {
+        ImFont* face = ui::condensedFont() != nullptr ? ui::condensedFont() : ImGui::GetFont();
+        ImGui::PushFont(face, std::floor(ImGui::GetFontSize() * 2.2f));
+        centeredText(kProductName, ui::Ink::strong, left, width);
+        ImGui::PopFont();
+    }
+    centeredText(kProductExpansion, ui::Ink::primary, left, width);
+    ImGui::Dummy(ImVec2(width, line * 0.25f));
+    centeredText(kTagline, ui::Ink::secondary, left, width);
+    aboutRule(left, width);
+
+    // the facts: a dim label column, right-aligned, and the values beside it
+    Runtime& rt = in.rt;
+    const WorldInfo& world = rt.session.world();
+    const model::PrincipalInfo* w = rt.session.attached() && !world.id.empty() ? rt.principals.get(world.id) : nullptr;
+    const model::FieldState* rel = w != nullptr ? w->field("world/release") : nullptr;
+    std::vector<std::pair<std::string, std::string>> facts;
+    if (!rt.session.attached()) {
+        facts.emplace_back("world", "not attached");
+    } else {
+        facts.emplace_back("world", world.name.empty() ? std::string("attached") : world.name);
+        if (rel != nullptr && rel->value.is_object()) {
+            const std::string version = rel->value.value("version", std::string());
+            const std::string commit = rel->value.value("commit", std::string());
+            if (!version.empty()) {
+                facts.emplace_back("release", version);
+            }
+            if (!commit.empty()) {
+                facts.emplace_back("commit", commit.substr(0, 12));
+            }
+            if (rel->value.contains("log-version")) {
+                facts.emplace_back("log format", rel->value["log-version"].dump());
+            }
+        } else {
+            facts.emplace_back("release", "none: started from a checkout");
+        }
+    }
+    float labelW = 0.0f;
+    for (const auto& [k, v] : facts) {
+        labelW = std::max(labelW, ImGui::CalcTextSize(ui::upper(k).c_str()).x);
+    }
+    const float gap = ImGui::CalcTextSize("00").x;
+    float valueW = 0.0f;
+    for (const auto& [k, v] : facts) {
+        valueW = std::max(valueW, ImGui::CalcTextSize(v.c_str()).x);
+    }
+    const float tableX = left + std::max(0.0f, std::floor((width - labelW - gap - valueW) * 0.5f));
+    for (const auto& [k, v] : facts) {
+        const std::string label = ui::upper(k);
+        ImGui::SetCursorPosX(tableX + labelW - ImGui::CalcTextSize(label.c_str()).x);
+        ui::text(ui::Ink::secondary, label);
+        ImGui::SameLine(tableX + labelW + gap);
+        ui::text(ui::Ink::primary, v);
+    }
+    aboutRule(left, width);
+    centeredText(kCopyright, ui::Ink::secondary, left, width);
+    centeredText(kContact, ui::Ink::nav, left, width);
+    centeredText(kRights, ui::Ink::secondary, left, width);
+    ImGui::Dummy(ImVec2(width, line * 0.5f));
+    const float bw = ImGui::CalcTextSize(("[ " + ui::upper("close") + " ]").c_str()).x;
+    ImGui::SetCursorPosX(left + std::floor((width - bw) * 0.5f));
+    if (ui::bracketButtonNamed("close", "close-ABOUT") || ImGui::IsKeyPressed(ImGuiKey_Escape, false) ||
+        ImGui::IsKeyPressed(ImGuiKey_Enter, false)) {
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndPopup();
 }
 
 std::vector<Item> items(MenuHost h) {
@@ -215,7 +344,7 @@ std::vector<Item> items(MenuHost h) {
     add("HELP", "SHOW DOCUMENTATION", "", "the world's manual: search it, read it, bookmark it", [&] { p.manual.toggle(); });
     add("HELP", "KEYBOARD SHORTCUTS", "", "every key the listener answers to", [] { g_popups.shortcuts = true; });
     add("HELP", "WHAT THINGS ARE", "", "Principals, Fields, panes, Grants, in a line each", [] { g_popups.things = true; });
-    add("HELP", "ABOUT", "", "version and world", [] { g_popups.about = true; });
+    add("HELP", "ABOUT", "", "what ORBIS is, the world's release, the copyright", [] { g_popups.about = true; });
     return out;
 }
 
@@ -429,7 +558,7 @@ void drawMenuPopups(MenuHost h) {
               "A Grant says who may do what to what.\n"
               "A pane is a live surface on an Object; it lives in the world, not in this client.\n"
               "HISTORY is the event log; CTX is how much of the model's context a conversation uses.\n");
-    textPopup(g_popups.about, "ABOUT", (std::string(kProductName) + ": " + kProductExpansion + ".\n" + kTagline + "\n").c_str());
+    drawAbout(in);
 }
 
 } // namespace ke::app

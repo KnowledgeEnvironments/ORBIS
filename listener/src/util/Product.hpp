@@ -8,5 +8,9 @@ namespace ke {
 inline constexpr const char* kProductName = "ORBIS";
 inline constexpr const char* kProductExpansion = "On-line Relative Basis Information System";
 inline constexpr const char* kTagline = "A shared knowledge environment for doing work with people, computers, and artificial intelligence.";
+// The copyright, as HELP, ABOUT shows it: one row each, so no punctuation runs into the address.
+inline constexpr const char* kCopyright = "\u00a92026 I. Finder, KnowledgeEnvironments";
+inline constexpr const char* kContact = "src@lispm.net";
+inline constexpr const char* kRights = "All Rights Reserved.";
 
 } // namespace ke
