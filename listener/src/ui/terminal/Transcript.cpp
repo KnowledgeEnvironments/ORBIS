@@ -1,4 +1,5 @@
 #include "ui/terminal/Internal.hpp"
+#include "ui/Fonts.hpp"
 
 #include "platform/Platform.hpp"
 #include "util/Base64.hpp"
@@ -124,6 +125,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(ImGui::GetStyle().WindowPadding.x, ImGui::GetStyle().FramePadding.y * 2.0f));
     ImGui::BeginChild("transcript", ImVec2(0, readOnly ? 0.0f : ImGui::GetContentRegionAvail().y - footer), ImGuiChildFlags_AlwaysUseWindowPadding,
                       ImGuiWindowFlags_HorizontalScrollbar * 0);
+    pushMono(); // one size in here: the text is monospace at its own size, so cards, views and their controls are too
     if (ImGui::GetScrollMaxY() > 0.0f) {
         const bool atBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 2.0f;
         // Scrolling up lets go of the bottom, and being at the bottom takes hold of it again, however
@@ -164,39 +166,39 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
         ImGui::GetWindowDrawList()->AddLine(ImVec2(x, docOrigin.y + h1), ImVec2(x, docOrigin.y + y1), Ink::secondary, 1.0f);
         ImGui::GetWindowDrawList()->AddLine(ImVec2(x, docOrigin.y + y1), ImVec2(x + gutter * 0.5f, docOrigin.y + y1), Ink::secondary, 1.0f);
     }
-    // [ OPEN THREAD ] on each rail header's own line, no taller than the line, after the header's text:
-    // the whole conversation in its own window.
-    {
-        const ImVec2 keep = ImGui::GetCursorScreenPos();
-        const float cw = ImGui::CalcTextSize("0").x;
-        const float bw = ImGui::CalcTextSize("OPEN THREAD").x + cw;
-        for (const View::Rail& r : view.rails) {
-            float h0 = 0.0f, h1 = 0.0f;
-            if (!paraSpan(view.layout, r.headerPara, r.headerPara, h0, h1)) {
-                continue;
-            }
-            const std::string header = r.headerPara < doc.paras.size() ? doc.paras[r.headerPara].text() : std::string();
-            const float afterText = docOrigin.x + ImGui::CalcTextSize(header.c_str()).x + 2.0f * cw;
-            const ImVec2 at(std::min(afterText, docOrigin.x + wrap - bw), docOrigin.y + h0);
-            if (!ImGui::IsRectVisible(at, ImVec2(at.x + bw, at.y + ImGui::GetTextLineHeight()))) {
-                continue; // scrolled away: no item, no drive target (a click there would land on other text)
-            }
-            ImGui::SetCursorScreenPos(at);
-            ImGui::PushID(r.thread.c_str());
-            if (textLink("open thread", "thread:" + chat::idPrefix(r.thread))) {
-                if (!tab.threadUi.erase(r.thread)) {
-                    Tab::ThreadUi tu;
-                    tu.thread = r.thread;
-                    tab.threadUi[r.thread] = std::move(tu);
-                }
-            }
-            if (ImGui::IsItemHovered()) {
-                ke::ui::tip("the whole thread %s in its own window: every participant's Messages in order, with their cost", r.thread.c_str());
-            }
-            ImGui::PopID();
+    // `open thread` in each rail header is a link run in the line (TranscriptView): the hand and an
+    // underline on hover, a drive target, and a click opens the whole conversation in its own window
+    // instead of folding the thread, which a click anywhere else on the header still does.
+    std::string threadLinkHit;
+    for (const View::Rail& r : view.rails) {
+        if (r.headerPara >= doc.starts.size() || r.linkEnd <= r.linkBegin) {
+            continue;
         }
-        ui::restoreCursor(keep);
-        ImGui::Dummy(ImVec2(0.0f, 0.0f));
+        const long long a = static_cast<long long>(doc.starts[r.headerPara] + r.linkBegin);
+        const long long z = static_cast<long long>(doc.starts[r.headerPara] + r.linkEnd);
+        ImVec2 p0, p1;
+        float h0 = 0.0f, h1 = 0.0f;
+        const bool placed = paraOffsetPos(doc, view.layout, mono, ImGui::GetFontSize(), docOrigin, r.headerPara, r.linkBegin, p0, h0) &&
+                            paraOffsetPos(doc, view.layout, mono, ImGui::GetFontSize(), docOrigin, r.headerPara, r.linkEnd, p1, h1) &&
+                            p0.y == p1.y; // one visual line; a wrapped link still works, without the underline
+        if (placed && ImGui::IsRectVisible(p0, ImVec2(p1.x, p1.y + h1))) {
+            drive::hit("button:thread:" + chat::idPrefix(r.thread), p0, ImVec2(p1.x, p1.y + h1));
+        }
+        if (sr.hoveredOffset >= a && sr.hoveredOffset < z && !tab.sel.dragging) {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+            if (placed) {
+                ImGui::GetWindowDrawList()->AddLine(ImVec2(p0.x, p0.y + h0 - 1.0f), ImVec2(p1.x, p1.y + h1 - 1.0f), Ink::nav);
+            }
+            ke::ui::tip("the whole thread %s in its own window: every participant's Messages in order, with their cost", r.thread.c_str());
+        }
+        if (sr.clickedOffset >= a && sr.clickedOffset < z) {
+            threadLinkHit = r.thread;
+        }
+    }
+    if (!threadLinkHit.empty() && !tab.threadUi.erase(threadLinkHit)) {
+        Tab::ThreadUi tu;
+        tu.thread = threadLinkHit;
+        tab.threadUi[threadLinkHit] = std::move(tu);
     }
     // Kernel record boxes: a dim frame around a reply's run record, red when the prose contradicted it.
     for (const View::Record& r : view.records) {
@@ -246,7 +248,8 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
                 tab.expandedThinking.insert(it->second.evaluation);
             }
             ++tab.expandedVersion;
-        } else if (auto tt = view.threadToggles.find(static_cast<std::size_t>(sr.clickedPara)); tt != view.threadToggles.end()) {
+        } else if (auto tt = view.threadToggles.find(static_cast<std::size_t>(sr.clickedPara));
+                   tt != view.threadToggles.end() && threadLinkHit.empty()) {
             if (!tab.collapsedThreads.erase(tt->second)) {
                 tab.collapsedThreads.insert(tt->second);
             }
@@ -404,6 +407,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
         ImGui::SetScrollHereY(1.0f);
     }
     tab.lastLines = view.shape;
+    popMono();
     ImGui::EndChild();
     ImGui::PopStyleVar();
     insetRim(ImGui::GetWindowDrawList(), ImGui::GetItemRectMin(), ImGui::GetItemRectMax());

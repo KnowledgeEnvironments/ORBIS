@@ -6,8 +6,6 @@
 
 namespace ke::chat {
 
-namespace {
-
 // Terminal colour codes in a stdout tail (`ESC [ 32 m`) are noise in a chat: dropped.
 std::string stripAnsi(std::string_view s) {
     std::string out;
@@ -25,6 +23,8 @@ std::string stripAnsi(std::string_view s) {
     }
     return out;
 }
+
+namespace {
 
 std::string_view trimRight(std::string_view s) {
     while (!s.empty() && (s.back() == '\n' || s.back() == '\r' || s.back() == ' ' || s.back() == '\t')) {

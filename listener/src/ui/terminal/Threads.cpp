@@ -1,4 +1,5 @@
 #include "ui/terminal/Internal.hpp"
+#include "ui/Fonts.hpp"
 
 namespace ke::ui {
 
@@ -228,6 +229,7 @@ void TerminalPane::drawThreadPanes(Tab& tab, model::Principals& principals, cons
             ImGui::SameLine();
             text(Ink::secondary, "thread " + chat::idPrefix(tid) + " \u00b7 " + (tu.source == "world" ? "from the world (history thread, " + std::to_string(tu.took) + " taken)" : tu.source == "fold" ? "from the fold (history thread: " + tu.err + ")" : "loading\u2026"));
             ImGui::BeginChild("thread-body", ImVec2(0, 0), ImGuiChildFlags_AlwaysUseWindowPadding);
+            pushMono(); // as in the transcript: one size for the text and everything set in it
             const float wrap = ImGui::GetContentRegionAvail().x;
             if (tu.themeAt != themeVersion() || tu.messagesVersion != chat.messages().version() || tu.principalsAt != principals.applied() || tu.evalsAt != evals.applied()) {
                 rebuildThreadDoc(tab, tu, principals, evals, chat, self, wrap);
@@ -262,6 +264,7 @@ void TerminalPane::drawThreadPanes(Tab& tab, model::Principals& principals, cons
             if (ImGui::IsKeyPressed(ImGuiKey_Escape) && ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
                 tu.sel.clear();
             }
+            popMono();
             ImGui::EndChild();
             insetRim(ImGui::GetWindowDrawList(), ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
         }

@@ -211,7 +211,7 @@ TabBarResult tabBar(const char* id, const std::vector<TabItem>& tabs, int active
         if (ImGui::BeginPopup("tablist")) {
             for (int i = 0; i < static_cast<int>(tabs.size()); ++i) {
                 const TabItem& t = tabs[static_cast<std::size_t>(i)];
-                const std::string row = t.glyph + " " + t.label + (t.note.empty() ? "" : " " + t.note);
+                const std::string row = (t.glyph.empty() ? std::string() : t.glyph + " ") + t.label + (t.note.empty() ? "" : " " + t.note);
                 if (ImGui::Selectable(row.c_str(), i == active)) {
                     res.picked = i;
                 }
@@ -237,7 +237,8 @@ int subTabs(const char* id, const char* const* names, int count, int active) {
     const float h = ImGui::GetTextLineHeight() + 2.0f;
     const float right = pos.x + ImGui::GetContentRegionAvail().x;
     for (int i = 0; i < count; ++i) {
-        const ImVec2 size = ImGui::CalcTextSize(names[i]);
+        const std::string shown = upper(names[i]); // the label case; the drive target keeps the name
+        const ImVec2 size = ImGui::CalcTextSize(shown.c_str());
         if (x + size.x + 8.0f > right && x > pos.x + 4.0f) { // a narrow pane: the strip wraps
             x = pos.x + 4.0f;
             y += h;
@@ -250,7 +251,7 @@ int subTabs(const char* id, const char* const* names, int count, int active) {
         drive::hit(std::string("tab:") + names[i], ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
         const bool hovered = ImGui::IsItemHovered();
         ImGui::PopID();
-        dl->AddText(ImVec2(x + 4.0f, y + 1.0f), i == active ? Ink::strong : hovered ? Ink::nav : Ink::secondary, names[i]);
+        dl->AddText(ImVec2(x + 4.0f, y + 1.0f), i == active ? Ink::strong : hovered ? Ink::nav : Ink::secondary, shown.c_str());
         if (i == active) {
             dl->AddLine(ImVec2(x + 4.0f, y + h - 1.0f), ImVec2(x + 4.0f + size.x, y + h - 1.0f), Ink::nav);
         }
@@ -259,6 +260,46 @@ int subTabs(const char* id, const char* const* names, int count, int active) {
     ImGui::PopID();
     ImGui::SetCursorScreenPos(pos);
     ImGui::Dummy(ImVec2(right - pos.x, y - pos.y + h));
+    return result;
+}
+
+float subChoiceWidth(const char* lead, const char* const* names, int count) {
+    float w = ImGui::CalcTextSize(upper(lead).c_str()).x + 8.0f;
+    for (int i = 0; i < count; ++i) {
+        w += ImGui::CalcTextSize(upper(names[i]).c_str()).x + 12.0f;
+    }
+    return w;
+}
+
+int subChoice(const char* id, const char* lead, const char* const* names, const char* const* targets, int count, int active) {
+    int result = active;
+    ImGui::PushID(id);
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    const ImVec2 pos = ImGui::GetCursorScreenPos();
+    const float h = ImGui::GetTextLineHeight() + 2.0f;
+    const std::string leadText = upper(lead);
+    dl->AddText(ImVec2(pos.x, pos.y + 1.0f), Ink::secondary, leadText.c_str());
+    float x = pos.x + ImGui::CalcTextSize(leadText.c_str()).x + 8.0f;
+    for (int i = 0; i < count; ++i) {
+        const std::string shown = upper(names[i]);
+        const ImVec2 size = ImGui::CalcTextSize(shown.c_str());
+        ImGui::SetCursorScreenPos(ImVec2(x - 4.0f, pos.y));
+        ImGui::PushID(i);
+        if (ImGui::InvisibleButton("choice", ImVec2(size.x + 8.0f, h))) {
+            result = i;
+        }
+        drive::hit(std::string("button:") + targets[i], ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        const bool hovered = ImGui::IsItemHovered();
+        ImGui::PopID();
+        dl->AddText(ImVec2(x, pos.y + 1.0f), i == active ? Ink::strong : hovered ? Ink::nav : Ink::secondary, shown.c_str());
+        if (i == active) {
+            dl->AddLine(ImVec2(x, pos.y + h - 1.0f), ImVec2(x + size.x, pos.y + h - 1.0f), Ink::nav);
+        }
+        x += size.x + 12.0f;
+    }
+    ImGui::PopID();
+    ImGui::SetCursorScreenPos(pos);
+    ImGui::Dummy(ImVec2(x - pos.x, h));
     return result;
 }
 

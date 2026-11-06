@@ -46,5 +46,10 @@ TabBarResult tabBar(const char* id, const std::vector<TabItem>& tabs, int active
 
 // The strip subordinate to the bar: small words on the content's own surface, under its tab.
 int subTabs(const char* id, const char* const* names, int count, int active);
+// A choice of what the content shows, in the same words as subTabs: `show all · messages · activity`,
+// the active one underlined. Not a button: it changes the view, it does nothing. Drive targets are
+// `button:<targets[i]>`. Draws at the cursor; subChoiceWidth says how wide, for right alignment.
+float subChoiceWidth(const char* lead, const char* const* names, int count);
+int subChoice(const char* id, const char* lead, const char* const* names, const char* const* targets, int count, int active);
 
 } // namespace ke::ui

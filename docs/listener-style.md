@@ -75,6 +75,36 @@ control, pressed control, title well, scrollbar track, scrollbar control. Select
 control. Tabs are raised and pressed buttons where the theme says square. A control keeps the box its
 bracketed word would take, so a theme never moves the layout.
 
+## Tabs, buttons, links (2026-11-05)
+
+Three kinds of control, and each looks like what it does.
+
+- **A tab chooses what you look at.** Two levels. The tab bar (`ui::tabBar`) holds the views
+  (Principals, Chat, Graph, Panes, History) and, inside Chat, one tab per agent. Under it, the
+  sub-strip (`ui::subTabs`) is plain words with the active one underlined: Transcript,
+  Conversations, Fields and the rest. A choice of what a view shows is in the same words, right
+  of the sub-strip on its row when it fits: `Show all · messages · activity` (`ui::subChoice`).
+  A tab is never a bracket.
+- **A bracket does something.** `[ ACTIONS ]`, `[ MANAGE USAGE ]`, `[ APPROVE ]`, `[ STOP ]`. A
+  bracket never switches a view.
+- **A link goes somewhere, in cyan, in the text.** A name, a path, `open thread` at the end of a
+  thread's header line. Same font, same baseline, same case as the line it is in; the hand and an
+  underline on hover.
+- **The menu bar is menu titles.** World, Approvals, Notices and Search open windows, drawn as
+  words like File and Edit (`ui::menuBarItem`), amber when something waits. No boxes there.
+- **A kind mark only where a strip mixes kinds.** Views carry none: their names say what they are.
+  Chat's agent tabs carry `>` for an agent, `@` for you, `(i)` for an inspector; Panes carries
+  `>_` for a terminal and `md` for a file. One meaning per mark.
+- **One case.** Every label, tabs and sub-tabs included, follows VIEW, LABELS. Names (agents,
+  files, worlds) are shown as typed. Drive targets keep the lower-case name, whatever is shown.
+- **One size inside a transcript.** The transcript and a thread's window are set at the monospace size, and so is
+  everything in them: cards, view blocks, their chips and links. The chrome around them (tabs, the Reasoning row,
+  the input) stays at the interface size.
+- **A column fits what is in it.** Your page's sender column is as wide as the longest name in its section, at most
+  28 columns; a longer name ends in `…` and shows whole on hover.
+- **A row never runs past the pane.** What does not fit gives way, least needed first, and says
+  so in a tooltip: on the Reasoning row the plain "Using ChatGPT plan" goes first, then the gauge.
+
 ## Shape
 
 - Rounding 0 everywhere. Window and pane titles in a title well, uppercase, letter-spaced.
@@ -96,11 +126,10 @@ bracketed word would take, so a theme never moves the layout.
 
 - Panels and chips have one or two chamfered corners, a 45-degree cut of 6 px, drawn with
   the ImGui draw list rather than rounding. Top-left and bottom-right by default.
-- Tab headers are parallelograms slanted 15 degrees. **Every tab is inverse video when
-  active**: phosphor fill, black text, never a tint behind phosphor text. Hover inverts at the
-  dim phosphor (dim fill, black text); idle tabs are an outline. One implementation draws them
-  all (`ui::tabStrip`): the per-agent chat tabs, TRANSCRIPT / PROMPT / FIELDS, the
-  desktop's CHAT | GRAPH | PANES switch, the phone's strip. ImGui's own tab bars are never shown.
+- The phone's strip (`ui::tabStrip`) has parallelogram tabs slanted 15 degrees, inverse video
+  when active: phosphor fill, black text, never a tint behind phosphor text. Hover inverts at the
+  dim phosphor; idle tabs are an outline. The desktop's tabs are in **Tabs, buttons, links** below.
+  ImGui's own tab bars are never shown.
   Bracket words `[ WORD ]` follow the same rule: inverse when on or held, dim-inverse on hover.
 - Tab metrics, in points at scale 1 and multiplied by the display scale, all on whole pixels:
   height = text line height + 6 (3 above and below the glyphs); 8 of padding each side of the
@@ -182,8 +211,8 @@ stops, and typing resumes without a click.
 ## Chats
 
 One chat per agent, opened from the PRINCIPALS pane; tabs across the top of the
-CHAT pane, Cmd-W closes. Views are bracket words, inverse when active:
-`[ TRANSCRIPT ] [ PROMPT ] [ FIELDS ]`.
+CHAT pane, Cmd-W closes. Views are the sub-strip's words, the active one underlined:
+Transcript, Conversations, Instructions, Fields, Memory, Devices, Rules.
 
 - Transcript blocks: a head line `NAME  hh:mm:ss  [via <eval>]  <- <in-reply-to>` then the
   body wrapped. Lines typed by this listener are headed `> NAME` in white and set in white; a
@@ -216,15 +245,14 @@ the width class changes, never per frame. Phone width is the phone layout's busi
 ## Threads and noise
 
 Messages that share a `message/thread` are one conversation: a 1 px dim rail runs down the left
-edge, a column and a half in, from the thread's header (`[-] thread · asked by person · 5 messages`, dim, click to fold the
-thread to its root and last reply) to its last paragraph. A reply inside the thread by someone
+edge, a column and a half in, from the thread's header (`▾ thread · asked by person · 5 messages · open thread`, dim with `open thread` a
+cyan link to the thread's own window; a click elsewhere on the line folds the thread to its root and last reply) to its last paragraph. A reply inside the thread by someone
 who is neither the asker nor this terminal's Principal (grid answering root in person's thread)
 hangs two columns further in with `└> grid` in its head (U+21B3 is not in JetBrains Mono; the box-drawing corner is); the asker's and the Principal's own lines stay
 flush. System lines, a Trigger's firing (`message/kind trigger`) and an approval decision
 (`approval-result`), are one dim line each: `heartbeat  hh:mm:ss  root  …`. The filter row above
-the transcript, `FILTER [ all ] [ chat ] [ system ]` (the active one inverse, persisted), hides
-them under `chat` and shows only them under `system`; the CTX bar says `FILTER CHAT` while it is
-not `all`. A courtesy reply between loops at hop 3 or beyond draws dim: present, not loud.
+the transcript, `Show all · messages · activity` (the active one underlined, persisted), hides
+them under `messages` and shows only them under `activity`. A courtesy reply between loops at hop 3 or beyond draws dim: present, not loud.
 
 ## Cards and dialogs
 

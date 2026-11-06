@@ -310,27 +310,36 @@ void TerminalPane::drawBody(model::Principals& principals, const model::Evaluati
     if (inlineTabs_) {
         ImGui::SetCursorPosX(ImGui::GetStyle().WindowPadding.x); // row 2 starts at the pane's left edge
     }
+    const ImVec2 rowAt = ImGui::GetCursorScreenPos();
     tab.view = kViewIds[subTabs("views", kViews, 7, shownView)];
-    if (tab.view == 0) { // what the chat shows, beside the tabs that choose what you are looking at
-        static const std::pair<const char*, const char*> kShow[] = {{"all", "all"}, {"messages", "chat"}, {"activity", "system"}};
-        float wide = 0.0f;
-        for (const auto& [label, id] : kShow) {
-            wide += ImGui::CalcTextSize((std::string("[ ") + label + " ]").c_str()).x + 3.0f * ImGui::GetStyle().ItemSpacing.x;
+    if (tab.view == 0) {
+        // What the transcript shows: a choice in the sub-strip's own words, right-aligned on the views'
+        // row when there is room, else on its own row. It changes the view, so it is not a button.
+        static const char* const kShowNames[] = {"all", "messages", "activity"};
+        static const char* const kShowIds[] = {"all", "chat", "system"};
+        static const char* const kShowTargets[] = {"filter:all", "filter:chat", "filter:system"};
+        float words = 4.0f;
+        for (const char* v : kViews) {
+            words += ImGui::CalcTextSize(upper(v).c_str()).x + 12.0f;
         }
+        const float want = subChoiceWidth("show", kShowNames, 3);
         const float rightEdge = ImGui::GetWindowPos().x + ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x;
-        const bool fits = rightEdge - ImGui::GetItemRectMax().x > wide;
-        bool first = true;
-        for (const auto& [label, id] : kShow) {
-            if (!first || fits) {
-                ImGui::SameLine(first ? rightEdge - wide - ImGui::GetWindowPos().x : 0.0f);
+        const ImVec2 after = ImGui::GetCursorScreenPos();
+        const bool fits = rowAt.x + words + want + 16.0f <= rightEdge;
+        const ImVec2 at(std::max(rowAt.x, rightEdge - want), fits ? rowAt.y : after.y);
+        ImGui::SetCursorScreenPos(at);
+        int shown = 0;
+        for (int i = 0; i < 3; ++i) {
+            if (this->filter == kShowIds[i]) {
+                shown = i;
             }
-            first = false;
-            if (bracketButtonNamed(label, std::string("filter:") + id, true, this->filter == id)) {
-                this->filter = id;
-            }
-            if (ImGui::IsItemHovered()) {
-                ke::ui::tip("all: everything. messages: what people and agents said. activity: heartbeats, approvals and status lines");
-            }
+        }
+        this->filter = kShowIds[subChoice("show", "show", kShowNames, kShowTargets, 3, shown)];
+        if (ImGui::IsMouseHoveringRect(at, ImVec2(at.x + want, at.y + ImGui::GetTextLineHeight() + 2.0f))) {
+            ke::ui::tip("all: everything. messages: what people and agents said. activity: heartbeats, approvals and status lines");
+        }
+        if (fits) {
+            restoreCursor(after);
         }
     }
 

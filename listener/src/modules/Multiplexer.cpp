@@ -519,8 +519,7 @@ void Multiplexer::drawLeaf(const model::LayoutLeaf& leaf, int index) {
         ui::TabItem t;
         t.id = id;
         if (const ViewSpec* v = view(id)) {
-            t.glyph = v->glyph;
-            t.label = v->label;
+            t.label = ui::upper(v->label); // a view's name is a label; a pane's name below is a name, as typed
             t.target = v->target;
             t.pinned = true;
             tabs.push_back(std::move(t));

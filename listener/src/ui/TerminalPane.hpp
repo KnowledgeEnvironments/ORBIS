@@ -244,6 +244,8 @@ class TerminalPane {
             std::size_t firstPara = 0;
             std::size_t lastPara = 0;
             bool collapsed = false;
+            std::size_t linkBegin = 0; // `open thread`, a link run in the header: byte offsets in that paragraph
+            std::size_t linkEnd = 0;
         };
         std::vector<Rail> rails;
         std::map<std::size_t, std::string> threadToggles; // header para -> thread id

@@ -35,5 +35,7 @@ struct KernelRecord {
 inline constexpr const char* kKernelRecordHeading = "Runs this wake (kernel record):";
 
 KernelRecord splitKernelRecord(const std::string& text);
+// Terminal colour codes (`ESC [ 32 m`) dropped: noise in a chat, and a `?` box where the font has no glyph.
+std::string stripAnsi(std::string_view s);
 
 } // namespace ke::chat

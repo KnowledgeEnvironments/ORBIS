@@ -30,7 +30,7 @@ struct ViewSpec {
     std::string window; // the ImGui window it draws in, placed by ui::placePane
     std::string label;
     std::string target; // the drive target, `tab:<target>`
-    std::string glyph;
+    // no kind mark: a view's tab is its name (docs/listener-style.md, Tabs); marks are for strips that mix kinds
 };
 
 class Multiplexer final : public Host {

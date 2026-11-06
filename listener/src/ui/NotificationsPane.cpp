@@ -20,12 +20,12 @@ void markRead(chat::Notifications& notifications, chat::Chat& chat, const std::s
 
 } // namespace
 
-bool noticesChip(const chat::Notifications& notifications, bool open) {
+bool noticesChip(const chat::Notifications& notifications, bool open, bool menuBar) {
     const int unread = notifications.unread();
-    const std::string label = "notices " + std::to_string(unread);
+    const std::string label = (menuBar ? upper("notices") : std::string("notices")) + " " + std::to_string(unread);
     const bool hot = notifications.worstUnread().has_value() && chat::loud(*notifications.worstUnread());
-    const bool clicked = bracketButtonNamed(label.c_str(), "notices", true, open,
-                                            hot ? Ink::inspected : unread > 0 ? Ink::primary : Ink::secondary);
+    const ImU32 ink = hot ? Ink::inspected : unread > 0 ? Ink::primary : Ink::secondary;
+    const bool clicked = menuBar ? menuBarItem(label, "notices", open, ink) : bracketButtonNamed(label.c_str(), "notices", true, open, ink);
     if (ImGui::IsItemHovered()) {
         ke::ui::tip("what the world's Principals have told you");
     }

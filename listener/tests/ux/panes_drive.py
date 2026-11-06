@@ -64,7 +64,7 @@ def live(d, kind):
 
 def pick(d, name):
     """A tab by name; past what fits, through the list that names them all."""
-    if "tab:" + name in d.targets():
+    if ("tab:" + name).lower() in (t.lower() for t in d.targets()):  # the drive lists names in lower case
         d.click("tab:" + name)
         return
     d.click("tablist:leaf")

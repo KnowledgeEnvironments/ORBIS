@@ -103,23 +103,36 @@ void TerminalPane::drawModelPicker(Tab& tab, const model::PrincipalInfo* info, c
     const ImVec2 controlAt = ImGui::GetItemRectMin();
     if (ImGui::IsItemHovered()) {
         const std::string source = tab.chosen.is_object() ? tab.chosen.value("source", std::string()) : std::string();
-        ke::ui::tip("%s", (name + (source.empty() ? "" : "\nchosen for: " + source) + "\nclick to choose").c_str());
+        const bool onPlan = tab.chosen.is_object() && tab.chosen.value("plan", false);
+        ke::ui::tip("%s", (name + (source.empty() ? "" : "\nchosen for: " + source) + (onPlan ? "\nusing the ChatGPT plan" : "") +
+                           "\nclick to choose").c_str());
     }
     const bool plan = tab.chosen.is_object() && tab.chosen.value("plan", false);
     const std::string status = tab.chosen.is_object() ? tab.chosen.value("status", std::string()) : std::string();
     const std::string usage = tab.chosen.is_object() ? tab.chosen.value("usage-url", std::string()) : std::string();
     if (plan) {
-        ImGui::SameLine();
-        if (status == "limit") {
-            text(Ink::inspected, "Usage limit reached");
-        } else if (!tab.chosen.value("signed-in", true)) {
-            text(Ink::inspected, "Sign in to ChatGPT again");
-        } else {
-            text(Ink::secondary, "Using ChatGPT plan");
+        // What fits, in order: a warning, then MANAGE USAGE, then the plain "Using ChatGPT plan". The row
+        // never runs past the pane's right edge; what gives way is in the Model button's tooltip.
+        const bool signedIn = tab.chosen.value("signed-in", true);
+        const bool warn = status == "limit" || !signedIn;
+        const std::string words = status == "limit" ? "Usage limit reached" : !signedIn ? "Sign in to ChatGPT again" : "Using ChatGPT plan";
+        const float gap = ImGui::GetStyle().ItemSpacing.x;
+        const float wordsW = ImGui::CalcTextSize(words.c_str()).x + gap;
+        const float manageW = bracketRowWidth({"manage usage"}) + gap;
+        // measured from the last item, so nothing calls SameLine unless something follows it on this row
+        const float rightEdge = ImGui::GetWindowPos().x + ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x;
+        float room = rightEdge - ImGui::GetItemRectMax().x;
+        const bool showWords = warn ? room >= wordsW : room >= wordsW + manageW;
+        if (showWords) {
+            ImGui::SameLine();
+            text(warn ? Ink::inspected : Ink::secondary, words);
+            room -= wordsW;
         }
-        ImGui::SameLine();
-        if (bracketButtonNamed("manage usage", "manage-usage") && !usage.empty()) {
-            platform::openUrl(usage);
+        if (room >= manageW) {
+            ImGui::SameLine();
+            if (bracketButtonNamed("manage usage", "manage-usage") && !usage.empty()) {
+                platform::openUrl(usage);
+            }
         }
     }
     if (const std::string note = stringOf(fieldOf(info, "loop/model-note")); !note.empty()) {

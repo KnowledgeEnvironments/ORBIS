@@ -311,6 +311,14 @@ bool menuItem(const char* word, const char* shortcut, bool* selected, bool enabl
 }
 bool beginMenu(const char* word, bool enabled) { return ImGui::BeginMenu((upper(word) + "###" + word).c_str(), enabled); }
 
+bool menuBarItem(const std::string& shown, const std::string& name, bool open, ImU32 color) {
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(color));
+    const bool clicked = ImGui::MenuItem((shown + "###" + name).c_str(), nullptr, open);
+    ImGui::PopStyleColor();
+    drive::hit("button:" + name, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+    return clicked;
+}
+
 
 std::string spaced(std::string_view s) {
     std::string out;

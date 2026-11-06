@@ -777,8 +777,7 @@ void DesktopFrame::draw(FrameInputs& in) {
             if (std::exchange(worldPickerWanted, false)) {
                 ImGui::OpenPopup("world-picker");
             }
-            if (ui::bracketButtonNamed(wname.empty() ? "world" : ("world " + ui::upper(wname)).c_str(), "world-menu", true,
-                                       false, ui::Ink::strong)) {
+            if (ui::menuBarItem(ui::upper("world") + (wname.empty() ? std::string() : " " + wname), "world-menu", false, ui::Ink::strong)) {
                 ImGui::OpenPopup("world-picker");
             }
             if (ImGui::IsItemHovered()) {
@@ -795,18 +794,18 @@ void DesktopFrame::draw(FrameInputs& in) {
         {
             // Everything waiting on a decision, amber so it is seen from across the room.
             const std::size_t waiting = rt.tasks.pending().size();
-            const std::string label = "approvals " + std::to_string(waiting);
+            const std::string label = ui::upper("approvals") + " " + std::to_string(waiting);
             ImGui::SameLine();
-            if (ui::bracketButtonNamed(label.c_str(), "approvals", true, p.approvals.open(), waiting ? ui::Ink::inspected : ui::Ink::primary)) {
+            if (ui::menuBarItem(label, "approvals", p.approvals.open(), waiting ? ui::Ink::inspected : ui::Ink::primary)) {
                 p.approvals.toggle();
             }
             ImGui::SameLine();
-            if (ui::noticesChip(rt.notifications, p.notices.open())) {
+            if (ui::noticesChip(rt.notifications, p.notices.open(), true)) {
                 p.notices.toggle();
             }
         }
         ImGui::SameLine();
-        if (ui::bracketButtonNamed("search", "search-menu", true, p.history.searchOpen())) {
+        if (ui::menuBarItem(ui::upper("search"), "search-menu", p.history.searchOpen())) {
             if (p.history.searchOpen()) {
                 p.history.closeSearch();
             } else {
@@ -873,12 +872,12 @@ void DesktopFrame::draw(FrameInputs& in) {
         g_layout = &p.mux;
         if (!viewsSet) {
             viewsSet = true;
-            p.mux.setViews({{"view:principals", "PRINCIPALS", "principals", "principals", "@"},
-                            {"view:chat", "CHAT", "chat", "chat", ">"},
-                            {"view:graph", "GRAPH", "graph", "graph", "*"},
-                            {"view:panes", "PANES", "panes", "panes", ">_"},
-                            {"view:history", "HISTORY", "history", "history", "#"},
-                            {"view:inspect", "INSPECT", "inspector", "inspector", "(i)"}},
+            p.mux.setViews({{"view:principals", "PRINCIPALS", "principals", "principals"},
+                            {"view:chat", "CHAT", "chat", "chat"},
+                            {"view:graph", "GRAPH", "graph", "graph"},
+                            {"view:panes", "PANES", "panes", "panes"},
+                            {"view:history", "HISTORY", "history", "history"},
+                            {"view:inspect", "INSPECT", "inspector", "inspector"}},
                            [charW, width, scale = in.uiScale](bool thin) {
                                return defaultLayout(thin, thin ? 0.0f : leftRatioFor(width, charW, scale, false));
                            });

@@ -42,6 +42,8 @@ struct Popups {
     bool shortcuts = false;
     bool things = false;
     bool about = false;
+    bool resetView = false;  // VIEW, RESET VIEW SETTINGS asks first
+    bool resetFocus = false;
     std::string path;
 } g_popups;
 
@@ -57,6 +59,38 @@ void bumpFonts(FrameInputs& in, float delta) {
 void resetFonts(FrameInputs& in) {
     in.prefs.fontUiSize = 14.0f;
     in.prefs.fontMonoSize = 14.0f;
+    in.saveWhimsy();
+}
+
+// VIEW, RESET VIEW SETTINGS: how this client looks, back to a fresh install. Theme, faces and sizes,
+// label case, tooltips, focus, the map, reasoning shown, the transcript filter, the PRINCIPALS tree and
+// HISTORY. What is not looks stays: the world and token, pins (they live on your Principal), OS
+// notifications (a WORLD setting) and the last search. The layout has its own item, RESET LAYOUT.
+void resetViewSettings(FrameInputs& in) {
+    const Prefs fresh;
+    Prefs& v = in.prefs;
+    v.thinking = fresh.thinking;
+    v.filter = fresh.filter;
+    v.treeFlat = fresh.treeFlat;
+    v.treeExpanded.clear();
+    v.historyOpen = fresh.historyOpen;
+    v.theme = fresh.theme;
+    v.fontUi = fresh.fontUi;
+    v.fontMono = fresh.fontMono;
+    v.fontUiSize = fresh.fontUiSize;
+    v.fontMonoSize = fresh.fontMonoSize;
+    v.labelCase = fresh.labelCase;
+    v.mapTwilight = fresh.mapTwilight;
+    v.tooltips = fresh.tooltips;
+    v.focusFollowsMouse = fresh.focusFollowsMouse;
+    Panes& p = in.panes;
+    p.terminal.showThinking = v.thinking;
+    p.terminal.filter = v.filter;
+    p.principals.flat = v.treeFlat;
+    p.principals.expanded.clear();
+#if !LISTENER_PHONE
+    p.history.collapsed = !v.historyOpen;
+#endif
     in.saveWhimsy();
 }
 
@@ -130,6 +164,10 @@ std::vector<Item> items(MenuHost h) {
         });
     }
 #endif
+    add("VIEW", "RESET VIEW SETTINGS", "", "theme, fonts, sizes, labels, tooltips and filters back to their defaults; asks first", [] {
+        g_popups.resetView = true;
+        g_popups.resetFocus = true;
+    });
     add("VIEW", "HISTORY", "", "fold the event log away, or bring it back", [&] {
 #if !LISTENER_PHONE
         if (!p.mux.viewOpen("view:history")) {
@@ -341,6 +379,25 @@ void drawMenuPopups(MenuHost h) {
         });
     }
     in.panes.openFile.draw(in.rt.chat, in.rt.principals);
+    if (g_popups.resetView) {
+        g_popups.resetView = false;
+        ImGui::OpenPopup("RESET VIEW SETTINGS");
+    }
+    if (ImGui::BeginPopupModal("RESET VIEW SETTINGS", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextUnformatted("Theme, fonts and sizes, label case, tooltips, focus follows mouse, the transcript filter,\n"
+                               "the PRINCIPALS tree and HISTORY go back to how a new client starts.\n\n"
+                               "Your worlds, token, pins and OS notifications stay. The layout has its own item,\n"
+                               "VIEW, RESET LAYOUT.");
+        ui::dialogGap();
+        const ui::Confirmed c = ui::confirmRow("reset", "reset-view-yes", "reset-view-no", g_popups.resetFocus);
+        if (c == ui::Confirmed::Yes) {
+            resetViewSettings(in);
+            ImGui::CloseCurrentPopup();
+        } else if (c == ui::Confirmed::No) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
     const auto textPopup = [](bool& flag, const char* title, const char* body) {
         if (flag) {
             flag = false;

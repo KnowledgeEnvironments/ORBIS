@@ -67,7 +67,7 @@ void drawTitle(ImDrawList* dl, const chat::ViewSpec& v, ViewUiState& st, ImVec2 
     const std::string chipText = "[" + upper(v.kind.empty() ? "view" : v.kind) + "]";
     const ImVec2 cs = mono->CalcTextSizeA(fs, FLT_MAX, 0.0f, chipText.c_str());
     dl->AddRectFilled(ImVec2(x - 1.0f, ty - 1.0f), ImVec2(x + cs.x + 1.0f, ty + cs.y + 1.0f), viewKindColor(v.kind));
-    dl->AddText(mono, fs, ImVec2(x, ty), Ink::onSelection, chipText.c_str());
+    dl->AddText(mono, fs, ImVec2(x, ty), Surface::background, chipText.c_str()); // dark on the chip, whatever its colour
     x += cs.x + 2.0f * kPad;
     const std::string title = v.title.empty() ? "untitled view" : v.title;
     dl->AddText(mono, fs, ImVec2(x, ty), Ink::strong, title.c_str());
@@ -82,7 +82,7 @@ void drawTitle(ImDrawList* dl, const chat::ViewSpec& v, ViewUiState& st, ImVec2 
     if (!ImGui::IsRectVisible(min, ImVec2(min.x + wrap, min.y + h))) {
         return;
     }
-    ImGui::SetCursorScreenPos(ImVec2(x, min.y + 1.0f));
+    ImGui::SetCursorScreenPos(ImVec2(x, ty)); // on the title's baseline
     ImGui::PushID(scope.c_str());
     if (!v.about.empty()) {
         ImGui::PushStyleColor(ImGuiCol_Text, Ink::onSelection);
@@ -112,7 +112,29 @@ void drawTitle(ImDrawList* dl, const chat::ViewSpec& v, ViewUiState& st, ImVec2 
         ImGui::PopStyleColor();
         ImGui::SameLine(0.0f, kPad);
     }
-    if (expandable) {
+    if (v.kind == "pane") {
+        // where the pane is goes somewhere, so it is a link (docs/listener-style.md, Tabs, buttons, links)
+        const std::string pane = v.data.is_object() ? v.data.value("pane", std::string()) : std::string();
+        const char* word = "open pane";
+        const ImVec2 ws = ImGui::CalcTextSize(word);
+        const ImVec2 at(min.x + wrap - slant - ws.x - 2.0f * kPad, ty);
+        ImGui::SetCursorScreenPos(at);
+        const bool clicked = ImGui::InvisibleButton("open-pane", ws) && !pane.empty();
+        drive::hit("button:open-pane:" + pane, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+        const bool hovered = ImGui::IsItemHovered();
+        dl->AddText(at, pane.empty() ? Ink::secondary : Ink::nav, word);
+        if (hovered && !pane.empty()) {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+            dl->AddLine(ImVec2(at.x, at.y + ws.y), ImVec2(at.x + ws.x, at.y + ws.y), Ink::nav);
+        }
+        if (clicked) {
+            LinkRequest r;
+            r.kind = LinkRequest::OpenPane;
+            r.object = pane;
+            r.openKind = v.data.value("kind", std::string("editor"));
+            symbolUi().ask(std::move(r));
+        }
+    } else if (expandable) {
         const float bw = ImGui::CalcTextSize("[ EXPAND ]").x;
         ImGui::SetCursorScreenPos(ImVec2(min.x + wrap - slant - bw - 2.0f * kPad, min.y + 1.0f));
         if (bracketButtonNamed("expand", "expand:" + chat::idPrefix(v.id), true, false, Ink::onSelection)) {
@@ -597,7 +619,7 @@ float viewBlockHeight(const chat::ViewSpec& v, ViewUiState& st, float wrap, floa
         return title + imageFit(st, wrap).y + 2.0f * kPad;
     }
     if (v.kind == "pane") {
-        return title + ImGui::GetFrameHeightWithSpacing() + 6.0f;
+        return title; // one line: the bar, `open pane` a link at its right
     }
     return title; // text: the body is in the document
 }
@@ -630,16 +652,6 @@ ViewActions drawViewBlock(const chat::ViewSpec& v, ViewUiState& st, ImVec2 min, 
                           scope, nameOf, acts);
         } else if (v.kind == "image") {
             drawImageBody(v, st, bodyMin, bodyMax, acts);
-        } else if (v.kind == "pane") {
-            ImGui::SetCursorScreenPos(ImVec2(bodyMin.x + 4.0f, bodyMin.y + 2.0f));
-            const std::string pane = v.data.is_object() ? v.data.value("pane", std::string()) : std::string();
-            if (bracketButtonNamed("OPEN PANE", "open-pane:" + pane, !pane.empty())) {
-                LinkRequest r;
-                r.kind = LinkRequest::OpenPane;
-                r.object = pane;
-                r.openKind = v.data.value("kind", std::string("editor"));
-                symbolUi().ask(std::move(r));
-            }
         }
     }
     ImGui::PopID();

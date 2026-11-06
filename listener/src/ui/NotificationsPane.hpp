@@ -21,6 +21,6 @@ class NotificationsPane {
 };
 
 // The menu bar's chip: `notices 3`, amber while something loud is unread. True when clicked.
-bool noticesChip(const chat::Notifications& notifications, bool open);
+bool noticesChip(const chat::Notifications& notifications, bool open, bool menuBar = false); // a menu-bar word on the desktop, a bracket on the phone
 
 } // namespace ke::ui

@@ -178,6 +178,10 @@ void setLabelCase(const std::string& labelCase); // "caps", "sentence", "" for t
 bool menuItem(const char* word, const char* shortcut = nullptr, bool selected = false, bool enabled = true);
 bool menuItem(const char* word, const char* shortcut, bool* selected, bool enabled = true);
 bool beginMenu(const char* word, bool enabled = true);
+// A menu-bar word that opens a window rather than a menu (WORLD, APPROVALS, NOTICES, SEARCH): drawn like
+// FILE and EDIT beside it, highlighted while its window is open; `shown` is already in the label case.
+// Drive target `button:<name>`. Buttons with brackets are for doing things, not for the menu bar.
+bool menuBarItem(const std::string& shown, const std::string& name, bool open, ImU32 color = Ink::primary);
 ImU32 stateColor(bool attached, bool connecting);
 // Touch screens have no wheel: a finger dragged over the current window (or table) scrolls it.
 // No-op for a mouse. Returns true when it scrolled this frame.

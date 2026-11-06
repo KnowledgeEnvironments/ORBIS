@@ -164,9 +164,17 @@ void TerminalPane::rebuildView(Tab& tab, const model::PrincipalInfo* info, model
             rail.collapsed = collapsed;
             rail.headerPara = doc.paras.size();
             v.threadToggles[doc.paras.size()] = group->thread;
-            doc.add(std::string(collapsed ? "\xe2\x96\xb8 " : "\xe2\x96\xbe ") + "thread · asked by " + group->askedByName + " · " +
-                        std::to_string(group->lines.size()) + " messages" + (collapsed ? " (root and last shown)" : ""),
-                    Ink::secondary, block, 2);
+            // `open thread` is a link in the line itself, like a name in running text: same font, same baseline
+            SelPara hp;
+            hp.block = block;
+            hp.kind = 2;
+            const std::string head = std::string(collapsed ? "\xe2\x96\xb8 " : "\xe2\x96\xbe ") + "thread · asked by " + group->askedByName +
+                                     " · " + std::to_string(group->lines.size()) + " messages" + (collapsed ? " (root and last shown)" : "") + " · ";
+            hp.runs.push_back(SelRun{head, Ink::secondary});
+            hp.runs.push_back(SelRun{"open thread", Ink::nav});
+            rail.linkBegin = head.size();
+            rail.linkEnd = head.size() + std::string("open thread").size();
+            doc.add(std::move(hp));
             rail.firstPara = doc.paras.size();
             v.rails.push_back(rail);
         }
@@ -435,7 +443,7 @@ void TerminalPane::rebuildView(Tab& tab, const model::PrincipalInfo* info, model
                             }
                             if (const model::FieldState* so = t->field("task/stdout"); so && so->value.is_string()) {
                                 std::vector<std::string> tail;
-                                std::string out = so->value.get<std::string>();
+                                std::string out = chat::stripAnsi(so->value.get<std::string>()); // a test runner's colours
                                 while (!out.empty() && out.back() == '\n') {
                                     out.pop_back();
                                 }
