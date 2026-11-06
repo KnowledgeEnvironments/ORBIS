@@ -737,6 +737,16 @@ void appendMarkdownBody(SelDoc& doc, const std::string& src, ImU32 base, int blo
             MdCodeBlock cb;
             cb.firstPara = doc.paras.size();
             cb.lang = lang;
+            {
+                // the block's header row, inside its frame: the language tag and [ COPY ] sit here
+                // (drawMarkdownExtras), above the code, so the bracket never covers a line of it
+                SelPara head;
+                head.block = block;
+                head.kind = 5;
+                head.code = true;
+                head.indent = cw;
+                doc.add(std::move(head));
+            }
             while (j < lines.size()) {
                 std::string l = lines[j];
                 std::size_t ld = 0;
@@ -756,7 +766,7 @@ void appendMarkdownBody(SelDoc& doc, const std::string& src, ImU32 base, int blo
                 cb.source += l + "\n";
                 ++j;
             }
-            if (doc.paras.size() == cb.firstPara) { // an empty block still gets a frame to click
+            if (doc.paras.size() == cb.firstPara + 1) { // an empty block still gets a frame to click
                 SelPara p;
                 p.block = block;
                 p.code = true;

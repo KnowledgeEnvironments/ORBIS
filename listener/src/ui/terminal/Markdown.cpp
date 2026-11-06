@@ -103,31 +103,48 @@ void drawMarkdownExtras(const MdExtras& md, const SelDoc& doc, const SelLayout& 
             split->SetCurrentChannel(dl, 2);
         }
         outlineRect(dl, a, b, Ink::secondary);
-        // Corner: language tag and [ COPY ]. The bracket is an overlay item at an explicit
-        // rectangle (ItemAdd + ButtonBehavior), so the layout cursor never moves for it.
-        const std::string copyLabel = "[ COPY ]";
-        const float copyW = ImGui::CalcTextSize(copyLabel.c_str()).x;
-        float x = b.x - copyW - cw;
-        const ImRect bb(ImVec2(x, a.y + 1.0f), ImVec2(x + copyW, a.y + 1.0f + lh));
+        // The title band: the block's first row (a reserved paragraph, ui/Markdown), tinted like a
+        // view block's bar. The language on the left, dim; `copy` on the right, a quiet word that
+        // says `copied` for a moment after a click. Nothing is drawn over the code.
+        float h0 = 0.0f, h1 = 0.0f;
+        const bool hasBand = doc.paras[cb.firstPara].kind == 5 && paraSpan(lay, cb.firstPara, cb.firstPara, h0, h1);
+        const float bandY0 = a.y + 1.0f;
+        const float bandY1 = hasBand ? origin.y + h1 : a.y + 1.0f + lh;
+        if (hasBand) {
+            if (split) {
+                split->SetCurrentChannel(dl, 0);
+            }
+            dl->AddRectFilled(ImVec2(a.x + 1.0f, bandY0), ImVec2(b.x - 1.0f, bandY1), Surface::hover);
+            if (split) {
+                split->SetCurrentChannel(dl, 2);
+            }
+        }
+        const float textY = std::floor(bandY0 + (bandY1 - bandY0 - lh) * 0.5f);
+        if (!cb.lang.empty()) {
+            dl->AddText(ImVec2(a.x + cw, textY), Ink::secondary, cb.lang.c_str());
+        }
+        static int copiedId = -1;
+        static double copiedAt = -10.0;
         const ImGuiID id = ImGui::GetID(n++);
+        const bool justCopied = copiedId == static_cast<int>(id) && ImGui::GetTime() - copiedAt < 1.5;
+        const char* word = justCopied ? "copied" : "copy";
+        const float wordW = ImGui::CalcTextSize(word).x;
+        const ImRect bb(ImVec2(b.x - cw - wordW, textY), ImVec2(b.x - cw, textY + lh));
         bool hov = false, held = false, pressed = false;
         if (ImGui::ItemAdd(bb, id)) {
             pressed = ImGui::ButtonBehavior(bb, id, &hov, &held);
         }
-        if (hov) {
-            dl->AddRectFilled(bb.Min, bb.Max, Surface::hover);
-        }
-        dl->AddText(bb.Min, hov ? Ink::onSelection : Ink::primary, copyLabel.c_str());
-        if (pressed) {
-            ImGui::SetClipboardText(cb.source.c_str());
-        }
-        if (hov) {
+        drive::hit("button:copy-code:" + std::to_string(n - 1), bb.Min, bb.Max);
+        dl->AddText(bb.Min, justCopied ? Ink::secondary : Ink::nav, word);
+        if (hov && !justCopied) {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+            dl->AddLine(ImVec2(bb.Min.x, bb.Max.y - 1.0f), ImVec2(bb.Max.x, bb.Max.y - 1.0f), Ink::nav);
             ke::ui::tip("copy the code block");
         }
-        if (!cb.lang.empty()) {
-            const std::string tag = upper(cb.lang);
-            x -= ImGui::CalcTextSize(tag.c_str()).x + 2 * cw;
-            dl->AddText(ImVec2(x, a.y + 1.0f), Ink::secondary, tag.c_str());
+        if (pressed) {
+            ImGui::SetClipboardText(cb.source.c_str());
+            copiedId = static_cast<int>(id);
+            copiedAt = ImGui::GetTime();
         }
     }
     drawMathInDoc(md, doc, lay, origin, wrap, n);

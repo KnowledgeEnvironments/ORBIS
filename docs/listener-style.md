@@ -100,6 +100,9 @@ Three kinds of control, and each looks like what it does.
 - **One size inside a transcript.** The transcript and a thread's window are set at the monospace size, and so is
   everything in them: cards, view blocks, their chips and links. The chrome around them (tabs, the Reasoning row,
   the input) stays at the interface size.
+- **A code block has a title band.** Its first row is a slim tinted band, like a view block's bar: the language on
+  the left, dim, and `copy` on the right in cyan, which reads `copied` for a moment after a click. Nothing is drawn
+  over the code.
 - **A column fits what is in it.** Your page's sender column is as wide as the longest name in its section, at most
   28 columns; a longer name ends in `…` and shows whole on hover.
 - **A row never runs past the pane.** What does not fit gives way, least needed first, and says

@@ -63,7 +63,9 @@ TEST_CASE("fences, headings, lists, quotes, rules and a table become paragraphs"
     CHECK(md.codeBlocks[0].lang == "clojure");
     CHECK(md.codeBlocks[0].source == "(defn f [x]\n  x)\n");
     CHECK(doc.paras[md.codeBlocks[0].firstPara].code);
-    CHECK(md.codeBlocks[0].lastPara - md.codeBlocks[0].firstPara == 1);
+    // a header row for the language tag and [ COPY ], then the two lines: the bracket never covers code
+    CHECK(doc.paras[md.codeBlocks[0].firstPara].kind == 5);
+    CHECK(md.codeBlocks[0].lastPara - md.codeBlocks[0].firstPara == 2);
     CHECK(joined(doc.paras[0]) == "Title here");
     CHECK(doc.paras[0].runs.back().color == Ink::strong);
     bool sawCode = false;

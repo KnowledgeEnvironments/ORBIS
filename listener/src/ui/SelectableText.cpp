@@ -47,7 +47,8 @@ std::string SelDoc::blockText(int block) const {
     // rendered text otherwise.
     std::string s;
     for (std::size_t i = 0; i < paras.size(); ++i) {
-        if (paras[i].block == block && paras[i].kind != 3) {
+        // a spacer, or a reserved row with nothing to say (a code block's header row), is not text
+        if (paras[i].block == block && paras[i].kind != 3 && !(paras[i].kind == 5 && paras[i].source.empty())) {
             s += (paras[i].source.empty() ? paras[i].text() : paras[i].source) + "\n";
         }
     }
