@@ -25,7 +25,13 @@
 (def resume-limit 2)
 (def unstarted-window-ms (* 60 60 1000))
 (def ^:private unfinished #{:queued :running :streaming})
+;; a Message the lane never saw: these kinds do not start a wake on their own
 (def ^:private not-a-wake #{:directive :trigger :approval-result :approval :status})
+;; a Message the loop had already started on is a wake whatever its kind, except a Trigger's, which
+;; fires again by itself. The card path of a kernel swap is the case: the wake that asked ends at
+;; approval-pending, the person's approval-result starts the wake that carries on, and the restart it
+;; approved kills that one (bootstrap test, 2026-11-10: root stayed silent on its own new release)
+(def ^:private never-resumed #{:trigger :status})
 
 (defn- f [db id k] (get-in (objects/fields db id) [k :field/value]))
 (defn- kw [v] (some-> v name keyword))
@@ -57,6 +63,7 @@
         started (set (keep #(f db % :evaluation/message) (objects/objects-with-field db :evaluation/message)))]
     (for [m (objects/objects-with-field db :message/from)
           :when (and (not (started m)) (recent? db m now))
+          :when (not (not-a-wake (kw (f db m :message/kind))))
           :when (authority/person? db (f db m :message/from))
           p (f db m :message/to)
           :let [state (objects/state db p)]
@@ -71,7 +78,7 @@
        (objects/exists? db p)
        (not (objects/retired? db p))
        (not (f db m :message/dequeued))
-       (not (not-a-wake (kw (f db m :message/kind))))
+       (not (never-resumed (kw (f db m :message/kind))))
        (not (thread/answered-by? db m p))
        (< (long (or (f db m :message/resumed) 0)) resume-limit)))
 

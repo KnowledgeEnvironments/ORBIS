@@ -154,3 +154,27 @@
             (is (not (running? w m)))
             (finally (system/stop w)))))
       (finally (fx/delete-tree! dir)))))
+
+(deftest a-wake-the-loop-had-started-resumes-whatever-its-kind
+  ;; the card path of a kernel swap: the wake that asked ends at approval-pending, the person's
+  ;; approval-result Message starts the wake that carries on, and the restart it approved kills that
+  ;; one. Seen on the bootstrap test, 2026-11-10: root stayed silent on its own new release
+  (let [dir (fx/temp-dir)]
+    (try
+      (let [world (fx/start-world dir 0)
+            root (fx/attach-root world)
+            root-id (:principal root)
+            route (resolve-as root "root.route")
+            model (resolve-as root "root.model")
+            _ (pace! root model 400)
+            m (say! root root-id route "carry on after the restart")]
+        (is (until #(running? world m) 8000))
+        (is (:ok (ws/request!! root :set-field {:object m :field :message/kind :type :keyword :value :approval-result :reader :both})))
+        (ws/close! root)
+        (system/stop world)
+        (wake-then dir
+                   (fn [world2 root2]
+                     (pace! root2 model 0)
+                     (is (until #(reply-to world2 m root-id) 15000) "an approval-result the loop was running on comes back")
+                     (is (= 1 (f world2 m :message/resumed))))))
+      (finally (fx/delete-tree! dir)))))

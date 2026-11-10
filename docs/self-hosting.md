@@ -70,7 +70,10 @@ A world started without a supervisor refuses with `err unsupervised`: nothing wo
 
 The wake that asked is unfinished when the process goes, so `loop/resume.clj` brings it back and it
 carries on. If it asks again, `world.restart` answers `already` instead of restarting, because the
-world it wanted is the one answering.
+world it wanted is the one answering. On the card path the wake that asked ended at `approval-pending`,
+and the person's approval-result Message started the wake the restart kills: that one comes back the
+same way, since a Message the loop had started on is a wake whatever its kind (the bootstrap test,
+2026-11-10, found root silent on its own new release before this held).
 
 ## The log only moves forward
 
