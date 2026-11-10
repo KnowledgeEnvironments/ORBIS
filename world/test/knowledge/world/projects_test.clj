@@ -47,6 +47,20 @@
                                                     {:action "project.add" :args {:name "grid" :path dir}})
                                  [:err :code])))))))
 
+(deftest a-person-can-add-a-project-with-an-explicit-or-root-default-model
+  (fx/with-world [{:keys [world dir root]}]
+    (let [person (fx/attach-as world (slurp (io/file dir "person.token")))
+          model (get-in (ws/request!! root :resolve {:name "root.model" :op :read}) [:result :object])]
+      (try
+        (doseq [[name args] [["named-model" {:model "root.model"}]
+                             ["default-model" {}]]]
+          (let [project-dir (project!)
+                r (act! person "project.add" (merge {:name name :path project-dir} args))
+                id (get-in r [:result :result :principal])]
+            (is (:ok r) (pr-str r))
+            (is (= [model] (v world id :principal/models)))))
+        (finally (ws/close! person))))))
+
 (deftest a-path-that-is-no-directory-is-refused-before-a-card
   (fx/with-world [{:keys [world root]}]
     (is (= :invalid-args (get-in (actions/preflight world (act/db world) (:principal root)

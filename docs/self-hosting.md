@@ -31,6 +31,7 @@ running, and any session can read it.
 scripts/release.sh --data <dir>            # first release, the working copy
 KE_PORT=7777 scripts/supervise.sh <dir>    # the parent of the world
 scripts/supervise.sh --stop <dir>          # or scripts/world-stop.sh <dir>
+scripts/world.sh <dir>                     # both of the first two, from <dir>/world.env (docs/install.md)
 ```
 
 The supervisor also keeps the terminal holder running, with a bare environment, so terminals go on through every restart of the world (`docs/panes.md`). It starts another if one dies. A full stop ends it. The holder is a native binary built outside the tree with `make holder`, so `release.sh` copies it into `bin/` rather than the read-only release. A release made without one keeps the holder already there, and a running holder is untouched until a full stop. An older holder that speaks another protocol version is not used: the world says so in its log and runs new terminals itself, so a change of `holder/src/main.c` version needs a full stop.

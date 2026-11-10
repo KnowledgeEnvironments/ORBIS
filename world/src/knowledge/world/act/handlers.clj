@@ -293,7 +293,10 @@
         _ (when (contains? ops :delegate) (fail! :narrower-required "a Principal you create may not delegate (no :delegate in ops)"))
         _ (strictly-narrower! db p scope ops)
         from (or (->uuid routes-from) p)
-        model (or (->uuid model) (when (= :process driven-by) (first-model db p)))
+        model (if model
+                (or (->uuid model) (resolve/lookup db p (str model)))
+                (when (= :process driven-by)
+                  (or (first-model db p) (first-model db (objects/root-id db)))))
         transport (transport-of db p)
         _ (when (and (= :process driven-by) (nil? model)) (fail! :invalid-args "no Model: give `model` or bind one to yourself first"))
         {:keys [object result]} (ok! (act/create! world p :principal {:driven-by driven-by :name name} {:return-token? session?}))
@@ -503,7 +506,7 @@
 
 (defn- adopt-project!
   "A directory as a project: its Principal, mount, shell and Grant."
-  [world p {:keys [name path charter url]} opts]
+  [world p {:keys [name path charter url model]} opts]
   (let [dir (.getPath ^File (canonical-dir path))
         readme (projects/head-of-readme dir)
         what (projects/about dir)
@@ -512,6 +515,7 @@
         made (:result (ok! (actions/handle! :principal.create world p
                                             {:name name
                                              :charter (if short? (project-charter name (name-of (act/db world) p) what) (str charter working-habits))
+                                             :model model
                                              :grant {:scope {:prefix name} :ops project-grant}}
                                             opts)))
         mounted (:result (ok! (mount! world p {:principal (str (:principal made)) :path dir :name name} opts)))

@@ -3,7 +3,10 @@ export JAVA_HOME ?= /opt/homebrew/opt/openjdk@25
 export PATH := $(JAVA_HOME)/bin:/opt/homebrew/bin:$(PATH)
 CLJ := clojure
 
-.PHONY: smoke holder test-holder deps world nrepl listener android test test-schema test-unit test-exit kz schema-json schema-check fmt
+.PHONY: setup smoke holder test-holder deps world nrepl listener android test test-schema test-unit test-exit kz schema-json schema-check fmt
+
+setup:           ## from a clean checkout to a running world and an open listener (scripts/install.sh, docs/install.md)
+	scripts/install.sh
 
 holder:          ## the terminal holder: needs Zig, see holder/PIN
 	$(MAKE) -C holder

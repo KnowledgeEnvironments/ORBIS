@@ -121,7 +121,7 @@
     :handler :project.add
     :gated true
     :schema [:map [:name {:optional true} :string] [:path {:optional true} :string] [:url {:optional true} :string]
-             [:charter {:optional true} :string]]
+             [:charter {:optional true} :string] [:model {:optional true} :string]]
     :instructions (str "`name` is short and becomes the Principal, the mount and the prefix of a Grant strictly narrower than "
                        "yours. `path` is a directory on this machine; you need no read of it first. Or `url`, a git remote "
                        "such as git@github.com:me/thing.git: the world clones it with the machine's key to projects/<name> under "
