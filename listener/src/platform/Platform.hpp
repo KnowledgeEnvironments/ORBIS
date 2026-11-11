@@ -39,6 +39,9 @@ struct Insets {
     float top = 0.0f, left = 0.0f, bottom = 0.0f, right = 0.0f;
 };
 Insets safeArea(SDL_Window* window);
+// The OS's own insets for the window, when it has them: on iOS SDL's answer can be the other
+// orientation's (iPhone Duo, 2026-11-11: an 84 pt side band in portrait). False means use SDL's.
+bool nativeSafeArea(SDL_Window* window, Insets& out);
 
 // A folder chosen by the person, on platforms that can; `done` gets "" when cancelled.
 bool canPickFolder();

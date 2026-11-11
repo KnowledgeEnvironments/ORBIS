@@ -4,6 +4,7 @@
 #include "model/Modeline.hpp"
 #include "ui/MathView.hpp"
 #include "platform/Keyboard.hpp"
+#include "platform/Platform.hpp"
 #include "app/Menus.hpp"
 #include "drive/Commands.hpp"
 #include "ui/ChatGptSignIn.hpp"
@@ -1052,24 +1053,22 @@ void DesktopFrame::draw(FrameInputs& in) {
 #else
 
 void applySafeArea(SDL_Window* window) {
-    SDL_Rect safe{};
     int w = 0, h = 0;
-    if (!SDL_GetWindowSafeArea(window, &safe) || !SDL_GetWindowSize(window, &w, &h)) {
+    if (!SDL_GetWindowSize(window, &w, &h)) {
         return;
     }
-    auto* vp = static_cast<ImGuiViewportP*>(ImGui::GetMainViewport());
-    static SDL_Rect logged{-1, -1, -1, -1};
-    if (safe.x != logged.x || safe.y != logged.y || safe.w != logged.w || safe.h != logged.h) {
-        logged = safe;
-        int pw = 0, ph = 0;
-        SDL_GetWindowSizeInPixels(window, &pw, &ph);
-        log::info("safe area: window {}x{} ({}x{} px), safe x {} y {} w {} h {}", w, h, pw, ph, safe.x, safe.y, safe.w, safe.h);
+    const platform::Insets in = platform::safeArea(window);
+    static platform::Insets logged{-1, -1, -1, -1};
+    if (in.top != logged.top || in.left != logged.left || in.bottom != logged.bottom || in.right != logged.right) {
+        logged = in;
+        log::info("safe area: window {}x{}, insets top {} left {} bottom {} right {}", w, h, in.top, in.left, in.bottom, in.right);
     }
-    vp->BuildWorkInsetMin = ImVec2(static_cast<float>(safe.x), static_cast<float>(safe.y));
+    auto* vp = static_cast<ImGuiViewportP*>(ImGui::GetMainViewport());
+    vp->BuildWorkInsetMin = ImVec2(in.left, in.top);
     // The keyboard takes the bottom of the work area, so the panes shrink rather than leave the screen.
     platform::watchKeyboard(window);
-    const int bottom = std::max(h - (safe.y + safe.h), platform::keyboardOverlap());
-    vp->BuildWorkInsetMax = ImVec2(static_cast<float>(w - (safe.x + safe.w)), static_cast<float>(bottom));
+    const float bottom = std::max(in.bottom, static_cast<float>(platform::keyboardOverlap()));
+    vp->BuildWorkInsetMax = ImVec2(in.right, bottom);
 }
 
 void SettingsPane::load(const Options& o) {

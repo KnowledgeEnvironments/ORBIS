@@ -188,8 +188,8 @@ if(IOS)
     set_source_files_properties(platform/ios/Assets.xcassets PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_target_properties(listener PROPERTIES XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME AppIcon)
     enable_language(OBJCXX)
-    target_sources(listener PRIVATE src/platform/KeyboardIos.mm)
-    set_source_files_properties(src/platform/KeyboardIos.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+    target_sources(listener PRIVATE src/platform/KeyboardIos.mm src/platform/SafeAreaIos.mm)
+    set_source_files_properties(src/platform/KeyboardIos.mm src/platform/SafeAreaIos.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
     set_target_properties(listener PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/platform/ios/Info.plist.in

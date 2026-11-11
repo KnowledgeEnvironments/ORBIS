@@ -227,8 +227,15 @@ void haptic(Haptic) {
     // SDL has no impact generator; iOS and Android add theirs here.
 }
 
+#if !defined(SDL_PLATFORM_IOS)
+bool nativeSafeArea(SDL_Window*, Insets&) { return false; }
+#endif
+
 Insets safeArea(SDL_Window* window) {
     Insets out;
+    if (nativeSafeArea(window, out)) {
+        return out;
+    }
     SDL_Rect safe;
     int w = 0, h = 0;
     if (window == nullptr || !SDL_GetWindowSafeArea(window, &safe) || !SDL_GetWindowSize(window, &w, &h)) {
