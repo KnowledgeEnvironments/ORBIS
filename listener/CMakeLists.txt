@@ -168,6 +168,12 @@ if(IOS)
     # root.token inside the bundle, which is a file name and not an identity.
     set(LISTENER_TOKEN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../data/person.token" CACHE FILEPATH
         "Token baked into the iOS bundle")
+    # The world a fresh install dials before anyone has set one in Settings: a phone cannot reach
+    # 127.0.0.1, so a development build names the world host here (seen on the phone, 2026-11-11)
+    set(ORBIS_DEFAULT_URL "" CACHE STRING "The ws URL a phone dials until Settings says otherwise")
+    if(ORBIS_DEFAULT_URL)
+        target_compile_definitions(listener PRIVATE ORBIS_DEFAULT_URL="${ORBIS_DEFAULT_URL}")
+    endif()
     file(GLOB LISTENER_FONT_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts/*.ttf)
     set(LISTENER_BUNDLE_RESOURCES ${LISTENER_FONT_FILES})
     set_source_files_properties(${LISTENER_FONT_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources/fonts)

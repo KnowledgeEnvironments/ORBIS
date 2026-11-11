@@ -13,7 +13,7 @@ Not a chat window with tools stapled on. A place.
 </p>
 
 ORBIS is the On-line Relative Basis Information System. It is source-available, free for
-noncommercial use; see [License](#license).
+noncommercial use; see [License](#license). It is brand-new alpha software: see [Known limits](#known-limits) before you run it.
 
 ![ORBIS: root's note with typeset math and a TikZ diagram, the graph of people, agents and Models under a twilight sky, a terminal held by the world running the test suite, and the log beneath](docs/figures/readme/hero.png)
 
@@ -201,7 +201,7 @@ docs/      the contract and the working documents
 
 ## Known limits
 
-ORBIS is an exploration, and a synthesis of ideas its author holds dear: a demonstrative alpha, not a proven thesis. Many of its ideas will change, some will evolve into something else, and some will turn out redundant once the agents have lived in it for a while; the record will show which. The loop closes and the record is real; the claims above are the bet, and what follows is where the bet is still open.
+ORBIS is alpha software, truly: weeks old, one author, used daily by that author and nobody else yet. It is an exploration, and a synthesis of ideas its author holds dear: a demonstrative alpha, not a proven thesis. Many of its ideas will change, some will evolve into something else, and some will turn out redundant once the agents have lived in it for a while; the record will show which. The loop closes and the record is real; the claims above are the bet, and what follows is where the bet is still open.
 
 - Real work inside ORBIS holds on a strong hosted model (the demo above, on gpt-5.6-sol) and not yet on a small local one: agents can read, write and run in a box, but a local model writes against APIs it has not read.
 - Expect to lose worlds. Upgrading one in place works through root's releases, and the log only moves forward, but the log format can still change.
