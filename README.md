@@ -21,11 +21,15 @@ play with. It is not open source: see [License](#license).
 
 ## What this is
 
+ORBIS is an operating system for work done by people and AI agents together, built the way the great interactive systems were built and the industry forgot: one persistent, self-describing world with a cogent data model, instead of a pile of files and a chat window.
+
 Forty years ago we had systems you lived inside. Genera and Smalltalk kept a whole world in one image, every object named, documented from within, inspectable at any depth. Plan 9 made everything a name in a namespace you could mount. The MOOs put many people and programmable objects in one persistent room. Engelbart and Xanadu wanted every reference to be real. They lost to Unix and files, because their richness had a price paid in human attention, and people will not pay it. The lazy system won, and [worse was better](https://www.dreamsongs.com/WorseIsBetter.html).
 
 The lineage is older than the web and less fashionable. The midrange machine whose operating system *was* the database: a single-level store, every object with its own authority, nothing outside it. The groupware whose unit was a document of typed fields with an access list, replicated between offices and worked on by agents, before the word was borrowed for something lesser. The expert systems, which knew that knowledge wants structure and that an inference should show its work. The Lisp machines and Smalltalk, where you lived inside the system and it could explain itself. Each got one thing right and paid for it in human ceremony.
 
 An agent will pay that ceremony. It will name everything, keep the grants current, write the setup notes, mount the namespaces, and the product of all that ceremony is exactly what it needs to think: its own context. So the richness is affordable now, and ORBIS is the bet that **better is better** after all: groupware, expert systems and the integrated machine, meeting agents; build the world, and let the residents keep it.
+
+Agents fail for one reason: context. Every harness today assembles it by hand, with retrievers, templates, "memory" files, skill folders and summarizers, none of which the system itself can see or audit. ORBIS makes context a property of the world. What a Principal can name is what it can read; depth and salience shape the rest; a named serialization caches it and replays it. The same predicate that answers "may you?" answers "what do you see?" and "what did that cost?". Permission, attention, cost and audit are one mechanism, not four afterthoughts.
 
 What the industry is shipping instead is a for-loop around a chat completion with a vector database stapled to the side. "Memory" is a markdown file the model forgets to read. "Skills" are prompt-stuffing with a folder structure. "Multi-agent" is three of the same loop passing strings. Observability is a dashboard bolted on after the fact, over a transcript nobody can replay. None of it has a notion of *who may do what*, so the answer is always "everything, and we hope." That is not a harness. That is a prayer with retries.
 
@@ -37,6 +41,8 @@ ORBIS is the other thing:
 - **People, agents and appliances are one class.** One namespace model, one API; a flag says what drives each. The product a team builds is itself a Principal, so the team is observable: who touched what, under which Grant, from which inputs, at what cost.
 - **Workflows are deterministic because they are data.** A Task is an object, a card is an object, a rule is an object, a restart is an object. Worlds link to worlds; a Principal in one speaks to a Principal in another through a Route, and the whole exchange is on both logs. Many worlds, many people, many runtimes, one grammar.
 - **It ships itself.** A world carries the release it runs and a working copy its root may edit. Root builds, tests, cuts a release and restarts the world onto it, and the swap waits for a person's own card. A release that fails health comes back on its own.
+
+And the table stakes, since a system is not a demo. Of course it has a UI: a native client that treats legibility as first-order work, because a correct world you cannot read has failed the person. Of course it has persistence: one append-only log as the only truth, every object a stream, state a fold, no image, no save. Of course it is multi-user: a person, a process and an appliance are one class with one namespace model, in the same room, on the same record. Of course it has inheritance: Grants descend and narrow, charters template, memory and instructions are authored Fields a Principal carries with it. Of course it is hypertext: every reference is a real, resolved, two-way span, and a made-up name cannot pass as a link. Of course it multiplexes: terminals, files, editors and typeset pages are Objects in the world that any client draws, including a phone with no shell of its own.
 
 ### The ontology, in one breath
 
