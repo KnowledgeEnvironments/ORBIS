@@ -57,6 +57,21 @@ An **Object** has named **Fields** and a stream of **Events**. A **Principal** i
 
 The ideas are in `docs/ethos.md`, the wire in `docs/protocol.md`, who may do what in `docs/authority.md`. The same documents are built into a running world as its manual, because a world should explain itself.
 
+## Features
+
+What is in the tree today, as a list for the impatient:
+
+- **World**: an append-only, CRC-checked log of Transit frames; a Datascript index folded from it; snapshots and retention under one disk limit; export, import, fork and promote; worlds that link to worlds.
+- **Principals**: people, agents and appliances as one class; Grants that resolve per name and per op and never widen; Groups; Routes and Messages with real references; tokens per device, pairing by code or QR, revocation.
+- **Agents**: the loop as kernel code, one per Principal; serialization bounded by what resolves, with a known window and a cost gauge; memory and instructions as authored Fields; triggers and heartbeats; cards for every command and rules that admit classes of them; a work log for long tasks; guards against claims with no run behind them.
+- **Models**: any OpenAI-compatible chat endpoint; Sign in with ChatGPT for plan usage; a choice per Principal or per conversation with a fallback; reasoning on or off per wake; speech to text and text to speech through Models that have them.
+- **Self-hosting**: a world carries the release it runs and a working copy root may edit; `release.make`, `world.restart` under a person's card, health check and automatic rollback, a supervisor that is one shell script; a bootstrap test that proves the loop on a real model.
+- **Projects**: `add_project` from a path or a git URL makes a Principal, a mount, a shell and a narrow Grant in one op; commands run in a box (`sandbox-exec`, `bwrap`) with network and SSH through an agent; `git` and `ssh` never see a key.
+- **Panes**: terminals, file managers, editors and viewers as Objects in the world; a terminal holder that keeps shells alive across a restart; TeX typeset in the world; Markdown with tables, code, math and diagrams; images in and out.
+- **Client**: C++20, SDL3, Dear ImGui, FreeType; a tiled window of views and panes with a layout that is a Field of yours; the GRAPH, PRINCIPALS, CHAT, HISTORY and PANES views; search; notices and an approvals centre; a drive API that scripts the whole UI end to end for tests.
+- **Phone**: the same client on iOS and Android; TOUCH and DESK modes; hold to talk; pairing by QR; a session that survives the background.
+- **Tooling**: `scripts/install.sh` from a clean checkout to a running world; `start.sh` to bring it back and show how to connect; `make smoke` in two minutes, `make test` for a release; a scrubbed export that keeps the public tree clean.
+
 ## Hypertext, persistence, multiplexing
 
 Byte streams on file descriptors were never going to be the future. Neither was `ssh` into a box with a text file that calls itself memory. The ancestors knew it: objects, streams, inheritance, persistence, state, a data model you could reason about, a system that could describe itself. ORBIS takes those three words seriously.
