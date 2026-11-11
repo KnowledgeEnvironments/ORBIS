@@ -702,6 +702,25 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             });
         };
         tab.talk = t.talk;
+        if (bare) {
+            t.talk = nullptr; // TOUCH: the bar below the line does the holding; no bracket beside it
+        }
+    }
+    tab.speak = nullptr;
+    if (actions_ != nullptr && actions_->get("speech.say") != nullptr && anyModelHas(principals, "model/tts")) {
+        const std::string said = lastReply(lines, session.principal().value_or(""));
+        if (!said.empty()) {
+            InputPane* line = &tab.line;
+            tab.speak = [&chat, line, said] {
+                line->setVoiceNote("reading");
+                chat.actNamed("speech.say", json{{"text", said}}, [line](const Response& r) {
+                    std::vector<unsigned char> wav;
+                    const std::string b64 = r.ok ? r.result.value("audio", std::string()) : std::string();
+                    const bool ok = !b64.empty() && ke::util::base64Decode(b64, wav) && platform::playWav(std::string(wav.begin(), wav.end()));
+                    line->setVoiceNote(ok ? "" : "could not speak that");
+                });
+            };
+        }
     }
     if (tab.queueInstead) {
         tab.queueInstead = false;

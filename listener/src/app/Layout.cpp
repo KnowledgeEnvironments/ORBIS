@@ -449,14 +449,22 @@ void Panes::drawModeline(FrameInputs& in) {
         const ConnState st = rt.client.state();
         const std::string stateWord = ui::upper(name(st));
         const std::string head = std::to_string(rt.session.head());
+        const bool wideScreen = ImGui::GetMainViewport()->Size.x >= 500.0f;
+        bool& modePref = wideScreen ? in.prefs.touchWide : in.prefs.touch;
+        const char* modeWord = modePref ? "desk" : "touch"; // the other mode: what a tap goes to
         const float chipWidth = ImGui::CalcTextSize("NOTICES 00").x + 2.0f * ImGui::GetStyle().FramePadding.x;
-        const float right = chipWidth + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::CalcTextSize((stateWord + " " + head).c_str()).x;
+        const float right = ui::bracketRowWidth({modeWord}) + chipWidth + ImGui::GetStyle().ItemSpacing.x * 3.0f + ImGui::CalcTextSize((stateWord + " " + head).c_str()).x;
         const float rightX = ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - right;
         const ImVec2 textMin = ImGui::GetCursorScreenPos();
         ImGui::PushClipRect(textMin, ImVec2(textMin.x + std::max(0.0f, rightX - ImGui::GetCursorPosX() - ImGui::GetStyle().ItemSpacing.x), textMin.y + ImGui::GetTextLineHeight() * 2.0f), true);
         ui::text(hint.empty() ? ui::Ink::secondary : ui::Ink::nav, hint.empty() ? modelineText : hint);
         ImGui::PopClipRect();
         ImGui::SameLine(std::max(ImGui::GetCursorPosX(), rightX));
+        if (ui::bracketButtonNamed(modeWord, "mode-toggle")) {
+            modePref = !modePref;
+            in.saveWhimsy();
+        }
+        ImGui::SameLine();
         if (ui::noticesChip(rt.notifications, notices.open())) {
             notices.toggle();
         }
@@ -1307,14 +1315,9 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
         const std::string cur = p.terminal.current();
         const chat::SymbolTable::Entry* who = ui::symbolUi().table() != nullptr ? ui::symbolUi().table()->byId(cur) : nullptr;
         ui::text(ui::Ink::strong, cur.empty() ? std::string("ORBIS") : ui::upper(who != nullptr && !who->name.empty() ? who->name : chat::idPrefix(cur)));
-        ui::rowAtRight(ui::bracketRowWidth({"people", "desk"}));
+        ui::rowAtRight(ui::bracketRowWidth({"people"}));
         if (ui::bracketButtonNamed("people", "touch-people", true, pickPrincipal)) {
             pickPrincipal = !pickPrincipal;
-        }
-        ImGui::SameLine();
-        if (ui::bracketButtonNamed("desk", "touch-desk")) {
-            touchPref = false;
-            in.saveWhimsy();
         }
     }
     // The tab labels, with the pending approvals waiting on this listener's principal as a badge.
@@ -1376,7 +1379,10 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
     bool rebuild = false;
     if (activeTab == 0) {
         ui::setMathWorld(&rt.chat);
+        // TOUCH: the conversation at a size a thumb can hit, cards and their brackets with it
+        ImGui::PushFont(in.mono, touch ? in.prefs.fontMonoSize * in.uiScale * 1.25f : 0.0f);
         p.terminal.drawBody(rt.principals, rt.evaluations, rt.chat, rt.session, in.anim, in.mono);
+        ImGui::PopFont();
         p.terminal.drawExpandedViews(rt.principals, rt.chat, in.mono);
         p.terminal.drawThreadWindows(rt.principals, rt.evaluations, rt.chat, rt.session, in.mono);
     } else if (activeTab == 1) {
@@ -1428,10 +1434,20 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
     if (touch) {
         pickPrincipal = activeTab == 2; // a pick in the people list lands on the conversation
     }
-    if (barHeight > 0.0f && !p.terminal.drawTalkBar(barHeight)) {
-        // no Model can hear: the bar's room says so, in the same voice as the line's notes
-        ImGui::Dummy(ImVec2(0.0f, std::floor(barHeight / 4)));
-        ui::dimText("no Model here can hear");
+    if (barHeight > 0.0f) {
+        // the bar to hold, and SPEAK beside it when a Model can read the reply back
+        const float avail = ImGui::GetContentRegionAvail().x;
+        const float speakW = p.terminal.canSpeak() ? std::floor(avail * 0.3f) : 0.0f;
+        const float talkW = avail - speakW - (speakW > 0.0f ? ImGui::GetStyle().ItemSpacing.x : 0.0f);
+        if (!p.terminal.drawTalkBar(talkW, barHeight)) {
+            // no Model can hear: the bar's room says so, in the same voice as the line's notes
+            ImGui::Dummy(ImVec2(0.0f, std::floor(barHeight / 4)));
+            ui::dimText("no Model here can hear");
+        }
+        if (speakW > 0.0f) {
+            ImGui::SameLine();
+            p.terminal.drawSpeakBar(speakW, barHeight);
+        }
     }
     if (!terminalTab) {
         p.input.drawBody(rt.chat, in.anim, in.mono);

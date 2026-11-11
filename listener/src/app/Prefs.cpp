@@ -32,7 +32,7 @@ std::optional<Prefs> loadPrefs(const std::filesystem::path& file) {
         p.labelCase = j["view"].value("label-case", std::string());
         p.osNotices = j["view"].value("os-notices", true);
         p.mapTwilight = j["view"].value("map-twilight", false);
-        p.touch = j["view"].value("touch", false);
+        p.touch = j["view"].value("touch", true);
         p.touchWide = j["view"].value("touch-wide", false);
         p.focusFollowsMouse = j["view"].value("focus-follows-mouse", true);
         p.tooltips = j["view"].value("tooltips", true);

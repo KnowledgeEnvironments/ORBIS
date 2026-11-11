@@ -132,7 +132,9 @@ void InputPane::drawTalk(LineTarget& target) {
     if (ImGui::IsItemHovered()) {
         ke::ui::tip("hold to speak; the words land in the line to read before sending");
     }
-    if (!voiceNote_.empty()) {
+    // the note sits after the bracket when the row has room for it; a narrow row (a phone) keeps
+    // STEER and the label on screen instead (seen on the iPhone Duo, 2026-11-11)
+    if (!voiceNote_.empty() && ImGui::GetContentRegionAvail().x > ImGui::CalcTextSize(voiceNote_.c_str()).x + ImGui::CalcTextSize("[ STEER ] ROUTE 00000000").x) {
         ImGui::SameLine();
         text(Ink::secondary, voiceNote_);
     }
@@ -141,10 +143,12 @@ void InputPane::drawTalk(LineTarget& target) {
 // The same hold, as a bar a thumb finds without looking: the whole width, as tall as asked, the
 // word in the middle saying what it is doing. The transcript lands in the line above it, to read
 // before sending, like the bracket's.
-void InputPane::drawTalkBar(const std::function<void(const std::string&)>& talk, float height) {
+void InputPane::drawTalkBar(const std::function<void(const std::string&)>& talk, float width, float height) {
     ImDrawList* dl = ImGui::GetWindowDrawList();
     const ImVec2 pos = ImGui::GetCursorScreenPos();
-    const float width = ImGui::GetContentRegionAvail().x;
+    if (width <= 0.0f) {
+        width = ImGui::GetContentRegionAvail().x;
+    }
     ImGui::InvisibleButton("talk-bar", ImVec2(width, height));
     drive::hit("talk-bar", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
     const bool down = ImGui::IsItemActive();

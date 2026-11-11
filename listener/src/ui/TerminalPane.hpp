@@ -142,7 +142,11 @@ class TerminalPane {
     bool bare = false;
     bool inputActive() const;        // the current tab's line has focus (the cursor blinks)
     // TOUCH mode: the hold-to-talk bar for the current tab; false when no Model can hear.
-    bool drawTalkBar(float height);
+    bool drawTalkBar(float width, float height);
+    bool canTalk() const;
+    bool canSpeak() const;
+    // TOUCH mode: a tall SPEAK beside the bar: reads the last reply aloud.
+    bool drawSpeakBar(float width, float height);
     ImVec2 inputMin() const;         // for SDL_SetTextInputArea on the phone
     ImVec2 inputMax() const;
     void requestFocus();
@@ -303,6 +307,7 @@ class TerminalPane {
         std::string scrollField; // FIELDS scrolls to this row once
         InputPane line;
         std::function<void(const std::string&)> talk; // set while a Model can hear: what the bar hands a recording to
+        std::function<void()> speak;                   // set while a Model can speak and there is a reply to read
         // Images waiting for this tab's next send. Shared: an upload outlives a frame.
         struct PendingImage {
             std::string name;
