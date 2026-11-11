@@ -12,8 +12,8 @@ People, agents, models, machines and the work itself live in one persistent imag
 Not a chat window with tools stapled on. A place.
 </p>
 
-ORBIS is the On-line Relative Basis Information System. It is shared here with invited friends, to
-play with. It is not open source: see [License](#license).
+ORBIS is the On-line Relative Basis Information System. It is source-available, free for
+noncommercial use; see [License](#license).
 
 ![ORBIS: root's note with typeset math and a TikZ diagram, the graph of people, agents and Models under a twilight sky, a terminal held by the world running the test suite, and the log beneath](docs/figures/readme/hero.png)
 
@@ -37,7 +37,7 @@ The interaction model is the same joke from the other side. The state of the art
 
 And the UI is there for the person to *understand*, not to be impressed. The world owns structure; the client owns legibility, and inspection is understanding. The GRAPH shows who is here, on what model, with which mounts and shells. HISTORY is the log itself, every seq, filterable to one Principal or one kind, following the head. A thread shows every op an agent made and what each answered, with the file it read and the line it changed. The gauge under the chat shows how much of the window the next wake will spend, and on what. A card says, in one line a person can decide on, what will run, through which shell, in which directory. Nothing is hidden in a log file, and nothing needs a log file: the record is the interface.
 
-It is built to scale, in the direction that matters. Context cost scales with what a Principal may name, not with how long the world has existed: a thousand projects in one world cost an agent nothing until it can resolve them. The log is segments and snapshots under one retention limit, so a world that has run for a year boots from where it stands, and subscriptions are cursors with a window, so a thousand clients cannot make the server buffer. Loops are one per Principal with no shared state, so Principals run beside each other. Clients are thin because the work is in the world, so a phone costs the same as a desk. And streams federate where images never could: worlds link to worlds, a Principal here speaks to a Principal there, a fork of a world is a world, and the same grammar holds across all of them.
+It is built to scale in ways no other harness can, because the scaling is conceptual, not a bigger box. Context cost scales with what a Principal may name, not with how long the world has existed: a thousand projects in one world cost an agent nothing until it can resolve them. The log is segments and snapshots under one retention limit, so a world that has run for a year boots from where it stands, and subscriptions are cursors with a window, so a thousand clients cannot make the server buffer. Loops are one per Principal with no shared state, so Principals run beside each other. Clients are thin because the work is in the world, so a phone costs the same as a desk. And streams federate where images never could: worlds link to worlds, a Principal here speaks to a Principal there, a fork of a world is a world, and the same grammar holds across all of them.
 
 ORBIS is the other thing:
 
@@ -212,6 +212,6 @@ Pull requests are open: `CONTRIBUTING.md` has the terms (a contributor grant, so
 
 ## License
 
-License pending. All rights reserved: see `LICENSE`. You may look at it and run it because you were
-invited, and anything you submit is assigned as `LICENSE` says. Third-party components keep their
-own licences: see `THIRD_PARTY_NOTICES`.
+PolyForm Noncommercial 1.0.0: use it, change it, share it for personal, research, educational,
+nonprofit and government purposes, free. Commercial use needs a license from the author; ask.
+See `LICENSE`. Third-party components keep their own licences: `THIRD_PARTY_NOTICES`.
