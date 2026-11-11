@@ -100,7 +100,8 @@ if [ ! -f "$DATA/world.env" ]; then
   ( umask 077; {
       echo "export KE_WORLD_NAME=$NAME"
       echo "export KE_PORT=$PORT"
-      if [ -n "$LAN" ]; then echo "export KE_BIND=0.0.0.0"; echo "export KE_PUBLIC_URL=ws://$(hostname -s 2>/dev/null || hostname):$PORT/ws"; else echo "export KE_PUBLIC_URL=ws://127.0.0.1:$PORT/ws"; fi
+      # the address clients dial: the LAN IPv4 when there is one, since a phone cannot always resolve the host's name
+      if [ -n "$LAN" ]; then echo "export KE_BIND=0.0.0.0"; echo "export KE_PUBLIC_URL=ws://$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || hostname -s):$PORT/ws"; else echo "export KE_PUBLIC_URL=ws://127.0.0.1:$PORT/ws"; fi
       grep '^export KE_' "$ROOT/.envrc" | grep -v '^export KE_PORT=\|^export KE_DATA='
     } > "$DATA/world.env" )
   ok "$DATA/world.env written: name $NAME, port $PORT$([ -n "$LAN" ] && echo ", every interface" || echo ", this machine only: --lan or KE_BIND=0.0.0.0 for others")"
