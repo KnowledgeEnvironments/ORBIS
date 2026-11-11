@@ -685,6 +685,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             }
         }, chat::Clock::now(), {}, true);
     };
+    tab.talk = nullptr;
     if (actions_ != nullptr && actions_->get("speech.transcribe") != nullptr && anyModelHas(principals, "model/stt")) {
         t.talk = [&chat, line_](const std::string& wav) {
             line_->setVoiceNote("transcribing");
@@ -697,6 +698,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
                 line_->addTranscript(r.result.value("text", std::string()));
             });
         };
+        tab.talk = t.talk;
     }
     if (tab.queueInstead) {
         tab.queueInstead = false;
@@ -708,6 +710,9 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             t.submit(line);
         }
     }
+    if (bare) {
+        focusRequested_ = false; // TOUCH: the keyboard waits for a tap on the line
+    }
     if (focusRequested_) {
         tab.line.requestFocus();
         focusRequested_ = false;
@@ -718,7 +723,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             addImageBytes(tab, chat, std::move(png), "pasted.png");
         }
     }
-    if (hasReasoning) {
+    if (hasReasoning && !bare) {
         if (!view.rails.empty()) {
             tab.lastThread = view.rails.back().thread;
         }

@@ -1,5 +1,7 @@
 #include "ui/InputPane.hpp"
 
+#include "ui/Chrome.hpp"
+
 #include "platform/Platform.hpp"
 
 #include "chat/MessageCache.hpp"
@@ -100,10 +102,8 @@ void InputPane::drawBody(chat::Chat& chat, const Anim& anim, ImFont* mono) {
 
 // Held, the microphone is open, and only then: let go and the recording leaves for a transcript the
 // person reads in the line before sending anything. Two minutes is what one frame to the world holds.
-void InputPane::drawTalk(LineTarget& target) {
+void InputPane::talkStep(bool down, const std::function<void(const std::string&)>& talk) {
     constexpr double kMaxSeconds = 120.0;
-    bracketButtonNamed("talk", "talk", true, holding_);
-    const bool down = ImGui::IsItemActive();
     const double now = ImGui::GetTime();
     const auto finish = [&] {
         holding_ = false;
@@ -111,7 +111,7 @@ void InputPane::drawTalk(LineTarget& target) {
         if (wav.empty()) {
             voiceNote_ = "nothing recorded";
         } else {
-            target.talk(wav);
+            talk(wav);
         }
     };
     if (down && !holding_ && !cutOff_) {
@@ -124,6 +124,11 @@ void InputPane::drawTalk(LineTarget& target) {
     } else if (!down) {
         cutOff_ = false;
     }
+}
+
+void InputPane::drawTalk(LineTarget& target) {
+    bracketButtonNamed("talk", "talk", true, holding_);
+    talkStep(ImGui::IsItemActive(), target.talk);
     if (ImGui::IsItemHovered()) {
         ke::ui::tip("hold to speak; the words land in the line to read before sending");
     }
@@ -131,6 +136,24 @@ void InputPane::drawTalk(LineTarget& target) {
         ImGui::SameLine();
         text(Ink::secondary, voiceNote_);
     }
+}
+
+// The same hold, as a bar a thumb finds without looking: the whole width, as tall as asked, the
+// word in the middle saying what it is doing. The transcript lands in the line above it, to read
+// before sending, like the bracket's.
+void InputPane::drawTalkBar(const std::function<void(const std::string&)>& talk, float height) {
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    const ImVec2 pos = ImGui::GetCursorScreenPos();
+    const float width = ImGui::GetContentRegionAvail().x;
+    ImGui::InvisibleButton("talk-bar", ImVec2(width, height));
+    drive::hit("talk-bar", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+    const bool down = ImGui::IsItemActive();
+    talkStep(down, talk);
+    chrome(dl, pos, ImVec2(pos.x + width, pos.y + height), holding_ ? ChromeRole::PressedControl : ChromeRole::RaisedControl);
+    const std::string word = holding_ ? "LISTENING" : voiceNote_.empty() || voiceNote_ == "listening" ? "HOLD TO TALK" : upper(voiceNote_);
+    const ImVec2 size = ImGui::CalcTextSize(word.c_str());
+    dl->AddText(ImVec2(pos.x + std::floor((width - size.x) / 2), pos.y + std::floor((height - size.y) / 2)),
+                holding_ ? Ink::onSelection : Ink::nav, word.c_str());
 }
 
 void InputPane::drawLine(LineTarget& target, const Anim& anim, ImFont* mono) {

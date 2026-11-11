@@ -138,7 +138,11 @@ class TerminalPane {
     void drawThreadWindows(model::Principals& principals, const model::Evaluations& evals, chat::Chat& chat,
                            const Session& session, ImFont* mono);
 
+    // TOUCH mode: the transcript and its line alone; no tab row, view tabs, filter, status or model bar.
+    bool bare = false;
     bool inputActive() const;        // the current tab's line has focus (the cursor blinks)
+    // TOUCH mode: the hold-to-talk bar for the current tab; false when no Model can hear.
+    bool drawTalkBar(float height);
     ImVec2 inputMin() const;         // for SDL_SetTextInputArea on the phone
     ImVec2 inputMax() const;
     void requestFocus();
@@ -298,6 +302,7 @@ class TerminalPane {
         int view = 0; // 0 transcript, 1 prompt, 2 fields, 3 memory, 4 devices
         std::string scrollField; // FIELDS scrolls to this row once
         InputPane line;
+        std::function<void(const std::string&)> talk; // set while a Model can hear: what the bar hands a recording to
         // Images waiting for this tab's next send. Shared: an upload outlives a frame.
         struct PendingImage {
             std::string name;

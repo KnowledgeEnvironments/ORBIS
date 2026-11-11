@@ -57,6 +57,7 @@ int runApp(const Options& optsIn) {
         p.labelCase = prefs.labelCase;
         p.osNotices = prefs.osNotices;
         p.mapTwilight = prefs.mapTwilight;
+        p.touch = prefs.touch;
         p.tooltips = prefs.tooltips; // missing, these two snapped back to the file's value on every save
         p.focusFollowsMouse = prefs.focusFollowsMouse;
         p.historyOpen = prefs.historyOpen;

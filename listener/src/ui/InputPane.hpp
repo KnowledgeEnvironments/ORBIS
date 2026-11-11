@@ -46,6 +46,8 @@ class InputPane {
 
     bool active() const { return active_; } // the field has keyboard focus (the cursor blinks)
     void requestFocus() { focusRequested_ = true; }
+    // TOUCH mode: a bar the width of the screen, held to speak, in place of the [ TALK ] bracket.
+    void drawTalkBar(const std::function<void(const std::string&)>& talk, float height);
     // The field's rectangle on screen (for the phone: SDL_SetTextInputArea keeps it above the
     // keyboard). Valid after drawBody.
     ImVec2 fieldMin() const { return fieldMin_; }
@@ -81,6 +83,7 @@ class InputPane {
   private:
     static int callback(ImGuiInputTextCallbackData* data);
     void drawTalk(LineTarget& target);
+    void talkStep(bool down, const std::function<void(const std::string&)>& talk);
     bool holding_ = false;     // TALK is down and the microphone is open
     bool cutOff_ = false;      // the limit ended it: nothing more until TALK is let go
     double heldSince_ = 0.0;

@@ -187,6 +187,9 @@ struct SettingsPane {
     bool claimPending = false;
     // A orbis://pair link arrived (URL scheme or a drop): prefill and open the form.
     void prefill(const PairLink& link);
+    // MODE: TOUCH or DESK, a pref of this phone; the frame points these at the prefs and their save.
+    bool* touch = nullptr;
+    std::function<void()> saveView;
 
     void load(const Options& o);
     // Returns true when the runtime must be rebuilt with the new options.
@@ -198,6 +201,7 @@ struct SettingsPane {
 struct PhoneFrame {
     SettingsPane settings;
     int activeTab = 1; // the map first: who is here, what they are doing
+    bool pickPrincipal = false; // TOUCH: the people list is up, to choose who to talk to
     // Returns true when the runtime must be rebuilt (Settings changed url/token or forgot the session).
     bool draw(FrameInputs& in, Options& opts, SDL_Window* window);
 };
