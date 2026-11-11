@@ -15,6 +15,9 @@ with this grant:
 > distribute, sublicense and relicense it, under any terms, including commercial ones. You keep your
 > copyright and may use your contribution for anything else.
 
+Your contribution comes as is, with no warranty, and you are not liable to anyone for its use. It
+reaches users only through `LICENSE`, whose no-liability terms then cover it like the rest of the tree.
+
 Add `Signed-off-by: Your Name <you@example.com>` to each commit (`git commit -s`) to say so. A pull
 request whose commits lack it will be asked for it before review.
 

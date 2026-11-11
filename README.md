@@ -214,4 +214,5 @@ Pull requests are open: `CONTRIBUTING.md` has the terms (a contributor grant, so
 
 PolyForm Noncommercial 1.0.0: use it, change it, share it for personal, research, educational,
 nonprofit and government purposes, free. Commercial use needs a license from the author; ask.
-See `LICENSE`. Third-party components keep their own licences: `THIRD_PARTY_NOTICES`.
+It comes as is, without warranty, and nobody who wrote it is liable for what you do with it; the
+license says so in full. See `LICENSE`. Third-party components keep their own licences: `THIRD_PARTY_NOTICES`.
