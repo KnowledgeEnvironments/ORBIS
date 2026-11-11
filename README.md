@@ -33,6 +33,8 @@ Agents fail for one reason: context. Every harness today assembles it by hand, w
 
 What the industry is shipping instead is a for-loop around a chat completion with a vector database stapled to the side. "Memory" is a markdown file the model forgets to read. "Skills" are prompt-stuffing with a folder structure. "Multi-agent" is three of the same loop passing strings. Observability is a dashboard bolted on after the fact, over a transcript nobody can replay. None of it has a notion of *who may do what*, so the answer is always "everything, and we hope." That is not a harness. That is a prayer with retries.
 
+The interaction model is the same joke from the other side. The state of the art is an agent in a tmux pane over ssh, scraping its own terminal, reporting in walls of monospace while you alt-tab to find out whether it did the thing. That is not a way for a program to work with a person. In ORBIS an agent has the tools to delight you: it *presents* a view, a typeset page, a diagram, a table that is yours to click; it opens a pane on your screen and you watch the same terminal it watches; it hands you a card that says exactly what will run, where, and waits; it cites a path and the path opens at the line; it leaves a notice that reaches your phone; and everything it did is one click from the record that proves it. A resident with a presentation layer, not a process with a pipe.
+
 ORBIS is the other thing:
 
 - **The log is the truth.** No image holds the system; every object has a stream, present state is a fold over it, a run is a value with a name. Replay it and you get the same world. Streams federate; images never did, and the single image is what killed the ancestors.
