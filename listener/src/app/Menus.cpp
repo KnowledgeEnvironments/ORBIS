@@ -502,6 +502,27 @@ void drawMenusFlat(MenuHost h) {
                 ui::dimText("%s", i.disabledWhy.c_str());
             }
         }
+        if (std::string_view(section) == "VIEW") {
+            // A phone has no menu bar, so expose the two font sizes directly instead of hiding
+            // their independent pickers in desktop's nested VIEW menus.
+            const auto sizes = [&](const char* title, const char* drive, float& size) {
+                ui::dimText("%s", title);
+                bool sameLine = false;
+                for (const float s : kFontSizes) {
+                    if (sameLine) {
+                        ImGui::SameLine();
+                    }
+                    const std::string word = std::to_string(static_cast<int>(s));
+                    if (ui::bracketButtonNamed(word.c_str(), std::string(drive) + ":" + word, true, size == s)) {
+                        size = s;
+                        h.in.saveWhimsy();
+                    }
+                    sameLine = true;
+                }
+            };
+            sizes("INTERFACE SIZE", "interface-size", h.in.prefs.fontUiSize);
+            sizes("MONOSPACE SIZE", "monospace-size", h.in.prefs.fontMonoSize);
+        }
     }
 }
 
