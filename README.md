@@ -7,8 +7,10 @@
 <p align="center"><b>A shared knowledge environment for doing work with people, computers, and artificial intelligence.</b></p>
 
 <p align="center">
-One append-only log is the truth. Everything in it is an Object with Fields. Agents are Principals with Grants, Routes and Models, and they live in the same room as you.<br>
-The world is a Clojure process that is also the agent harness. The listener is a native client that draws what the world sends.
+Agents that live in a world, not a chat window.<br>
+One log that never forgets. Every person, agent, model, file and terminal is a named thing with a record.<br>
+An agent does what it was granted, asks when it wasn't, and can change the code it runs on, once you approve the card.<br>
+A Clojure world runs all of it. A native client shows you all of it.
 </p>
 
 ORBIS is the On-line Relative Basis Information System. It is shared here with invited friends, to
@@ -20,11 +22,11 @@ play with. It is not open source: see [License](#license).
 
 ## What it is
 
-- **A world, not a chat log.** People, agents, Models, files, shells, terminals, projects, approvals and notices are all Objects in one graph, named, with a record. An agent's prompt is a *serialization* of that graph around its task, not a transcript stuffed to the limit.
-- **Authority is explicit.** A Principal does what its Grant resolves. Commands run through cards a person decides, or through rules a person wrote. Root is the operator; agents escalate to it; a new release of the kernel always waits for a person's own card.
-- **It carries and changes its own source.** A supervised world holds the release it runs and a working copy root may edit. Root builds, tests, releases and restarts the world; a release that fails its health check comes back to the last good one by itself.
-- **Any model.** An OpenAI-compatible endpoint on your LAN, or Sign in with ChatGPT for plan usage, per Principal, switchable mid-conversation, with a fallback.
-- **Native, everywhere.** The listener is C++20, SDL3 and Dear ImGui: macOS today, iOS and Android builds in the tree. Terminals, files, TeX and search run in the world, so a thin client sees everything. The holder keeps terminals alive across a world restart, on libghostty-vt. A Principal's commands run in a confinement box: `sandbox-exec` on macOS, `bwrap` on Linux.
+- **A world, not a chat log.** People, agents, models, files, shells, terminals, projects, cards and notices: every one a named thing with a history, in one graph. An agent's prompt is cut from that graph around the job at hand, not a transcript stuffed to the limit.
+- **Permission is the architecture.** An agent does exactly what its Grant resolves. Commands go through cards you decide, or rules you wrote. Root runs the place; agents escalate to it; swapping the kernel always waits for your own card.
+- **It ships itself.** A world carries the release it runs and a working copy root may edit. Root builds, tests, cuts a release and restarts the world onto it. A release that fails its health check comes back to the last good one on its own.
+- **Any model, per agent.** Your own endpoint on the LAN, or Sign in with ChatGPT. Pick per Principal, switch mid-conversation, keep a fallback.
+- **One native client, every screen.** C++20, SDL3, Dear ImGui: macOS now, iOS and Android in the tree. Terminals, files, TeX and search run in the world, so the phone sees exactly what the desk sees. Terminals outlive a restart. Every agent but root runs in a box (`sandbox-exec` on macOS, `bwrap` on Linux).
 
 The ideas are in `docs/ethos.md`, the wire in `docs/protocol.md`, who may do what in `docs/authority.md`. The same documents are built into a running world as its manual.
 
@@ -175,6 +177,10 @@ docs/      the contract and the working documents
 - There is no TLS, and tokens are the only authentication. The confinement box limits an agent's mistakes. It has not been reviewed as a security boundary, so do not run untrusted models or prompts against a machine you care about.
 - The holder's libghostty-vt is pre-1.0 and pinned to one commit.
 - The design documents describe intent, and some are ahead of the code.
+
+## Contributing
+
+Pull requests are open: `CONTRIBUTING.md` has the terms (a contributor grant, so the author keeps the right to license ORBIS commercially) and what a change needs.
 
 ## License
 
