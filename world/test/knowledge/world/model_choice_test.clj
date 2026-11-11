@@ -57,7 +57,13 @@
       (testing "an id the Model does not offer is refused"
         (log/append!! (:log world) (log/pending :field-set a (:world-id world) {:name :model/available :type [:list :string] :value ["x"] :reader :both}))
         (is (false? (:ok (act! w "model.choose" {:principal (str root-id) :model (str a) :id "nope"})))))
-      (testing "clear goes back to the first Model"
+      (testing "a Principal-scoped residency allowlist is enforced for choices and fallbacks"
+        (is (:ok (ws/request!! w :set-field {:object root-id :field :policy/model-residencies
+                                             :type [:list :keyword] :value [:tenant]})))
+        (is (= :residency (get-in (act! w "model.choose" {:principal (str root-id) :model (str a)}) [:err :code])))
+        (is (nil? (models/for-wake (act/db world) (state) nil)) "no configured Model has tenant residency")
+        (is (nil? (models/fallback-for (act/db world) (state) nil))))
+      (testing "clear goes back to the first eligible Model"
         (is (:ok (act! w "model.choose" {:principal (str root-id) :clear true})))
         (is (nil? (get-in (state) [:object/fields :principal/model-choice])))))))
 

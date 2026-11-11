@@ -876,6 +876,31 @@
 
 ;; ---------------------------------------------------------------- the Model catalogue, cost, search
 
+;; ---------------------------------------------------------------- conversation controls
+
+(defmethod actions/handle! :conversation.rename
+  [_ world p {:keys [thread title]} opts]
+  (let [db (act/db world)
+        id (->uuid thread)
+        title (str/trim (str title))]
+    (authority/require-person! db p opts)
+    (cond
+      (or (nil? id) (not= :message (:object/class (objects/entity db id))))
+      (fail! :invalid-args "no such conversation")
+      (not= id (thread/thread-of db id))
+      (fail! :invalid-args "thread must name the conversation's root Message")
+      (str/blank? title) (fail! :invalid-args "title must not be blank")
+      (> (count title) 120) (fail! :invalid-args "title is longer than 120 characters")
+      :else
+      (let [{:keys [grant]} (resolve/resolve! world db p (act/id-name id) :write)]
+        (if-not grant
+          act/unresolved
+          (let [seq-no (act/append! world (log/pending :field-set id p
+                                                        {:name :conversation/title :type :string
+                                                         :value title :reader :both}
+                                                        :delegation grant))]
+            {:ok {:result {:thread id :title title} :object id :seq seq-no}}))))))
+
 ;; ---------------------------------------------------------------- choosing a Model
 
 (defn- model-object!
@@ -907,6 +932,8 @@
           {:ok {:result {:principal target :field k :cleared true} :object where :seq seq-no}})
         (let [m (model-object! world db p model)
               known (field db m :model/available)]
+          (when-not (models/allowed-for-principal? db (objects/state db target) m)
+            (fail! :residency "the Principal's policy/model-residencies does not admit this Model"))
           (when (and id (seq known) (not (some #{id} known)))
             (fail! :invalid-args (str id " is not among that Model's model/available")))
           (evaluate-grant! world db target m)

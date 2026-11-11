@@ -360,6 +360,7 @@ class TerminalPane {
         struct ConversationsUi {
             std::vector<chat::ConversationRow> rows;
             std::string search, err, status;
+            std::string renaming, renameTitle;
             bool asked = false, busy = false, more = false, supported = true;
         } conv;
         std::string heldCard; // the card under the mouse: it keeps its height until the mouse leaves

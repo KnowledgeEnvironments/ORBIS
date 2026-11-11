@@ -46,7 +46,7 @@
   #{"task.approve" "task.deny" "task.decide-many" "approval.rule.add" "approval.rule.remove"
     "approval.rule.list" "approval.rule.test" "approval.unsafe" "approval.unsafe.off"
     "adapter.unconfine" "adapter.confine" "pane.share" "pane.unshare"
-    "model.choose" "model.chosen" "model.signin.begin" "model.signin.finish" "model.signout"
+    "model.choose" "model.chosen" "model.signin.begin" "model.signin.finish" "model.signout" "conversation.rename"
     "notify.list" "notify.read" "image.read" "image.open" "image.show" "tex.render" "tex.read" "tex.open" "tex.log"
     ;; the manual costs one line of the Acting text, not four of Actions
     "doc.show" "doc.candidates" "doc.overview" "doc.contents" "field.diff" "conversation.compressor" "path.complete"
@@ -319,6 +319,13 @@
     :schema [:map [:mount :string] [:path {:optional true} :string]]
     :instructions (str "Lists the directory `path` ends in, keeping the names its last part begins: "
                        "{mount dir stem entries}, a directory ending in /. It creates nothing, and needs read on the mount.")}
+   {:name "conversation.rename"
+    :hint "rename a conversation"
+    :handler :conversation.rename
+    :public true
+    :schema [:map [:thread id-string] [:title :string]]
+    :instructions "Set the title shown for a conversation. A person's own session only; the person must be able to write its root Message."
+   }
    {:name "conversation.compressor"
     :hint "give a Principal its own summary prompt, from the shipped one"
     :handler :conversation.compressor

@@ -216,7 +216,7 @@ At the end, root and the person should be able to find:
 - its ordinary Model trust boundary;
 - the public/private boundary;
 - consequential actions reserved to the person;
-- recovery expectations;
+- recovery expectations and the no-data-loss/provenance rule;
 - worker-delegation rules;
 - remaining uncertainties.
 

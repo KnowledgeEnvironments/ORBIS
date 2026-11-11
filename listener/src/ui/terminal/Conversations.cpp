@@ -176,10 +176,33 @@ void TerminalPane::drawConversations(Tab& tab, const model::PrincipalInfo* info,
             ImGui::PushID(r.thread.c_str());
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            text(Ink::strong, r.title.empty() ? chat::idPrefix(r.thread) : r.title);
-            if (r.compressed) {
-                ImGui::SameLine();
-                text(Ink::secondary, "compressed");
+            if (c.renaming == r.thread) {
+                ImGui::SetNextItemWidth(-1);
+                const bool enter = ImGui::InputTextWithHint("##rename", "conversation title", &c.renameTitle,
+                                                            ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll);
+                drive::hit("input:conversation-rename:" + chat::idPrefix(r.thread), ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+                if (enter && !c.renameTitle.empty()) {
+                    const std::string thread = r.thread;
+                    const std::string title = c.renameTitle;
+                    chat.actNamed("conversation.rename", json{{"thread", thread}, {"title", title}}, [&c, thread, title](const Response& res) {
+                        if (res.ok) {
+                            for (chat::ConversationRow& row : c.rows) {
+                                if (row.thread == thread) row.title = title;
+                            }
+                            c.renaming.clear();
+                            c.renameTitle.clear();
+                            c.err.clear();
+                        } else {
+                            c.err = res.err ? res.err->code + ": " + res.err->message : std::string("rename refused");
+                        }
+                    });
+                }
+            } else {
+                text(Ink::strong, r.title.empty() ? chat::idPrefix(r.thread) : r.title);
+                if (r.compressed) {
+                    ImGui::SameLine();
+                    text(Ink::secondary, "compressed");
+                }
             }
             ImGui::TableNextColumn();
             text(Ink::secondary, who);
@@ -189,6 +212,16 @@ void TerminalPane::drawConversations(Tab& tab, const model::PrincipalInfo* info,
             text(Ink::secondary, std::to_string(r.messages) + " msgs");
             ImGui::TableNextColumn();
             const std::string shortId = chat::idPrefix(r.thread);
+            if (bracketButtonNamed(c.renaming == r.thread ? "cancel" : "rename", "conversation-rename:" + shortId, session.attached())) {
+                if (c.renaming == r.thread) {
+                    c.renaming.clear();
+                    c.renameTitle.clear();
+                } else {
+                    c.renaming = r.thread;
+                    c.renameTitle = r.title;
+                }
+            }
+            ImGui::SameLine();
             if (bracketButtonNamed("open", "conversation-open:" + shortId)) {
                 Tab::ThreadUi tu; // the read-only thread window
                 tu.thread = r.thread;

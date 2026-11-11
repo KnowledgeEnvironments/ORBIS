@@ -178,17 +178,29 @@
 
 (defn- up? [db id] (not (down (field db id :model/status))))
 
+(declare allowed-for-principal?)
+
 (defn- first-of
-  "The first of the Principal's Models, as a pick."
+  "The first eligible of the Principal's Models, as a pick."
   [db p-state]
-  (some (fn [e] (when (live? db e) {:model e}))
+  (some (fn [e] (when (and (live? db e) (allowed-for-principal? db p-state e)) {:model e}))
         (sort-by str (get-in p-state [:object/fields :principal/models :field/value]))))
+
+(defn allowed-for-principal?
+  "Whether model satisfies a Principal's enforceable residency allowlist. An absent or empty list
+   preserves the default refusal of external Models; otherwise model/residency must be named."
+  [db p-state model]
+  (let [allowed (set (get-in p-state [:object/fields :policy/model-residencies :field/value]))
+        residency (field db model :model/residency)]
+    (if (seq allowed) (contains? allowed residency) (not= :external residency))))
 
 (defn fallback-for
   "The Principal's fallback, if it can be used and is not `not-this`."
   [db p-state not-this]
   (let [f (pick (get-in p-state [:object/fields :principal/model-fallback :field/value]))]
-    (when (and f (live? db (:model f)) (up? db (:model f)) (not= not-this (:model f))) f)))
+    (when (and f (live? db (:model f)) (up? db (:model f))
+               (allowed-for-principal? db p-state (:model f))
+               (not= not-this (:model f))) f)))
 
 (defn for-wake
   "What a wake runs on: the conversation's choice, else the Principal's, else its first Model. A
@@ -200,7 +212,7 @@
         chosen (or (when (and conversation (live? db (:model conversation))) (assoc conversation :source :conversation))
                    (when (and principal (live? db (:model principal))) (assoc principal :source :principal))
                    (some-> (first-of db p-state) (assoc :source :first)))]
-    (when chosen
+    (when (and chosen (allowed-for-principal? db p-state (:model chosen)))
       (if (up? db (:model chosen))
         chosen
         (if-let [f (fallback-for db p-state (:model chosen))]

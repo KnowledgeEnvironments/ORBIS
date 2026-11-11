@@ -168,7 +168,7 @@ A cancel beats a steer. A call cut either way leaves `evaluation/partial` and `e
 
 A conversation is a `message/thread`. A person's plain line with no `in-reply-to` joins the newest thread they asked on that Route while its last Message is younger than `serialize/conversation-idle-s` (on a recipient, default 1800), `in-reply-to` the last thing someone else said.
 
-`history {conversations true, principal?, limit?, before?}` answers `{events [], conversations [{thread route participants title first-at last-at last-seq messages tokens-in tokens-out compressed}], next?}`, newest first, only threads whose root the caller reads. `before` takes a `last-seq`. The title is `conversation/title` on the thread root, else the first line of its first Message.
+`history {conversations true, principal?, limit?, before?}` answers `{events [], conversations [{thread route participants title first-at last-at last-seq messages tokens-in tokens-out compressed}], next?}`, newest first, only threads whose root the caller reads. `before` takes a `last-seq`. The title is `conversation/title` on the thread root, else the first line of its first Message. `act conversation.rename {thread, title}`, a person's own session only, writes the explicit title on a writable root Message.
 
 A whole-line `/word` from a person is a Message of `message/kind directive` with `message/directive`, answered by a `status` Message `in-reply-to` it, and it never wakes a loop:
 
@@ -351,6 +351,8 @@ A wake's first turn names Fields someone else set since `loop/seen-seq`, which t
 ## Choosing a Model
 
 `act model.choose {principal, model?, id?, thread?, fallback?, clear?}`, a person's session only, says what a Principal runs on. `id` is one of the Model's `model/available`. With `thread` it holds for that conversation, in `conversation/model` on the thread root; otherwise `principal/model-choice`. `fallback true` writes `principal/model-fallback`. Each value is `{model, id?}`. An agent cannot choose for itself: those Fields answer `person-only` to anyone else. A person holds no `delegate`, so the kernel grants the Principal `evaluate` on the Model.
+
+`policy/model-residencies` on a Principal is an enforceable list of admitted `model/residency` values. It applies to direct evaluations, conversation and Principal choices, first-choice selection, and fallbacks. The Field is absent by default, which admits non-external Models and preserves the default refusal of external residency; a person's session may set (for example) `[:local]` for a local-only Principal or explicitly include `:external` for an isolated worker.
 
 `act model.chosen {principal, thread?}` answers what a wake would use now: `{model, name, id, status, plan, source, fell-back-from?, fallback?, signed-in?, usage-url?}`, where `source` is `conversation`, `principal`, `first` or `fallback`.
 

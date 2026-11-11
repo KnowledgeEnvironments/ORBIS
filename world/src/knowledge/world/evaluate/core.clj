@@ -33,13 +33,13 @@
    (objects = Objects rendered, dropped = items summarised or left out by the serializer policy).
    `evaluated` events go to the Evaluation's, the Model's and the initiator's streams (7.1).
    Budget Triggers are not checked yet. Returns {:ok {:evaluation id :done future}}."
-  (:require [knowledge.world.models :as models]
-            [knowledge.world.act.core :as act]
+  (:require [knowledge.world.act.core :as act]
             [knowledge.world.adapters.model-api :as model]
             [knowledge.world.cost :as cost]
             [knowledge.world.fold.objects :as objects]
             [knowledge.world.image :as image]
             [knowledge.world.log.core :as log]
+            [knowledge.world.models :as models]
             [knowledge.world.resolve.core :as resolve]
             [knowledge.world.serialize.core :as ser]
             [taoensso.timbre :as timbre]))
@@ -281,8 +281,8 @@
       (not= :model (:object/class model-state)) act/unresolved
       :else
       (if-let [{:keys [grant]} (resolve/resolve! world db principal (act/id-name model) :evaluate)]
-        (if (= :external residency)
-          (act/err :residency "no residency Grant rule admits an external Model yet")
+        (if-not (models/allowed-for-principal? db (objects/state db principal) model)
+          (act/err :residency "the Principal's policy/model-residencies does not admit this Model")
           (let [evaluation (random-uuid)
                 policy (or policy :normal)
                 reasoning (model/resolve-reasoning (model/for-model model-state) reasoning)

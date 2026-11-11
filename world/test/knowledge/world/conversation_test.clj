@@ -146,5 +146,16 @@
       (is (= route (:route row)))
       (is (>= (:messages row) 2))
       (is (false? (:compressed row)))
+      (testing "a person can give the conversation an explicit title"
+        (fx/grant! root (:id witness) #{a} #{:write})
+        (let [w (fx/attach-as world (:token witness))
+              renamed (ws/request!! w :act {:action :conversation.rename
+                                             :args {:thread (str a) :title "Build it carefully"}})]
+          (is (:ok renamed) (pr-str renamed))
+          (is (= "Build it carefully"
+                 (:title (first (filter #(= a (:thread %))
+                                       (get-in (ws/request!! root :history {:conversations true})
+                                               [:result :conversations]))))))
+          (ws/close! w)))
       (testing "the witness sees only what it may read"
         (is (seq (get-in (ws/request!! w :history {:conversations true}) [:result :conversations])))))))
