@@ -229,6 +229,7 @@ docs/      the contract and the working documents
 - The log is the truth: `docs/log-format.md`. The fold builds the index; a snapshot stands in for pruned history.
 - Resolution decides who may do what: `docs/authority.md`.
 - A world that carries and changes its own source: `docs/self-hosting.md`.
+- Welcoming its first resident: `docs/root-onboarding.md`.
 - Why things are as they are: `docs/decisions.md`, append-only. The ethos: `docs/ethos.md`. How an agent works on this repository: `AGENTS.md`.
 
 ## Known limits
