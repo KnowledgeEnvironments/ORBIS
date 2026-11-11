@@ -23,6 +23,8 @@ noncommercial use; see [License](#license).
 
 ORBIS is an operating system for work done by people and AI agents together, built the way the great interactive systems were built and the industry forgot: one persistent, self-describing world with a cogent data model, instead of a pile of files and a chat window.
 
+**The stack.** The world is Clojure on the JVM: an append-only log of Transit frames with CRCs, a Datascript index folded from it, Malli schemas for every class and frame, http-kit serving the protocol as JSON or Transit over WebSocket, and the agent loop as kernel code; it drives any OpenAI-compatible model, or ChatGPT by sign-in. The listener is C++20 on SDL3 and Dear ImGui with FreeType text, Metal underneath on Apple platforms, one codebase for macOS, iOS and Android; it holds no state the world does not, and draws what the world sends. Terminals are kept alive across restarts by a small Zig holder on libghostty-vt. The supervisor is a bash script with nothing to install. TeX is typeset by tectonic inside the world's box.
+
 Forty years ago we had systems you lived inside. The Lisp machines and Smalltalk kept a whole world in one image, every object named, documented from within, inspectable at any depth; the expert systems knew that knowledge wants structure. Plan 9 made everything a name in a namespace you could mount. The MOOs put many people and programmable objects in one persistent room. Engelbart and Xanadu wanted every reference to be real. They lost to Unix and files, because their richness had a price paid in human attention, and people will not pay it. The lazy system won, and [worse was better](https://www.dreamsongs.com/WorseIsBetter.html).
 
 The lineage is older than the web and less fashionable. The midrange machine whose operating system *was* the database: a single-level store, every object with its own authority, nothing outside it. The groupware whose unit was a document of typed fields with an access list, replicated between offices and worked on by agents, before the word was borrowed for something lesser. The expert systems, which knew that knowledge wants structure and that an inference should show its work. The Lisp machines and Smalltalk, where you lived inside the system and it could explain itself. Each got one thing right and paid for it in human ceremony.
@@ -139,7 +141,7 @@ ORBIS runs agents that read and write files and run commands on the machine that
 - **Secrets stay out of the record.** Model keys are read from the environment variable `key-env` names, never stored as Fields; ChatGPT sign-in tokens live under `credentials/`, which the box denies. `.envrc` is git-ignored. The log is exported, forked and backed up whole, so treat the data directory as sensitive.
 - **Cards are the control.** A new Principal starts with every command gated; a person decides each card or writes a rule for a class of commands. A new release of the kernel always waits for a person's own card, and nothing an agent writes can lift that. If a card surprises you, deny it and ask.
 
-## ORBIS IS SELF HOSTING
+## ORBIS is self hosting
 
 ![root fixes its own kernel: the card, the approval, the restart, and the report](docs/figures/readme/chat.png)
 
