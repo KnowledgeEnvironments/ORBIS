@@ -69,6 +69,20 @@ Byte streams on file descriptors were never going to be the future. Neither was 
 
 **The window.** One window, tiled. Every view and every pane is a tile in a tree of splits and tabs: the graph beside the chat, a terminal beside the file it is editing, the log under all of it, a typeset page floated out while you read. Drag a tab to split, dock, float or tab it; the layout is a Field of yours, so it comes back on the next launch and on the next machine, and a phone gets the narrow arrangement of the same tree. Focus follows the mouse; a pane an agent opens for you appears beside the conversation that opened it. You never have to leave: the terminal, the editor, the viewer, the approvals, the notices and the record are all here, and nothing of yours is in another app's window. On a phone, TOUCH mode is one conversation and a bar to hold while you speak; DESK mode is the same tabs at thumb size.
 
+## On the phone
+
+The same client, built for iOS from the same tree (`listener/README.md`; Android in `listener/platform/android/`). It holds nothing the world does not, so a phone with no shell and no files of its own still sees every pane.
+
+<img src="docs/figures/readme/phone.png" width="300" align="right" alt="TOUCH mode on a phone: the conversation, the line, and HOLD TO TALK">
+
+- **TOUCH mode**, the phone's default: one conversation, the line, and a bar across the bottom you hold while you speak. The words land in the line to read before you send; the world transcribes through any Model with speech-to-text (a local whisper will do). SPEAK beside the bar reads the last reply aloud through a Model with text-to-speech. Cards come to you at thumb size.
+- **DESK mode**: the desktop's panes as tabs; `[ desk ]` and `[ touch ]` on the bottom line switch, and a foldable keeps a mode per screen.
+- **Pairing by QR**: DEVICES on your own page shows a code and a QR; the phone's Camera opens the app with the world and code filled in; one tap claims a token for that phone alone, labelled and revocable from the desk.
+- **Background and back**: closing the phone closes the socket without detaching; opening it reattaches with the session and the last seq it acknowledged, and sees no gap.
+- Notices, approvals and the whole record are the same objects as on the desk, because they are the world's, not the client's.
+
+<br clear="all">
+
 ## Pictures
 
 | | |
