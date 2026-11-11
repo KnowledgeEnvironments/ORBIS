@@ -33,6 +33,7 @@ std::optional<Prefs> loadPrefs(const std::filesystem::path& file) {
         p.osNotices = j["view"].value("os-notices", true);
         p.mapTwilight = j["view"].value("map-twilight", false);
         p.touch = j["view"].value("touch", false);
+        p.touchWide = j["view"].value("touch-wide", false);
         p.focusFollowsMouse = j["view"].value("focus-follows-mouse", true);
         p.tooltips = j["view"].value("tooltips", true);
         p.fontMono = j["view"].value("font-mono", std::string());
@@ -70,7 +71,7 @@ bool savePrefs(const std::filesystem::path& file, const Prefs& prefs) {
                         {"bundled-token", prefs.bundledToken},
                         {"view", {{"thinking", prefs.thinking}, {"filter", prefs.filter}, {"search-last", prefs.searchLast},
                                   {"tree-flat", prefs.treeFlat}, {"theme", prefs.theme},
-                                  {"font-ui", prefs.fontUi}, {"label-case", prefs.labelCase}, {"focus-follows-mouse", prefs.focusFollowsMouse}, {"tooltips", prefs.tooltips}, {"os-notices", prefs.osNotices}, {"map-twilight", prefs.mapTwilight}, {"touch", prefs.touch}, {"font-mono", prefs.fontMono},
+                                  {"font-ui", prefs.fontUi}, {"label-case", prefs.labelCase}, {"focus-follows-mouse", prefs.focusFollowsMouse}, {"tooltips", prefs.tooltips}, {"os-notices", prefs.osNotices}, {"map-twilight", prefs.mapTwilight}, {"touch", prefs.touch}, {"touch-wide", prefs.touchWide}, {"font-mono", prefs.fontMono},
                                   {"font-ui-size", prefs.fontUiSize}, {"font-mono-size", prefs.fontMonoSize}, {"history-open", prefs.historyOpen}, {"tree-expanded", prefs.treeExpanded}, {"pinned", prefs.pinned}}}};
     if (prefs.principal) {
         j["principal"] = *prefs.principal;

@@ -1276,9 +1276,13 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
     Runtime& rt = in.rt;
     Panes& p = in.panes;
     applySafeArea(window);
-    settings.touch = &in.prefs.touch;
+    // The fold: a foldable's outer screen is narrow and its inner one wide, and each remembers its own
+    // mode, so folded it is TOUCH and open it is DESK until the person says otherwise on that screen.
+    const bool wideScreen = ImGui::GetMainViewport()->Size.x >= 500.0f;
+    bool& touchPref = wideScreen ? in.prefs.touchWide : in.prefs.touch;
+    settings.touch = &touchPref;
     settings.saveView = in.saveWhimsy;
-    const bool touch = in.prefs.touch;
+    const bool touch = touchPref;
     p.terminal.bare = touch;
     p.drawModeline(in);
     const ImGuiViewport* vp = ImGui::GetMainViewport();
@@ -1309,7 +1313,7 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
         }
         ImGui::SameLine();
         if (ui::bracketButtonNamed("desk", "touch-desk")) {
-            in.prefs.touch = false;
+            touchPref = false;
             in.saveWhimsy();
         }
     }

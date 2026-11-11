@@ -20,16 +20,16 @@ Mac and in TOUCH on the phone. Built.
 
 A foldable has two screens and a change between them. The rule: **the outer screen is TOUCH, the inner
 screen is DESK, unless the person said otherwise on that screen.** Fold it and you are holding a
-conversation; open it and you are at a desk. The mode pref becomes two prefs, keyed by the screen's
-width class (narrow under 500 pt, wide from there), and the active one follows the screen.
+conversation; open it and you are at a desk. The mode pref is two prefs, keyed by the screen's width
+class (narrow under 500 pt, wide from there), and the active one follows the screen. Built.
 
 The mechanics: on a fold or unfold iOS resizes the window's scene; SDL reports it as a resize and a
 safe-area change; the frame reads the window size every frame and the safe area from UIKit, so the
 layout follows. What must not happen: a window pinned to the size it was created at. The window is
 created at the screen's size in the device's own orientation and must stay resizable under SDL's
 fullscreen on iOS; the phone's console logs every screen change (`screen: event …`) so a fold that does
-not follow can be seen. Open: verified on the simulator for rotation, not yet on the device for the
-fold.
+not follow can be seen. The device's console showed every fold and rotation arriving as a resize with the right insets
+(2026-11-11); what remains is to see the layout follow with the per-screen mode on the device.
 
 ## The line and the keyboard
 
