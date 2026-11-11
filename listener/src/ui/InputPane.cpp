@@ -152,7 +152,10 @@ void InputPane::drawTalkBar(const std::function<void(const std::string&)>& talk,
     }
     ImGui::InvisibleButton("talk-bar", ImVec2(width, height));
     drive::hit("talk-bar", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
-    const bool down = ImGui::IsItemActive();
+    // The on-screen keyboard may close when the bar takes focus, which relays out the phone while
+    // the finger is still down.  Once recording starts, follow the physical hold rather than the
+    // item's moving rectangle; otherwise that relayout looks like an early release.
+    const bool down = ImGui::IsItemActive() || (holding_ && ImGui::IsMouseDown(ImGuiMouseButton_Left));
     talkStep(down, talk);
     const bool busy = !holding_ && voiceNote_ == "transcribing";
     chrome(dl, pos, ImVec2(pos.x + width, pos.y + height), holding_ ? ChromeRole::PressedControl : ChromeRole::RaisedControl);
