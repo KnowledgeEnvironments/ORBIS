@@ -67,11 +67,14 @@ sys.path.insert(0, sys.argv[3])
 from ws import World
 w = World(token_file=sys.argv[1], port=int(sys.argv[2]))
 r = w.act("token.list", {})
-rows = ((r.get("result") or {}).get("result") or {}).get("tokens") or ((r.get("result") or {}).get("result") or {}).get("rows") or []
-if rows:
-    print("devices")
-    for t in rows:
-        print("            " + " ".join(str(t.get(k) or "") for k in ("label", "principal-name", "issued-at", "last-used") if t.get(k)))
+res = (r.get("result") or {}).get("result") or {}
+cols = res.get("columns") or []; rows = res.get("rows") or []
+at = {c: i for i, c in enumerate(cols)}
+live = [t for t in rows if "revoked" in at and not t[at["revoked"]]]
+if live:
+    print("devices   label, principal, last used (revoke from DEVICES)")
+    for t in live:
+        print("            " + "  ".join(str(t[at[c]] or "-") for c in ("label", "principal", "last used") if c in at))
 PY
 fi
 say ""

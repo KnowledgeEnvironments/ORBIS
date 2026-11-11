@@ -1,11 +1,11 @@
 #!/bin/zsh
 # A world's history, for what pruning takes and a disk could lose: its log, snapshots, anchor and the
 # blobs still held. The newest few are kept. Restore by stopping the world and copying them back.
-#   scripts/backup-world.sh <data dir> [dest]     default /path/to/backups/worlds
+#   scripts/backup-world.sh <data dir> [dest]     default KE_BACKUPS, else backups/ beside the data dir
 set -eu
 DATA="${1:?a world's data directory}"
 NAME="$(basename "$DATA")"
-DEST="${2:-/path/to/backups/worlds}/$NAME"
+DEST="${2:-${KE_BACKUPS:-$(dirname "$D")/backups}}/$NAME"
 KEEP=3
 mkdir -p "$DEST"
 # at most one a day, however often a self-hosting world restarts
