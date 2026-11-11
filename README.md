@@ -14,9 +14,9 @@ The world is a Clojure process that is also the agent harness. The listener is a
 ORBIS is the On-line Relative Basis Information System. It is shared here with invited friends, to
 play with. It is not open source: see [License](#license).
 
-![root fixes its own kernel: the card, the approval, the restart, and the report](docs/figures/readme/chat.png)
+![ORBIS: root's note with typeset math and a TikZ diagram, the graph of people, agents and Models under a twilight sky, a terminal held by the world running the test suite, and the log beneath](docs/figures/readme/hero.png)
 
-*Above: root, running on a hosted model, has just changed ORBIS's own source, tested it, cut a release and asked to restart the world onto it. The person approved the card. The world came back on root's commit, root's wake carried on, and it reported with the commit, the files and the test it ran. Every line of that is on the log, in the HISTORY view under the chat.*
+*One window on one world: a chat with root (Markdown, typeset math, a table, code, a TikZ diagram rendered by the world), the GRAPH of people, agents and Models, a terminal that lives in the world and survives a restart, and HISTORY, the log itself, following the head.*
 
 ## What it is
 
@@ -99,9 +99,26 @@ The listener: `./listener/build/macos-debug/listener --url ws://127.0.0.1:7777/w
 On a second machine, copy the token once; a phone pairs by QR code. `KE_PUBLIC_URL` is the address
 clients are told to dial.
 
-## Demo: a world that improves itself
+## Before you run it
 
-`scripts/test-bootstrap.py` is the demonstration in the picture at the top, run end to end by a script that plays the person. It makes a fresh world from the checkout's HEAD, puts root on a real model, gives it an open item from the work list, decides root's cards by a policy it prints, approves the kernel swap, and checks from outside: the world runs root's commit and it is good, the commit touches what the task named, tests ran before the release, the reply names the commit, the behaviour the task asked for holds on the new world.
+ORBIS runs agents that read and write files and run commands on the machine that hosts the world. Read this before you give it one.
+
+- **Root's shell is yours.** Root is the operator: its commands run as the user who started the world, outside the box, so it can do what you can do there. Every other Principal's commands run in a confinement box (`sandbox-exec` on macOS, `bwrap` on Linux) that keeps them inside their mounts. The box has not been reviewed as a security boundary. Run a world under its own user account on a machine you can afford to rebuild.
+- **The Model sees the prompt.** What you type to a Principal, and what it reads to answer, goes to that Principal's Model: your own endpoint on the LAN, or OpenAI if you signed in with ChatGPT. Never type a password or a key into a chat; a Message is on the log for good and in the next prompt.
+- **Tokens are the only authentication, and there is no TLS.** `person.token` and `root.token` in the data directory are passwords; they are `0600`, keep them so. A world listens in the clear on its port: keep it on a network you trust, or behind a VPN, and set `KE_PUBLIC_URL` to the one address it should be dialled at.
+- **Secrets stay out of the record.** Model keys are read from the environment variable `key-env` names, never stored as Fields; ChatGPT sign-in tokens live under `credentials/`, which the box denies. `.envrc` is git-ignored. The log is exported, forked and backed up whole, so treat the data directory as sensitive.
+- **Cards are the control.** A new Principal starts with every command gated; a person decides each card or writes a rule for a class of commands. A new release of the kernel always waits for a person's own card, and nothing an agent writes can lift that. If a card surprises you, deny it and ask.
+- **Found something?** Write to `src@lispm.net` before you post it.
+
+## ORBIS IS SELF HOSTING
+
+![root fixes its own kernel: the card, the approval, the restart, and the report](docs/figures/readme/chat.png)
+
+*Root, on a hosted model, has just changed ORBIS's own source, tested it, cut a release and asked to restart the world onto it. The person approved the card. The world came back on root's commit, root's wake carried on, and it reported with the commit, the files and the test it ran. Every line of that is on the log.*
+
+### The demo, end to end
+
+`scripts/test-bootstrap.py` runs the picture above end to end, with a script that plays the person. It makes a fresh world from the checkout's HEAD, puts root on a real model, gives it an open item from the work list, decides root's cards by a policy it prints, approves the kernel swap, and checks from outside: the world runs root's commit and it is good, the commit touches what the task named, tests ran before the release, the reply names the commit, the behaviour the task asked for holds on the new world.
 
 ```
 scripts/test-bootstrap.py <scratch> --port 7811 --record <dir with a ChatGPT sign-in record> --task view-refs-test
