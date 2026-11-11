@@ -3,6 +3,8 @@
 #   ./start.sh              start the world if it is down, then show its state and the client tokens
 #   ./start.sh --restart    stop it first (a wedged supervisor, a change to data/world.env)
 #   ./start.sh --status     only show
+#   ./start.sh --fresh      a new, empty world: the old data/ is moved to data.trashed-<time>, never deleted,
+#                           its world.env (the Model, the port) carried over; asks before it moves anything
 # On a Mac the world starts through Terminal.app, so it has Local Network permission for a Model on
 # another machine and keeps running when the window closes (docs/install.md). Everything the world
 # needs is data/world.env; the supervisor (scripts/supervise.sh) keeps it up and rolls a bad release
@@ -20,6 +22,17 @@ URL="$(sed -n 's/^export KE_PUBLIC_URL=//p' "$DATA/world.env" | head -1)"; URL="
 running() { [ -f "$DATA/supervisor.pid" ] && kill -0 "$(cat "$DATA/supervisor.pid")" 2>/dev/null; }
 answers() { /usr/bin/curl -s -m 1 -o /dev/null "http://127.0.0.1:$PORT/"; }
 
+if [ "$MODE" = "--fresh" ]; then
+  KEEP="$DATA.trashed-$(date +%Y%m%dT%H%M%S)"
+  say "a fresh world: $DATA moves to $KEEP (nothing is deleted; move it back to recover)"
+  printf 'type yes to go on: '; read -r YES
+  [ "$YES" = "yes" ] || { say "left as it is"; exit 1; }
+  running && "$ROOT/scripts/supervise.sh" --stop "$DATA"
+  chmod -R u+w "$DATA/releases" 2>/dev/null
+  mv "$DATA" "$KEEP" && mkdir -p "$DATA" && cp "$KEEP/world.env" "$DATA/world.env" && chmod 600 "$DATA/world.env"
+  say "old world kept at $KEEP"
+  MODE=start
+fi
 if [ "$MODE" = "--restart" ] && running; then
   say "stopping the world"
   "$ROOT/scripts/supervise.sh" --stop "$DATA"
