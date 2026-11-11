@@ -116,6 +116,18 @@ std::vector<std::string> TerminalPane::tabIds() const {
     return out;
 }
 
+bool TerminalPane::drawTalkBar(float height) {
+    if (current_ < 0 || current_ >= static_cast<int>(tabs_.size())) {
+        return false;
+    }
+    Tab& tab = tabs_[static_cast<std::size_t>(current_)];
+    if (!tab.talk) {
+        return false;
+    }
+    tab.line.drawTalkBar(tab.talk, height);
+    return true;
+}
+
 const std::string& TerminalPane::current() const {
     return current_ >= 0 && current_ < static_cast<int>(tabs_.size()) ? tabs_[static_cast<std::size_t>(current_)].principal
                                                                       : kNone;
@@ -225,17 +237,19 @@ void TerminalPane::drawBody(model::Principals& principals, const model::Evaluati
         }
         items.push_back(std::move(item));
     }
-    const TabBarResult tabsPicked = tabBar("principal-tabs", items, current_, ImGui::GetContentRegionAvail().x, tabBarState_);
-    if (tabsPicked.picked >= 0) {
-        current_ = tabsPicked.picked;
-        focusRequested_ = true;
-    }
-    if (tabsPicked.closed >= 0) {
-        current_ = tabsPicked.closed;
-        closeCurrent();
-    } else if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !ImGui::GetIO().WantTextInput &&
-               ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_W)) {
-        closeCurrent();
+    if (!bare) {
+        const TabBarResult tabsPicked = tabBar("principal-tabs", items, current_, ImGui::GetContentRegionAvail().x, tabBarState_);
+        if (tabsPicked.picked >= 0) {
+            current_ = tabsPicked.picked;
+            focusRequested_ = true;
+        }
+        if (tabsPicked.closed >= 0) {
+            current_ = tabsPicked.closed;
+            closeCurrent();
+        } else if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !ImGui::GetIO().WantTextInput &&
+                   ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_W)) {
+            closeCurrent();
+        }
     }
     if (tabs_.empty()) {
         // Closing the last tab goes back to who is here.
@@ -307,43 +321,47 @@ void TerminalPane::drawBody(model::Principals& principals, const model::Evaluati
             shownView = i;
         }
     }
-    if (inlineTabs_) {
-        ImGui::SetCursorPosX(ImGui::GetStyle().WindowPadding.x); // row 2 starts at the pane's left edge
-    }
-    const ImVec2 rowAt = ImGui::GetCursorScreenPos();
-    tab.view = kViewIds[subTabs("views", kViews, 7, shownView)];
-    if (tab.view == 0) {
-        // What the transcript shows: a choice in the sub-strip's own words, right-aligned on the views'
-        // row when there is room, else on its own row. It changes the view, so it is not a button.
-        static const char* const kShowNames[] = {"all", "messages", "activity"};
-        static const char* const kShowIds[] = {"all", "chat", "system"};
-        static const char* const kShowTargets[] = {"filter:all", "filter:chat", "filter:system"};
-        float words = 4.0f;
-        for (const char* v : kViews) {
-            words += ImGui::CalcTextSize(upper(v).c_str()).x + 12.0f;
+    if (bare) {
+        tab.view = 0; // the conversation, and nothing to switch to
+    } else {
+        if (inlineTabs_) {
+            ImGui::SetCursorPosX(ImGui::GetStyle().WindowPadding.x); // row 2 starts at the pane's left edge
         }
-        const float want = subChoiceWidth("show", kShowNames, 3);
-        const float rightEdge = ImGui::GetWindowPos().x + ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x;
-        const ImVec2 after = ImGui::GetCursorScreenPos();
-        const bool fits = rowAt.x + words + want + 16.0f <= rightEdge;
-        const ImVec2 at(std::max(rowAt.x, rightEdge - want), fits ? rowAt.y : after.y);
-        ImGui::SetCursorScreenPos(at);
-        int shown = 0;
-        for (int i = 0; i < 3; ++i) {
-            if (this->filter == kShowIds[i]) {
-                shown = i;
+        const ImVec2 rowAt = ImGui::GetCursorScreenPos();
+        tab.view = kViewIds[subTabs("views", kViews, 7, shownView)];
+        if (tab.view == 0) {
+            // What the transcript shows: a choice in the sub-strip's own words, right-aligned on the views'
+            // row when there is room, else on its own row. It changes the view, so it is not a button.
+            static const char* const kShowNames[] = {"all", "messages", "activity"};
+            static const char* const kShowIds[] = {"all", "chat", "system"};
+            static const char* const kShowTargets[] = {"filter:all", "filter:chat", "filter:system"};
+            float words = 4.0f;
+            for (const char* v : kViews) {
+                words += ImGui::CalcTextSize(upper(v).c_str()).x + 12.0f;
+            }
+            const float want = subChoiceWidth("show", kShowNames, 3);
+            const float rightEdge = ImGui::GetWindowPos().x + ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x;
+            const ImVec2 after = ImGui::GetCursorScreenPos();
+            const bool fits = rowAt.x + words + want + 16.0f <= rightEdge;
+            const ImVec2 at(std::max(rowAt.x, rightEdge - want), fits ? rowAt.y : after.y);
+            ImGui::SetCursorScreenPos(at);
+            int shown = 0;
+            for (int i = 0; i < 3; ++i) {
+                if (this->filter == kShowIds[i]) {
+                    shown = i;
+                }
+            }
+            this->filter = kShowIds[subChoice("show", "show", kShowNames, kShowTargets, 3, shown)];
+            if (ImGui::IsMouseHoveringRect(at, ImVec2(at.x + want, at.y + ImGui::GetTextLineHeight() + 2.0f))) {
+                ke::ui::tip("all: everything. messages: what people and agents said. activity: heartbeats, approvals and status lines");
+            }
+            if (fits) {
+                restoreCursor(after);
             }
         }
-        this->filter = kShowIds[subChoice("show", "show", kShowNames, kShowTargets, 3, shown)];
-        if (ImGui::IsMouseHoveringRect(at, ImVec2(at.x + want, at.y + ImGui::GetTextLineHeight() + 2.0f))) {
-            ke::ui::tip("all: everything. messages: what people and agents said. activity: heartbeats, approvals and status lines");
-        }
-        if (fits) {
-            restoreCursor(after);
-        }
-    }
 
-    drawStatusBar(tab, info, principals, evals, chat, session);
+        drawStatusBar(tab, info, principals, evals, chat, session);
+    }
     // Esc twice within 400 ms (or Cmd-.) stops the running Evaluation; a single Esc keeps its
     // meaning (deselect, leave the line). The hint above makes the gesture discoverable.
     if (tab.line.takeEscapedEmpty()) {

@@ -443,7 +443,30 @@ void Panes::drawModeline(FrameInputs& in) {
             ImGui::SameLine();
         }
         const std::string hint = ui::takeDetailHint();
+#if LISTENER_PHONE
+        // A phone has no menu bar: the notices chip and the attach state sit at the right of this
+        // line, and the status text is clipped before them rather than run under them.
+        const ConnState st = rt.client.state();
+        const std::string stateWord = ui::upper(name(st));
+        const std::string head = std::to_string(rt.session.head());
+        const float chipWidth = ImGui::CalcTextSize("NOTICES 00").x + 2.0f * ImGui::GetStyle().FramePadding.x;
+        const float right = chipWidth + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::CalcTextSize((stateWord + " " + head).c_str()).x;
+        const float rightX = ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - right;
+        const ImVec2 textMin = ImGui::GetCursorScreenPos();
+        ImGui::PushClipRect(textMin, ImVec2(textMin.x + std::max(0.0f, rightX - ImGui::GetCursorPosX() - ImGui::GetStyle().ItemSpacing.x), textMin.y + ImGui::GetTextLineHeight() * 2.0f), true);
         ui::text(hint.empty() ? ui::Ink::secondary : ui::Ink::nav, hint.empty() ? modelineText : hint);
+        ImGui::PopClipRect();
+        ImGui::SameLine(std::max(ImGui::GetCursorPosX(), rightX));
+        if (ui::noticesChip(rt.notifications, notices.open())) {
+            notices.toggle();
+        }
+        ImGui::SameLine();
+        ui::text(ui::stateColor(st == ConnState::Attached, st == ConnState::Connecting || st == ConnState::Attaching), stateWord);
+        ImGui::SameLine();
+        ui::text(ui::Ink::strong, head);
+#else
+        ui::text(hint.empty() ? ui::Ink::secondary : ui::Ink::nav, hint.empty() ? modelineText : hint);
+#endif
     }
     ImGui::End();
     ImGui::PopStyleVar();
@@ -1091,6 +1114,25 @@ void SettingsPane::prefill(const PairLink& link) {
 bool SettingsPane::drawBody(Options& opts, Runtime& rt) {
     bool apply = false;
     ui::touchDragScroll();
+    if (touch != nullptr) {
+        ui::dimText("MODE");
+        if (ui::bracketButtonNamed("touch", "mode-touch", true, *touch) && !*touch) {
+            *touch = true;
+            if (saveView) {
+                saveView();
+            }
+        }
+        ImGui::SameLine();
+        if (ui::bracketButtonNamed("desk", "mode-desk", true, !*touch) && *touch) {
+            *touch = false;
+            if (saveView) {
+                saveView();
+            }
+        }
+        ImGui::SameLine();
+        ui::dimText("touch: one conversation and a bar to hold while you speak; desk: the tabs");
+        ImGui::Separator();
+    }
     ui::dimText("WORLD URL");
     ImGui::SetNextItemWidth(-FLT_MIN);
     ImGui::InputText("##url", &url, ImGuiInputTextFlags_AutoSelectAll);
@@ -1232,9 +1274,11 @@ bool SettingsPane::drawBody(Options& opts, Runtime& rt) {
 bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
     Runtime& rt = in.rt;
     Panes& p = in.panes;
-    const ConnState st = rt.client.state();
-    const std::string head = std::to_string(rt.session.head());
     applySafeArea(window);
+    settings.touch = &in.prefs.touch;
+    settings.saveView = in.saveWhimsy;
+    const bool touch = in.prefs.touch;
+    p.terminal.bare = touch;
     p.drawModeline(in);
     const ImGuiViewport* vp = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(vp->WorkPos);
@@ -1243,7 +1287,31 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
                  ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
                      ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking |
                      ImGuiWindowFlags_NoScrollWithMouse);
-    ImGui::PushFont(in.ui, 0.0f);
+    ImGui::PushFont(in.ui, touch ? ImGui::GetFontSize() * 1.15f : 0.0f);
+    if (touch) {
+        // TOUCH: no tabs. One line says who you are talking to; [ people ] picks another, [ desk ]
+        // returns to the tabs (the way to SETTINGS and the rest).
+        activeTab = pickPrincipal ? 2 : 0;
+        if (p.terminal.current().empty() && !pickPrincipal) {
+            // nothing open yet: root is who a phone talks to first
+            const chat::SymbolTable::Entry* root = ui::symbolUi().table() != nullptr ? ui::symbolUi().table()->byName("root") : nullptr;
+            if (root != nullptr) {
+                p.open(rt, root->id);
+            }
+        }
+        const std::string cur = p.terminal.current();
+        const chat::SymbolTable::Entry* who = ui::symbolUi().table() != nullptr ? ui::symbolUi().table()->byId(cur) : nullptr;
+        ui::text(ui::Ink::strong, cur.empty() ? std::string("ORBIS") : ui::upper(who != nullptr && !who->name.empty() ? who->name : chat::idPrefix(cur)));
+        ui::rowAtRight(ui::bracketRowWidth({"people", "desk"}));
+        if (ui::bracketButtonNamed("people", "touch-people", true, pickPrincipal)) {
+            pickPrincipal = !pickPrincipal;
+        }
+        ImGui::SameLine();
+        if (ui::bracketButtonNamed("desk", "touch-desk")) {
+            in.prefs.touch = false;
+            in.saveWhimsy();
+        }
+    }
     // The tab labels, with the pending approvals waiting on this listener's principal as a badge.
     std::string terminalLabel = kPhoneTabs[0];
     if (const std::size_t n = rt.tasks.pendingFor(rt.session.principal().value_or("")); n > 0) {
@@ -1251,8 +1319,9 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
     }
     const char* phoneTabs[kPhoneTabCount] = {terminalLabel.c_str(), kPhoneTabs[1], kPhoneTabs[2], kPhoneTabs[3],
                                              kPhoneTabs[4],         kPhoneTabs[5], kPhoneTabs[6]};
-    const float statusWidth = ImGui::CalcTextSize("ATTACHED 00000000").x;
-    if (ui::tabStripWidth(phoneTabs, kPhoneTabCount) + statusWidth <= ImGui::GetContentRegionAvail().x) {
+    if (touch) {
+        // the strip is not drawn: the header above stands in for it
+    } else if (ui::tabStripWidth(phoneTabs, kPhoneTabCount) <= ImGui::GetContentRegionAvail().x) {
         activeTab = ui::tabStrip("phone", phoneTabs, kPhoneTabCount, activeTab);
     } else {
         // Narrower than the strip: two rows, or the last tab (Settings, the way in) is off the screen.
@@ -1264,15 +1333,9 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
         const int bottom = ui::tabStrip("phone-2", phoneTabs + kTopRow, kPhoneTabCount - kTopRow, bottomActive);
         activeTab = top != topActive ? top : bottom != bottomActive ? kTopRow + bottom : active;
     }
-    // The tabs may wrap: the status has a row of its own, beside the chip that shares it.
-    if (ui::noticesChip(rt.notifications, p.notices.open())) {
-        p.notices.toggle();
-    }
-    ImGui::SameLine(std::max(0.0f, ImGui::GetContentRegionAvail().x + ImGui::GetCursorPosX() - statusWidth));
-    ui::text(ui::stateColor(st == ConnState::Attached, st == ConnState::Connecting || st == ConnState::Attaching),
-             ui::upper(name(st)));
-    ImGui::SameLine();
-    ui::text(ui::Ink::strong, head);
+    // The notices chip and the attach state live in the modeline at the bottom, where status lives,
+    // so the tabs are the only thing above the panes: at phone width the strip already takes two
+    // rows, and a third for status pushed the transcript down (iPhone Duo, 2026-11-11).
     {
         // The same red indicator as the desktop's, on a line of its own, always seen.
         ui::setUnsafe(rt.unsafe);
@@ -1301,7 +1364,10 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
     p.terminal.unread = &p.unread;
     const bool terminalTab = activeTab == 0; // its own input line; the strip is hidden
     const float inputHeight = terminalTab ? 0.0f : ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
-    ImGui::BeginChild("body", ImVec2(0, ImGui::GetContentRegionAvail().y - inputHeight), ImGuiChildFlags_None);
+    // TOUCH: the bar a thumb holds, under the conversation, as tall as two lines of text
+    const float barHeight = touch && terminalTab ? std::floor(ImGui::GetTextLineHeight() * 2.4f) : 0.0f;
+    const float barGap = barHeight > 0.0f ? ImGui::GetStyle().ItemSpacing.y : 0.0f;
+    ImGui::BeginChild("body", ImVec2(0, ImGui::GetContentRegionAvail().y - inputHeight - barHeight - barGap), ImGuiChildFlags_None);
     bool rebuild = false;
     if (activeTab == 0) {
         ui::setMathWorld(&rt.chat);
@@ -1354,6 +1420,14 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
     }
     ImGui::EndChild();
     ui::outlineRect(ImGui::GetWindowDrawList(), ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ui::Ink::secondary);
+    if (touch) {
+        pickPrincipal = activeTab == 2; // a pick in the people list lands on the conversation
+    }
+    if (barHeight > 0.0f && !p.terminal.drawTalkBar(barHeight)) {
+        // no Model can hear: the bar's room says so, in the same voice as the line's notes
+        ImGui::Dummy(ImVec2(0.0f, std::floor(barHeight / 4)));
+        ui::dimText("no Model here can hear");
+    }
     if (!terminalTab) {
         p.input.drawBody(rt.chat, in.anim, in.mono);
     }
