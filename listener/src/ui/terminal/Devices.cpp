@@ -248,14 +248,14 @@ void TerminalPane::drawDevices(Tab& tab, const model::PrincipalInfo* info, const
         dimText("use it as --token-file on another machine, or ADD WORLD with it; the world stores only its hash");
         ImGui::Unindent();
     }
-    drawPairing(tab, chat, session, mono);
+    drawPairing(tab, principals.nameOf(tab.principal), chat, session, mono);
     ImGui::EndChild();
     insetRim(ImGui::GetWindowDrawList(), ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 }
 
 // ---- pairing ------------------------------------------------------------------------------------
 
-void TerminalPane::drawPairing(Tab& tab, chat::Chat& chat, const Session& session, ImFont* mono) {
+void TerminalPane::drawPairing(Tab& tab, const std::string& who, chat::Chat& chat, const Session& session, ImFont* mono) {
     if (!tab.pairOpen) {
         return;
     }
@@ -264,6 +264,11 @@ void TerminalPane::drawPairing(Tab& tab, chat::Chat& chat, const Session& sessio
     text(Ink::strong, "PAIR A PHONE");
     ImGui::SameLine();
     text(Ink::secondary, "// the phone enters the code (or scans) and claims a token of its own, labelled, revocable here");
+    if (tab.principal != session.principal().value_or("")) {
+        // a phone paired here is this Principal's device, and an agent's device cannot dictate, decide
+        // cards or pair: a person's phone pairs from the person's own page (seen live, 2026-11-11)
+        text(Ink::inspected, "this pairs a phone AS " + upper(who) + ", not as you: your own phone pairs from your own page (PRINCIPALS, the row marked you)");
+    }
     const double now = static_cast<double>(std::time(nullptr));
     const double expires = tab.pairExpiresAt.empty() ? 0.0 : model::epochSeconds(tab.pairExpiresAt);
     const bool live = !tab.pairCode.empty() && (expires <= 0.0 || expires > now);
