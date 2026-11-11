@@ -282,7 +282,7 @@ Three kinds of tab, and each says what it is. `>` is a chat: clicking an agent o
 ## What it is not
 
 Not a game HUD, not neon glow, not blur. The reference is a terminal someone trusted in
-1995: WarGames, the Genera console, a VT with the brightness up. Every color carries a
+1995: WarGames, a Lisp machine console, a VT with the brightness up. Every color carries a
 meaning listed above; if a color has no row in the table it does not appear.
 
 ## Views and attachments

@@ -1,6 +1,6 @@
 (ns knowledge.world.manual
   "The built-in manual (decisions 2026-10-31): a part of the world that stores documentation, for people
-   and agents alike, modelled on the Genera Document Examiner. Topics are records, not files. Each is
+   and agents alike, modelled on the Lisp machine's document examiner. Topics are records, not files. Each is
    an Object in the world's manual collection, its events on the collection's stream, so the manual is
    versioned in the log and a world's copy upgrades with its kernel.
 
