@@ -7,10 +7,9 @@
 <p align="center"><b>A shared knowledge environment for doing work with people, computers, and artificial intelligence.</b></p>
 
 <p align="center">
-<b>Work with AI the way you work with people: in a shared place, by name, on the record.</b><br>
-ORBIS is that place. One world holds your projects, files, terminals and the agents that work them.<br>
-Every act is on a log that never forgets, every power is a grant you gave,<br>
-and the world ships its own next version with your say-so.
+<b>A scratch-built agentic system around a lost idea: the stateful, relational world.</b><br>
+People, agents, models, machines and the work itself live in one persistent image with one record and one set of rules about who may do what.<br>
+Not a chat window with tools stapled on. A place.
 </p>
 
 ORBIS is the On-line Relative Basis Information System. It is shared here with invited friends, to
@@ -20,23 +19,38 @@ play with. It is not open source: see [License](#license).
 
 *One window on one world: a chat with root (Markdown, typeset math, a table, code, a TikZ diagram rendered by the world), the GRAPH of people, agents and Models, a terminal that lives in the world and survives a restart, and HISTORY, the log itself, following the head.*
 
-## What it is
+## What this is
 
-- **A world, not a chat log.** People, agents, models, files, shells, terminals, projects, cards and notices: every one a named thing with a history, in one graph. An agent's prompt is cut from that graph around the job at hand, not a transcript stuffed to the limit.
-- **Permission is the architecture.** An agent does exactly what its Grant resolves. Commands go through cards you decide, or rules you wrote. Root runs the place; agents escalate to it; swapping the kernel always waits for your own card.
-- **It ships itself.** A world carries the release it runs and a working copy root may edit. Root builds, tests, cuts a release and restarts the world onto it. A release that fails its health check comes back to the last good one on its own.
-- **Any model, per agent.** Your own endpoint on the LAN, or Sign in with ChatGPT. Pick per Principal, switch mid-conversation, keep a fallback.
-- **One native client, every screen.** C++20, SDL3, Dear ImGui: macOS now, iOS and Android in the tree. Terminals, files, TeX and search run in the world, so the phone sees exactly what the desk sees. Terminals outlive a restart. Every agent but root runs in a box (`sandbox-exec` on macOS, `bwrap` on Linux).
+Forty years ago we had systems you lived inside. Genera and Smalltalk kept a whole world in one image, every object named, documented from within, inspectable at any depth. Plan 9 made everything a name in a namespace you could mount. The MOOs put many people and programmable objects in one persistent room. Engelbart and Xanadu wanted every reference to be real. They lost to Unix and files, because their richness had a price paid in human attention, and people will not pay it. The lazy system won, and [worse was better](https://www.dreamsongs.com/WorseIsBetter.html).
 
-The ideas are in `docs/ethos.md`, the wire in `docs/protocol.md`, who may do what in `docs/authority.md`. The same documents are built into a running world as its manual.
+An agent will pay that price. It will name everything, keep the grants current, write the setup notes, mount the namespaces, and the product of all that ceremony is exactly what it needs to think: its own context. So the richness is affordable now, and ORBIS is the bet that **better is better** after all: build the world, and let the agents keep it.
+
+What the industry is shipping instead is a for-loop around a chat completion with a vector database stapled to the side. "Memory" is a markdown file the model forgets to read. "Skills" are prompt-stuffing with a folder structure. "Multi-agent" is three of the same loop passing strings. Observability is a dashboard bolted on after the fact, over a transcript nobody can replay. None of it has a notion of *who may do what*, so the answer is always "everything, and we hope." That is not a harness. That is a prayer with retries.
+
+ORBIS is the other thing:
+
+- **The log is the truth.** No image holds the system; every object has a stream, present state is a fold over it, a run is a value with a name. Replay it and you get the same world. Streams federate; images never did, and the single image is what killed the ancestors.
+- **Context is a property of the graph, not of a prompt template.** What a Principal can name bounds what it can read. Depth and salience shape the rest. A named serialization caches it and replays it. The rules that set permission set context cost, and both are auditable.
+- **The world is the harness.** There is no agent program outside it. The loop that resolves, serializes, evaluates and acts is kernel code, one per Principal, with no state outside that Principal's Fields. Sessions are streams, tools are actions, subagents are Principals, channels are Routes, cron is a Trigger, memory is authored Fields. Everything a harness ever did is a named object with a record.
+- **People, agents and appliances are one class.** One namespace model, one API; a flag says what drives each. The product a team builds is itself a Principal, so the team is observable: who touched what, under which Grant, from which inputs, at what cost.
+- **Workflows are deterministic because they are data.** A Task is an object, a card is an object, a rule is an object, a restart is an object. Worlds link to worlds; a Principal in one speaks to a Principal in another through a Route, and the whole exchange is on both logs. Many worlds, many people, many runtimes, one grammar.
+- **It ships itself.** A world carries the release it runs and a working copy its root may edit. Root builds, tests, cuts a release and restarts the world onto it, and the swap waits for a person's own card. A release that fails health comes back on its own.
+
+### The ontology, in one breath
+
+An **Object** has named **Fields** and a stream of **Events**. A **Principal** is an Object that acts: driven by a person, by a process on a **Model**, or by nothing, an appliance. A **Grant** says what a Principal may do to which names, and `resolves?` is the one predicate that carries access, attention, cost and audit; a **Group** is a Grant's shorthand for several. A **Route** is where Principals speak; a **Message** is what they say, with its references as exact spans. An **Adapter** backs Objects that live elsewhere: a filesystem, a shell, a container, an API, another world. A **Serialization** is a named, cached slice of the graph: a prompt, a view, a page; an **Evaluation** is one Model call over one, with its ops and their results. A **Task** is work with a state machine, which is also how an approval is a card. A **Trigger** wakes a Principal on time or on an event. Fourteen classes, nine value types, sixteen event kinds, and nothing else. `docs/ontology.md` is generated from the schemas that enforce it.
+
+The ideas are in `docs/ethos.md`, the wire in `docs/protocol.md`, who may do what in `docs/authority.md`. The same documents are built into a running world as its manual, because a world should explain itself.
 
 ## Hypertext, persistence, multiplexing
 
-**Hypertext.** Text in ORBIS carries references. A name in a Message, a view's title, a summary, is written as `[[name]]`, resolved under the reader's Grants, and stored beside the text as spans (`message/refs`, `view/title/refs`): the display text stays plain, the reference stays exact. A path a model cites is checked against its own working copies by the world and marked as a path. In the listener every one of them is a link: a Principal, a Field, a file at a line, a commit. What a model wrote that resolved to nothing stays literal and is listed, so a made-up name cannot pass as a link.
+Byte streams on file descriptors were never going to be the future. Neither was `ssh` into a box with a text file that calls itself memory. The ancestors knew it: objects, streams, inheritance, persistence, state, a data model you could reason about, a system that could describe itself. ORBIS takes those three words seriously.
 
-**Persistence.** The log is the truth and it is never rewritten. Objects, indexes, views and memory are folds of it, discarded and rebuilt at will. A client that drops reattaches with its session and the last seq it acknowledged and sees no gap, whether the world stayed up or restarted. A world survives its own kernel swap with the wake that asked for it. Snapshots stand in for pruned history under one retention limit; `scripts/` back a world up, export it, import it, fork it and promote a fork.
+**Hypertext.** Every reference is real. A name in a Message, a view's title, a summary, written as `[[name]]`, resolves under the reader's Grants and is stored beside the text as exact spans (`message/refs`, `view/title/refs`); the display text stays plain, the reference stays a reference. A path a model cites is checked against its own working copies by the world and marked as a path. In the listener every one of them is a link to a Principal, a Field, a file at a line, a commit, and what a model wrote that resolves to nothing stays literal and is listed, so a made-up name can never pass as a link. Xanadu's two-way link, done by a kernel that knows who is asking.
 
-**Multiplexing.** A pane is a live surface in the world, not in a client: a terminal on a shell, a file manager on a directory, an editor or viewer on a file, a rendered page of TeX. Closing a client leaves it running; several clients attach to one pane; a person, a model and a remote client drive it through the same actions. The terminal holder keeps terminals alive across a world restart. A person's layout is a Field of theirs, so the same panes open on the Mac and on the phone.
+**Persistence.** No image, no checkpoint, no "save". The log is the truth and it is never rewritten; Objects, indexes, views and memory are folds of it, thrown away and rebuilt at will. A client that drops reattaches with its session and the last seq it acknowledged and sees no gap, whether the world stayed up or restarted. A world survives its own kernel swap with the wake that asked for it still running. Snapshots stand in for pruned history under one retention limit; worlds are backed up, exported, imported, forked and promoted whole, because a world is a value.
+
+**Multiplexing.** A pane is a live surface in the world, not in a client: a terminal on a shell, a file manager on a directory, an editor or viewer on a file, a typeset page of TeX. It is an Object with Fields like everything else, so closing a client leaves it running, several clients attach to one pane, and a person, a model and a remote client drive it through the same named actions. The terminal holder keeps terminals alive across a world restart. A person's layout is a Field of theirs, so the same panes open on the Mac and on the phone, and the phone, with no shell and no files of its own, sees exactly what the desk sees. Plan 9 mounted everything into one namespace; here the namespace is the world, and the screen is one more thing in it.
 
 ## Pictures
 

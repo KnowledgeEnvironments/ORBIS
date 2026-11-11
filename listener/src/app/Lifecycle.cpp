@@ -44,7 +44,20 @@ int bringUp(Gpu& gpu, const Options& opts) {
 #else
     const SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 #endif
+#if defined(SDL_PLATFORM_IOS)
+    // The window is the screen, in the orientation the device is held: a request wider than tall
+    // (the desktop's 1440x900) made SDL turn a portrait phone on its side, with the safe-area
+    // bands of the wrong edges (iPhone Duo simulator, 2026-11-11).
+    int ww = 1440, wh = 900;
+    SDL_Rect bounds{};
+    if (SDL_GetDisplayBounds(SDL_GetPrimaryDisplay(), &bounds) && bounds.w > 0 && bounds.h > 0) {
+        ww = bounds.w;
+        wh = bounds.h;
+    }
+    gpu.window = SDL_CreateWindow(kProductName, ww, wh, flags);
+#else
     gpu.window = SDL_CreateWindow(kProductName, 1440, 900, flags);
+#endif
     if (!gpu.window) {
         log::error("SDL_CreateWindow: {}", SDL_GetError());
         return 1;

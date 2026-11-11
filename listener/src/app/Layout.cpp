@@ -1058,6 +1058,13 @@ void applySafeArea(SDL_Window* window) {
         return;
     }
     auto* vp = static_cast<ImGuiViewportP*>(ImGui::GetMainViewport());
+    static SDL_Rect logged{-1, -1, -1, -1};
+    if (safe.x != logged.x || safe.y != logged.y || safe.w != logged.w || safe.h != logged.h) {
+        logged = safe;
+        int pw = 0, ph = 0;
+        SDL_GetWindowSizeInPixels(window, &pw, &ph);
+        log::info("safe area: window {}x{} ({}x{} px), safe x {} y {} w {} h {}", w, h, pw, ph, safe.x, safe.y, safe.w, safe.h);
+    }
     vp->BuildWorkInsetMin = ImVec2(static_cast<float>(safe.x), static_cast<float>(safe.y));
     // The keyboard takes the bottom of the work area, so the panes shrink rather than leave the screen.
     platform::watchKeyboard(window);
