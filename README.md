@@ -7,10 +7,10 @@
 <p align="center"><b>A shared knowledge environment for doing work with people, computers, and artificial intelligence.</b></p>
 
 <p align="center">
-Agents that live in a world, not a chat window.<br>
-One log that never forgets. Every person, agent, model, file and terminal is a named thing with a record.<br>
-An agent does what it was granted, asks when it wasn't, and can change the code it runs on, once you approve the card.<br>
-A Clojure world runs all of it. A native client shows you all of it.
+<b>Work with AI the way you work with people: in a shared place, by name, on the record.</b><br>
+ORBIS is that place. One world holds your projects, files, terminals and the agents that work them.<br>
+Every act is on a log that never forgets, every power is a grant you gave,<br>
+and the world ships its own next version with your say-so.
 </p>
 
 ORBIS is the On-line Relative Basis Information System. It is shared here with invited friends, to
