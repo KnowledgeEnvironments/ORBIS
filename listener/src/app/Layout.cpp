@@ -1223,7 +1223,8 @@ bool SettingsPane::drawBody(Options& opts, Runtime& rt) {
                     apply = true;
                 }
             } else {
-                pairStatus = "claim failed: " + claim.error();
+                pairStatus = "claim failed: " + claim.error() +
+                             (claim.error() == "could not connect" ? "; is the VPN or Wi-Fi on, and Local Network allowed for ORBIS in Settings?" : "");
                 pairErr = true;
             }
         }

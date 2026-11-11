@@ -6,6 +6,10 @@
 // into the bundle by a development build (LISTENER_TOKEN_FILE, the person's by default), then the
 // compiled defaults below. Android bakes nothing: the way in is PAIR WITH CODE. A client is a person; root is the agent.
 #include "app/App.hpp"
+
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
 #include "app/Options.hpp"
 #include "app/Runtime.hpp"
 #include "app/Smoke.hpp"
@@ -109,6 +113,14 @@ ke::Options phoneOptions() {
     opts.dataDir = dataDir.string();
 #if defined(SDL_PLATFORM_ANDROID)
     opts.assetsDir = "assets"; // inside the APK: relative, so SDL's IO opens it through AssetManager
+#endif
+#if defined(TARGET_OS_SIMULATOR) && TARGET_OS_SIMULATOR
+    // On the simulator the drive API opens a socket in the host's home, so the phone build can be
+    // walked and screenshotted from the Mac like the desktop (a unix socket path is short, so not
+    // the app container's). A device build never has one.
+    if (const char* home = std::getenv("SIMULATOR_HOST_HOME"); home != nullptr) {
+        opts.driveSocket = std::string(home) + "/.orbis/sim-drive.sock";
+    }
 #endif
     ke::log::info("phone: prefs {} assets {}", prefsFile.string(), opts.assetsDir);
     return opts;
