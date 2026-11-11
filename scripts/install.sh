@@ -66,8 +66,22 @@ if [ ! -f "$ROOT/.envrc" ]; then
   printf 'model URL (e.g. http://localhost:8000/v1): '; read -r MURL
   MID=""; MKEY=""
   if [ -n "$MURL" ]; then
-    printf 'model id: '; read -r MID
-    printf 'key (not shown; anything if the endpoint takes none): '; read -rs MKEY; echo
+    printf 'key (not shown; empty if the endpoint takes none): '; read -rs MKEY; echo
+    # the endpoint says what it serves: one model is taken, several are offered, none means type it
+    MODELS="$(/usr/bin/curl -s -m 5 ${MKEY:+-H "Authorization: Bearer $MKEY"} "${MURL%/}/models" 2>/dev/null | python3 -c 'import json,sys
+try:
+    d=json.load(sys.stdin); print("\n".join(str(m.get("id") or m.get("slug") or "") for m in (d.get("data") or d.get("models") or []) if isinstance(m, dict)))
+except Exception: pass' 2>/dev/null)"
+    if [ -z "$MODELS" ]; then
+      say "  (no model list at ${MURL%/}/models: the endpoint may be down, or need the key; type the id)"
+      printf 'model id: '; read -r MID
+    elif [ "$(printf '%s\n' "$MODELS" | grep -c .)" -eq 1 ]; then
+      MID="$MODELS"; say "  the endpoint serves one model: $MID"
+    else
+      say "  the endpoint serves:"; printf '%s\n' "$MODELS" | nl -w3 -s'  '
+      printf 'model id (a number from the list, or the id): '; read -r PICK
+      case "$PICK" in ''|*[!0-9]*) MID="$PICK" ;; *) MID="$(printf '%s\n' "$MODELS" | sed -n "${PICK}p")" ;; esac
+    fi
   fi
   ( umask 077; {
       echo "# written by scripts/install.sh; see .env.example"
@@ -130,7 +144,8 @@ if [ -n "$LISTENER" ]; then
   ok "listener opening (log $ROOT/logs/listener.log)"
 fi
 say ""
-say "next time:  open -a Terminal $DATA/start.sh   (or scripts/world.sh $DATA), then"
+KE_DATA="$DATA" "$ROOT/start.sh" --status
+say "next time:  ./start.sh   (starts the world if it is down, --restart after a change to world.env, --status to look), then"
 say "            $BIN --url ws://127.0.0.1:$PORT/ws --token-file $DATA/person.token"
 say "stop:       scripts/supervise.sh --stop $DATA"
 say "docs:       docs/install.md"
