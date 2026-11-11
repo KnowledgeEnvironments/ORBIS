@@ -468,7 +468,7 @@ class TerminalPane {
                      const Session& session, ImFont* mono);
     // The pairing block under DEVICES: pair.begin, then the code large, the world url, time left
     // and the QR of orbis://pair?url=…&code=… until it expires.
-    void drawPairing(Tab& tab, chat::Chat& chat, const Session& session, ImFont* mono);
+    void drawPairing(Tab& tab, const std::string& who, chat::Chat& chat, const Session& session, ImFont* mono);
     void drawFields(Tab& tab, const model::PrincipalInfo* info, const model::Principals& principals, chat::Chat& chat,
                     const Session& session);
     // The HINT cell of a Field (or of the object when `base` is "object"): the one-line

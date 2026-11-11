@@ -10,6 +10,7 @@
 #include "ui/SymbolUi.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
 
@@ -153,11 +154,21 @@ void InputPane::drawTalkBar(const std::function<void(const std::string&)>& talk,
     drive::hit("talk-bar", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
     const bool down = ImGui::IsItemActive();
     talkStep(down, talk);
+    const bool busy = !holding_ && voiceNote_ == "transcribing";
     chrome(dl, pos, ImVec2(pos.x + width, pos.y + height), holding_ ? ChromeRole::PressedControl : ChromeRole::RaisedControl);
-    const std::string word = holding_ ? "LISTENING" : voiceNote_.empty() || voiceNote_ == "listening" ? "HOLD TO TALK" : upper(voiceNote_);
+    if (busy) {
+        // the recording is on its way to the Model: the same tape as a thinking agent, along the bar's foot
+        hazardTape(dl, ImVec2(pos.x + 2.0f, pos.y + height - 6.0f), ImVec2(pos.x + width - 2.0f, pos.y + height - 2.0f), ImGui::GetTime());
+    }
+    const std::string word = holding_ ? "LISTENING" : busy ? "TRANSCRIBING" : voiceNote_.empty() || voiceNote_ == "listening" ? "HOLD TO TALK" : upper(voiceNote_);
     const ImVec2 size = ImGui::CalcTextSize(word.c_str());
-    dl->AddText(ImVec2(pos.x + std::floor((width - size.x) / 2), pos.y + std::floor((height - size.y) / 2)),
-                holding_ ? Ink::onSelection : Ink::nav, word.c_str());
+    const ImVec2 at(pos.x + std::floor((width - size.x) / 2), pos.y + std::floor((height - size.y) / 2));
+    dl->AddText(at, holding_ ? Ink::onSelection : Ink::nav, word.c_str());
+    if (holding_) {
+        // a dot that breathes while the microphone is open, so a held bar is seen to be listening
+        const float r = 3.0f + 2.0f * static_cast<float>(0.5 + 0.5 * std::sin(ImGui::GetTime() * 6.0));
+        dl->AddCircleFilled(ImVec2(at.x - 14.0f, at.y + size.y / 2), r, Ink::onSelection);
+    }
 }
 
 void InputPane::drawLine(LineTarget& target, const Anim& anim, ImFont* mono) {
