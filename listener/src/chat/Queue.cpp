@@ -4,7 +4,7 @@
 
 namespace ke::chat {
 
-std::vector<QueueRow> queueRows(const json& loopQueue, const MessageCache& cache, std::vector<std::string>& pending) {
+std::vector<QueueRow> queueRows(const json& loopQueue, const MessageCache& cache, std::vector<PendingLine>& pending) {
     std::vector<QueueRow> rows;
     if (loopQueue.is_array()) {
         for (const json& e : loopQueue) {
@@ -21,17 +21,29 @@ std::vector<QueueRow> queueRows(const json& loopQueue, const MessageCache& cache
             r.kind = str("kind");
             if (const MessageRow* m = cache.get(r.message)) {
                 r.text = m->text;
-                if (auto it = std::find(pending.begin(), pending.end(), m->text); it != pending.end()) {
+                if (auto it = std::find_if(pending.begin(), pending.end(), [&](const PendingLine& p) { return p.text == m->text; }); it != pending.end()) {
                     pending.erase(it);
                 }
             }
             rows.push_back(std::move(r));
         }
     }
-    for (const std::string& line : pending) {
+    // Kernel-handled commands need not enter loop/queue. A reply to a Message newer than the
+    // enqueue watermark is nevertheless an acknowledgement, so its pending row is finished.
+    cache.forEachReady([&](const MessageRow& m) {
+        if (!m.inReplyTo) {
+            return;
+        }
+        auto it = std::find_if(pending.begin(), pending.end(), [&](const PendingLine& p) { return m.seq > p.afterSeq; });
+        if (it != pending.end()) {
+            pending.erase(it);
+        }
+    });
+    for (std::size_t i = 0; i < pending.size(); ++i) {
         QueueRow r;
-        r.text = line;
+        r.text = pending[i].text;
         r.pending = true;
+        r.pendingIndex = i;
         rows.push_back(std::move(r));
     }
     return rows;

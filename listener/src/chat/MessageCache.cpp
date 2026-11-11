@@ -1,5 +1,7 @@
 #include "chat/MessageCache.hpp"
 
+#include <algorithm>
+
 namespace ke::chat {
 
 json stateValue(const json& state, std::string_view key) {
@@ -94,6 +96,12 @@ MessageRow MessageCache::parseMessage(const std::string& id, const json& state) 
     m.summaryFrom = seqOf("conversation/from");
     m.summaryThrough = seqOf("conversation/through");
     return m;
+}
+
+Seq MessageCache::maxReadySeq() const {
+    Seq out = 0;
+    forEachReady([&](const MessageRow& m) { out = std::max(out, m.seq); });
+    return out;
 }
 
 bool MessageCache::noteFieldSet(const std::string& id, const std::string& name, const json& value) {

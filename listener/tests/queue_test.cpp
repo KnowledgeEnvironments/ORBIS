@@ -17,7 +17,7 @@ TEST_CASE("a line sent while working shows at once and is not doubled when the w
     cache.noteEvent(sent);
     cache.request("m-1");
     cache.onRead("m-1", json{{"message/text", "second thought"}, {"message/from", "p"}});
-    std::vector<std::string> pending{"second thought", "third thought"};
+    std::vector<PendingLine> pending{{"second thought", 0}, {"third thought", 0}};
     auto rows = queueRows(json(), cache, pending);
     REQUIRE(rows.size() == 2);
     CHECK(rows[0].pending);
@@ -28,6 +28,20 @@ TEST_CASE("a line sent while working shows at once and is not doubled when the w
     CHECK(rows[0].text == "second thought");
     CHECK(rows[1].pending);
     CHECK(pending.size() == 1);
+}
+
+TEST_CASE("a reply acknowledges a pending kernel command that never entered loop queue") {
+    MessageCache cache;
+    cache.onRead("old", json{{"message/text", "old reply"}, {"message/in-reply-to", "old-command"}, {"message/seq", 9}});
+    std::vector<PendingLine> pending{{"/new", 10}};
+    auto rows = queueRows(json::array(), cache, pending);
+    REQUIRE(rows.size() == 1);
+    CHECK(rows[0].pendingIndex == 0);
+
+    cache.onRead("reply", json{{"message/text", "new conversation"}, {"message/in-reply-to", "command"}, {"message/seq", 11}});
+    rows = queueRows(json::array(), cache, pending);
+    CHECK(rows.empty());
+    CHECK(pending.empty());
 }
 
 TEST_CASE("a queue row shows one line") {

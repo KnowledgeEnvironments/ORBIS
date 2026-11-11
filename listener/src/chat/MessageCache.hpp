@@ -74,6 +74,7 @@ class MessageCache {
     std::size_t ready() const { return ready_; }
     std::size_t pending() const { return pending_; }
     std::size_t size() const { return entries_.size(); }
+    Seq maxReadySeq() const;
     // Every Message read so far (state Ready), in no particular order (search, exports).
     template <class F> void forEachReady(F&& f) const {
         for (const auto& [id, e] : entries_) {

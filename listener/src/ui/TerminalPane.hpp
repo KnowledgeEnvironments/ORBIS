@@ -335,7 +335,7 @@ class TerminalPane {
         Seq menuSeq = 0;
         std::size_t lastLines = 0;
         SelState sel;                            // character / block selection in the transcript
-        std::vector<std::string> queuePending;   // lines sent while it works, until `loop/queue` lists them
+        std::vector<chat::PendingLine> queuePending; // lines sent while it works, until listed or answered
         bool queueInstead = false;
         std::string steerError;                  // why a steer was refused, with the line kept in the input
         std::string steerText;                   // that line, for [ QUEUE INSTEAD ]

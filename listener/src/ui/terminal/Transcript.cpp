@@ -671,11 +671,12 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
     };
     const bool working = principals.get(tab.worker) && principals.get(tab.worker)->loopIteration() > 0;
     t.working = working;
-    std::vector<std::string>* queued = &tab.queuePending;
+    std::vector<chat::PendingLine>* queued = &tab.queuePending;
     if (working) {
         auto plain = t.submit;
-        t.submit = [plain, queued](const std::string& line) {
-            queued->push_back(line); // shown at once, until the world lists it
+        const chat::MessageCache* messages = &chat.messages();
+        t.submit = [plain, queued, messages](const std::string& line) {
+            queued->push_back(chat::PendingLine{line, messages->maxReadySeq()}); // shown at once, until listed or answered
             plain(line);
         };
     }
@@ -902,6 +903,15 @@ void TerminalPane::drawQueue(Tab& tab, const std::vector<chat::QueueRow>& queue,
         const std::string id8 = r.pending ? "pending" + std::to_string(i) : chat::idPrefix(r.message);
         ImGui::PushID(static_cast<int>(i));
         if (r.pending) {
+            if (bracketButtonNamed("x", "dismiss:" + id8)) {
+                if (r.pendingIndex < tab.queuePending.size()) {
+                    tab.queuePending.erase(tab.queuePending.begin() + static_cast<std::ptrdiff_t>(r.pendingIndex));
+                }
+            }
+            if (ImGui::IsItemHovered()) {
+                ke::ui::tip("dismiss this local pending row");
+            }
+            ImGui::SameLine();
             dimText("on its way");
             ImGui::SameLine();
         } else {
