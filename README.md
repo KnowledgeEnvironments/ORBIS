@@ -28,6 +28,14 @@ play with. It is not open source: see [License](#license).
 
 The ideas are in `docs/ethos.md`, the wire in `docs/protocol.md`, who may do what in `docs/authority.md`. The same documents are built into a running world as its manual.
 
+## Hypertext, persistence, multiplexing
+
+**Hypertext.** Text in ORBIS carries references. A name in a Message, a view's title, a summary, is written as `[[name]]`, resolved under the reader's Grants, and stored beside the text as spans (`message/refs`, `view/title/refs`): the display text stays plain, the reference stays exact. A path a model cites is checked against its own working copies by the world and marked as a path. In the listener every one of them is a link: a Principal, a Field, a file at a line, a commit. What a model wrote that resolved to nothing stays literal and is listed, so a made-up name cannot pass as a link.
+
+**Persistence.** The log is the truth and it is never rewritten. Objects, indexes, views and memory are folds of it, discarded and rebuilt at will. A client that drops reattaches with its session and the last seq it acknowledged and sees no gap, whether the world stayed up or restarted. A world survives its own kernel swap with the wake that asked for it. Snapshots stand in for pruned history under one retention limit; `scripts/` back a world up, export it, import it, fork it and promote a fork.
+
+**Multiplexing.** A pane is a live surface in the world, not in a client: a terminal on a shell, a file manager on a directory, an editor or viewer on a file, a rendered page of TeX. Closing a client leaves it running; several clients attach to one pane; a person, a model and a remote client drive it through the same actions. The terminal holder keeps terminals alive across a world restart. A person's layout is a Field of theirs, so the same panes open on the Mac and on the phone.
+
 ## Pictures
 
 | | |
