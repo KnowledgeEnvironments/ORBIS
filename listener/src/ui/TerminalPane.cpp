@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 
+#include "ui/Chrome.hpp"
 #include "ui/UnsafeView.hpp"
 #include "ui/terminal/Internal.hpp"
 
@@ -116,15 +117,39 @@ std::vector<std::string> TerminalPane::tabIds() const {
     return out;
 }
 
-bool TerminalPane::drawTalkBar(float height) {
-    if (current_ < 0 || current_ >= static_cast<int>(tabs_.size())) {
+bool TerminalPane::canTalk() const {
+    return current_ >= 0 && current_ < static_cast<int>(tabs_.size()) && static_cast<bool>(tabs_[static_cast<std::size_t>(current_)].talk);
+}
+
+bool TerminalPane::canSpeak() const {
+    return current_ >= 0 && current_ < static_cast<int>(tabs_.size()) && static_cast<bool>(tabs_[static_cast<std::size_t>(current_)].speak);
+}
+
+bool TerminalPane::drawTalkBar(float width, float height) {
+    if (!canTalk()) {
         return false;
     }
     Tab& tab = tabs_[static_cast<std::size_t>(current_)];
-    if (!tab.talk) {
+    tab.line.drawTalkBar(tab.talk, width, height);
+    return true;
+}
+
+bool TerminalPane::drawSpeakBar(float width, float height) {
+    if (!canSpeak()) {
         return false;
     }
-    tab.line.drawTalkBar(tab.talk, height);
+    Tab& tab = tabs_[static_cast<std::size_t>(current_)];
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    const ImVec2 pos = ImGui::GetCursorScreenPos();
+    ImGui::InvisibleButton("speak-bar", ImVec2(width, height));
+    drive::hit("speak-bar", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+    const bool down = ImGui::IsItemActive();
+    if (ImGui::IsItemClicked() || (ImGui::IsItemDeactivated() && ImGui::IsItemHovered())) {
+        tab.speak();
+    }
+    chrome(dl, pos, ImVec2(pos.x + width, pos.y + height), down ? ChromeRole::PressedControl : ChromeRole::RaisedControl);
+    const ImVec2 size = ImGui::CalcTextSize("SPEAK");
+    dl->AddText(ImVec2(pos.x + std::floor((width - size.x) / 2), pos.y + std::floor((height - size.y) / 2)), down ? Ink::onSelection : Ink::nav, "SPEAK");
     return true;
 }
 

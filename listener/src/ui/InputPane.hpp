@@ -47,7 +47,7 @@ class InputPane {
     bool active() const { return active_; } // the field has keyboard focus (the cursor blinks)
     void requestFocus() { focusRequested_ = true; }
     // TOUCH mode: a bar the width of the screen, held to speak, in place of the [ TALK ] bracket.
-    void drawTalkBar(const std::function<void(const std::string&)>& talk, float height);
+    void drawTalkBar(const std::function<void(const std::string&)>& talk, float width, float height);
     // The field's rectangle on screen (for the phone: SDL_SetTextInputArea keeps it above the
     // keyboard). Valid after drawBody.
     ImVec2 fieldMin() const { return fieldMin_; }
