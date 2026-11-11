@@ -1,0 +1,117 @@
+{
+  "name": "prometheus",
+  "title": "PROMETHEUS",
+  "ink": {
+    "primary": "#F7FEFF",
+    "secondary": "#ABD6F5",
+    "strong": "#F7FEFF",
+    "nav": "#00F2FF",
+    "inspected": "#FFC214",
+    "unresolved": "#FF45EB",
+    "connected": "#1FFF85",
+    "fatal": "#FF2E3D",
+    "unsafe": "#FF1A1A",
+    "on-selection": "#F7FEFF",
+    "on-paper": "#000000"
+  },
+  "surface": {
+    "background": "#000104",
+    "pane": "#02060FF9",
+    "well": "#010308FB",
+    "control": "#050D1BF6",
+    "selection": "#02366CFC",
+    "hover": "#0E2E54FC",
+    "border": "#004F9E",
+    "code": "#010308FB",
+    "paper": "#FFFFFF",
+    "twilight-orange": "#FF4800",
+    "twilight-blue": "#006EBD",
+    "twilight-black": "#000000",
+    "twilight-star": "#FFFFFF",
+    "code-border": "#004F9E",
+    "scroll-track": "#010917",
+    "scroll-thumb": "#082B52",
+    "scroll-thumb-hover": "#1A78AD",
+    "rule": "#004F9E"
+  },
+  "chrome": {
+    "raised-pane": {
+      "face": "#02060FF9",
+      "high": "#0A3866",
+      "low": "#032952",
+      "bevel": 3
+    },
+    "inset-well": {
+      "face": "#010308FB",
+      "high": "#0E2E54FC",
+      "low": "#032952",
+      "bevel": 2,
+      "inset": true
+    },
+    "raised-control": {
+      "face": "#050D1BF6",
+      "high": "#0A3866",
+      "low": "#032952",
+      "bevel": 2
+    },
+    "pressed-control": {
+      "face": "#02366CFC",
+      "high": "#00F2FF",
+      "low": "#032952",
+      "bevel": 2,
+      "inset": true
+    },
+    "title-well": {
+      "face": "#010308FB",
+      "high": "#004F9E",
+      "low": "#032952",
+      "bevel": 2,
+      "inset": true
+    },
+    "scroll-track": {
+      "face": "#010917",
+      "high": "#0E2E54FC",
+      "low": "#000002",
+      "bevel": 1,
+      "inset": true
+    },
+    "scroll-control": {
+      "face": "#082B52",
+      "high": "#1A78AD",
+      "low": "#032952",
+      "bevel": 1
+    }
+  },
+  "geometry": {
+    "controls": "raised"
+  },
+  "type": {
+    "fonts": [
+      "/System/Library/Fonts/SFNSMono.ttf",
+      "JetBrainsMono.ttf"
+    ]
+  },
+  "brand": {
+    "red": "#FF1F1F",
+    "green": "#2EFF2E",
+    "blue": "#2E73FF"
+  },
+  "ansi": {
+    "black": "#0A1420",
+    "red": "#FF2E3D",
+    "green": "#1FFF85",
+    "yellow": "#FFC214",
+    "blue": "#3D9DFF",
+    "magenta": "#FF45EB",
+    "cyan": "#00F2FF",
+    "white": "#ABD6F5",
+    "bright-black": "#3A5A7A",
+    "bright-red": "#FF6B76",
+    "bright-green": "#7CFFB6",
+    "bright-yellow": "#FFD966",
+    "bright-blue": "#8CC6FF",
+    "bright-magenta": "#FF8CF2",
+    "bright-cyan": "#7DF8FF",
+    "bright-white": "#F7FEFF"
+  }
+}

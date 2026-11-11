@@ -1,0 +1,30 @@
+{
+  "type" : "object",
+  "properties" : {
+    "principal" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "token" : {
+      "type" : "string"
+    },
+    "session" : {
+      "type" : "string"
+    },
+    "subs" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "type" : "integer",
+        "minimum" : 0
+      }
+    },
+    "client-kind" : {
+      "anyOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "string"
+      } ]
+    }
+  },
+  "required" : [ "token" ]
+}

@@ -1,0 +1,18 @@
+{
+  "oneOf" : [ {
+    "type" : "object",
+    "properties" : {
+      "object" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "class" : {
+        "type" : "string",
+        "enum" : [ "object", "principal", "field", "event", "serialization", "group", "message", "task", "evaluation", "trigger", "model", "route", "grant", "adapter" ]
+      }
+    },
+    "required" : [ "object", "class" ]
+  }, {
+    "type" : "null"
+  } ]
+}

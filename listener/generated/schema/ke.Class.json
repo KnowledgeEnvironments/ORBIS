@@ -1,0 +1,4 @@
+{
+  "type" : "string",
+  "enum" : [ "object", "principal", "field", "event", "serialization", "group", "message", "task", "evaluation", "trigger", "model", "route", "grant", "adapter" ]
+}

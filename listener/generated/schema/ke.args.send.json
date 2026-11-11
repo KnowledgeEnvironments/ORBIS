@@ -1,0 +1,119 @@
+{
+  "type" : "object",
+  "properties" : {
+    "to" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "uniqueItems" : true
+    },
+    "route" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "text" : {
+      "type" : "string"
+    },
+    "tags" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "format" : "uuid"
+      }
+    },
+    "refs" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Ref",
+        "type" : "object",
+        "properties" : {
+          "start" : {
+            "type" : "integer"
+          },
+          "end" : {
+            "type" : "integer"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "object", "field", "seq", "path" ]
+          },
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "field" : {
+            "type" : "string"
+          },
+          "seq" : {
+            "type" : "integer",
+            "minimum" : 0
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "line" : {
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "start", "end", "kind" ]
+      }
+    },
+    "unresolved-refs" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "in-reply-to" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "reasoning" : {
+      "type" : "string",
+      "enum" : [ "on", "off" ]
+    },
+    "kind" : {
+      "type" : "string",
+      "enum" : [ "view" ]
+    },
+    "view" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "steer" : {
+      "type" : "boolean"
+    },
+    "images" : {
+      "type" : "array",
+      "items" : {
+        "anyOf" : [ {
+          "type" : "string"
+        }, {
+          "title" : "ImageAttachment",
+          "type" : "object",
+          "properties" : {
+            "sha256" : {
+              "type" : "string"
+            },
+            "size" : {
+              "type" : "integer"
+            },
+            "mime" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string"
+            }
+          },
+          "required" : [ "sha256", "size", "mime", "name" ]
+        } ]
+      }
+    }
+  },
+  "required" : [ "to", "route", "text" ]
+}

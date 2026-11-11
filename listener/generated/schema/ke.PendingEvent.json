@@ -1,0 +1,1818 @@
+{
+  "title" : "PendingEvent",
+  "oneOf" : [ {
+    "title" : "Pending/created",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "created"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "class" : {
+            "type" : "string",
+            "enum" : [ "object", "principal", "field", "event", "serialization", "group", "message", "task", "evaluation", "trigger", "model", "route", "grant", "adapter" ]
+          },
+          "fields" : {
+            "type" : "object",
+            "additionalProperties" : { }
+          }
+        },
+        "required" : [ "class" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/bound",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "bound"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "namespace" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string",
+            "minLength" : 1,
+            "maxLength" : 512
+          },
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "namespace", "name", "object" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/unbound",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "unbound"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "namespace" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string",
+            "minLength" : 1,
+            "maxLength" : 512
+          },
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "namespace", "name", "object" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/field-set",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "field-set"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "type" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "enum" : [ "string", "number", "boolean", "instant", "keyword", "bytes", "ref", "list", "map" ]
+            }, {
+              "type" : "array",
+              "prefixItems" : [ {
+                "const" : "ref"
+              }, {
+                "type" : "string"
+              } ],
+              "items" : false
+            }, {
+              "type" : "array",
+              "prefixItems" : [ {
+                "const" : "list"
+              }, {
+                "$ref" : "#/definitions/knowledge.schema.core.field-type"
+              } ],
+              "items" : false
+            }, {
+              "type" : "array",
+              "prefixItems" : [ {
+                "const" : "map"
+              }, {
+                "$ref" : "#/definitions/knowledge.schema.core.field-type"
+              } ],
+              "items" : false
+            } ]
+          },
+          "value" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "number"
+            }, {
+              "type" : "integer"
+            }, {
+              "type" : "boolean"
+            }, {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "string"
+            }, {
+              "type" : "string",
+              "format" : "byte"
+            }, {
+              "type" : "string",
+              "format" : "uuid"
+            }, {
+              "type" : "object",
+              "properties" : {
+                "blob/sha256" : {
+                  "type" : "string",
+                  "minLength" : 64,
+                  "maxLength" : 64
+                },
+                "blob/size" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ "blob/sha256", "blob/size" ]
+            }, {
+              "type" : "object",
+              "properties" : {
+                "external/model" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                },
+                "external/key" : {
+                  "type" : "string"
+                },
+                "external/sha256" : {
+                  "type" : "string"
+                },
+                "external/last-seen" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              },
+              "required" : [ "external/model", "external/key" ]
+            }, {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/definitions/knowledge.schema.core.value"
+              }
+            }, {
+              "type" : "object",
+              "additionalProperties" : {
+                "$ref" : "#/definitions/knowledge.schema.core.value"
+              }
+            } ]
+          },
+          "reader" : {
+            "type" : "string",
+            "enum" : [ "human", "agent", "both" ]
+          },
+          "visibility" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "mode" : {
+            "type" : "string",
+            "enum" : [ "inline", "blob", "external" ]
+          },
+          "previous" : { },
+          "cleared" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "name", "type", "value", "reader" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/field-read",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "field-read"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "names" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "by" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "via" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "by" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/resolved",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "resolved"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "minLength" : 1,
+            "maxLength" : 512
+          },
+          "object" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "grant" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "op" : {
+            "type" : "string",
+            "enum" : [ "read", "reference", "transmit", "write", "delegate", "evaluate", "create" ]
+          },
+          "count" : {
+            "type" : "integer"
+          },
+          "seq" : {
+            "type" : "integer",
+            "minimum" : 0
+          }
+        },
+        "required" : [ "name", "op" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/granted",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "granted"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "grant" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "grantee" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "ops" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "read", "reference", "transmit", "write", "delegate", "evaluate", "create" ]
+            },
+            "uniqueItems" : true
+          },
+          "scope" : { },
+          "delegable" : {
+            "type" : "boolean"
+          },
+          "until" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "string",
+              "format" : "uuid"
+            } ]
+          }
+        },
+        "required" : [ "grant", "grantee", "ops", "scope" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/revoked",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "revoked"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "grant" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "grant" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/sent",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "sent"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "route" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "message", "route" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/delivered",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "delivered"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "route" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "recipient" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "message", "route", "recipient" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/task-moved",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "task-moved"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "task" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "from" : {
+            "type" : "string",
+            "enum" : [ "open", "active", "blocked", "done", "cancelled", "pending", "approved", "denied", "expired", "failed" ]
+          },
+          "to" : {
+            "type" : "string",
+            "enum" : [ "open", "active", "blocked", "done", "cancelled", "pending", "approved", "denied", "expired", "failed" ]
+          },
+          "evidence" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "uniqueItems" : true
+          }
+        },
+        "required" : [ "task", "from", "to" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/evaluated",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "evaluated"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "evaluation" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "queued", "running", "streaming", "done", "failed", "cancelled", "gated" ]
+          },
+          "model" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "cost" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "number"
+            }
+          },
+          "partial" : {
+            "type" : "string"
+          },
+          "delta" : {
+            "type" : "string"
+          },
+          "seq-in-stream" : {
+            "type" : "integer"
+          },
+          "thinking-delta" : {
+            "type" : "string"
+          },
+          "thinking-chars" : {
+            "type" : "integer"
+          },
+          "by" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "partial-chars" : {
+            "type" : "integer"
+          },
+          "reason" : {
+            "type" : "string",
+            "enum" : [ "steer" ]
+          },
+          "serialization" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "outcome" : {
+            "type" : "object",
+            "properties" : { }
+          }
+        },
+        "required" : [ "evaluation", "state" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/fired",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "fired"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "trigger" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "evaluation" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "owner" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "message" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "trigger" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/attached",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "attached"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "session" : {
+            "type" : "string"
+          },
+          "client-kind" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "string"
+            } ]
+          },
+          "format" : {
+            "type" : "string",
+            "enum" : [ "transit", "json" ]
+          },
+          "token" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "session", "client-kind" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/detached",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "detached"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "session" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "session" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/retired",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "retired"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "type" : "string"
+          },
+          "names" : {
+            "type" : "array",
+            "items" : {
+              "type" : "array",
+              "prefixItems" : [ {
+                "type" : "string",
+                "format" : "uuid"
+              }, {
+                "type" : "string",
+                "minLength" : 1,
+                "maxLength" : 512
+              } ],
+              "items" : false
+            }
+          }
+        }
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/restored",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "restored"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "names" : {
+            "type" : "array",
+            "items" : {
+              "type" : "array",
+              "prefixItems" : [ {
+                "type" : "string",
+                "format" : "uuid"
+              }, {
+                "type" : "string",
+                "minLength" : 1,
+                "maxLength" : 512
+              } ],
+              "items" : false
+            }
+          }
+        }
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/scratch-began",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "scratch-began"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "scratch" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "principal" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "forked-at" : {
+            "type" : "integer",
+            "minimum" : 0
+          }
+        },
+        "required" : [ "scratch", "principal", "forked-at" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/scratch-ended",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "scratch-ended"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "scratch" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "principal" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "messages" : {
+            "type" : "integer"
+          },
+          "tokens-in" : {
+            "type" : "integer"
+          },
+          "tokens-out" : {
+            "type" : "integer"
+          },
+          "duration-ms" : {
+            "type" : "integer"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "scratch", "principal", "messages", "tokens-in", "tokens-out", "duration-ms", "reason" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/pane-opened",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "pane-opened"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "pane" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "target" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "blob" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "pane", "kind" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/pane-input",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "pane-input"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "pane" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "who" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "bytes" : {
+            "type" : "integer"
+          },
+          "from" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "pane", "who", "bytes", "from" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/pane-output",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "pane-output"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "pane" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "n" : {
+            "type" : "integer"
+          },
+          "blob" : {
+            "type" : "string"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "chain" : {
+            "type" : "string"
+          },
+          "offset" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "pane", "n", "blob", "size", "chain" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/pane-edit",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "pane-edit"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "pane" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "who" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "version" : {
+            "type" : "integer"
+          },
+          "verb" : {
+            "type" : "string"
+          },
+          "at" : {
+            "type" : "integer"
+          },
+          "del" : {
+            "type" : "integer"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "sha" : {
+            "type" : "string"
+          },
+          "blob" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "pane", "who", "version", "verb", "at", "del", "text" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  }, {
+    "title" : "Pending/pane-closed",
+    "type" : "object",
+    "properties" : {
+      "event/stream" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/streams" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      },
+      "event/kind" : {
+        "const" : "pane-closed"
+      },
+      "event/actor" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/via" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/delegation" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "event/from-fork" : {
+        "type" : "string"
+      },
+      "event/fork-seq" : {
+        "type" : "integer",
+        "minimum" : 0
+      },
+      "event/at" : {
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "event/body" : {
+        "type" : "object",
+        "properties" : {
+          "pane" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "exit" : {
+            "type" : "integer"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "pane", "reason" ]
+      }
+    },
+    "required" : [ "event/stream", "event/kind", "event/actor", "event/at", "event/body" ]
+  } ],
+  "definitions" : {
+    "knowledge.schema.core.field-type" : {
+      "anyOf" : [ {
+        "type" : "string",
+        "enum" : [ "string", "number", "boolean", "instant", "keyword", "bytes", "ref", "list", "map" ]
+      }, {
+        "type" : "array",
+        "prefixItems" : [ {
+          "const" : "ref"
+        }, {
+          "type" : "string"
+        } ],
+        "items" : false
+      }, {
+        "type" : "array",
+        "prefixItems" : [ {
+          "const" : "list"
+        }, {
+          "$ref" : "#/definitions/knowledge.schema.core.field-type"
+        } ],
+        "items" : false
+      }, {
+        "type" : "array",
+        "prefixItems" : [ {
+          "const" : "map"
+        }, {
+          "$ref" : "#/definitions/knowledge.schema.core.field-type"
+        } ],
+        "items" : false
+      } ]
+    },
+    "knowledge.schema.core.value" : {
+      "anyOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "number"
+      }, {
+        "type" : "integer"
+      }, {
+        "type" : "boolean"
+      }, {
+        "type" : "string",
+        "format" : "date-time"
+      }, {
+        "type" : "string"
+      }, {
+        "type" : "string",
+        "format" : "byte"
+      }, {
+        "type" : "string",
+        "format" : "uuid"
+      }, {
+        "type" : "object",
+        "properties" : {
+          "blob/sha256" : {
+            "type" : "string",
+            "minLength" : 64,
+            "maxLength" : 64
+          },
+          "blob/size" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "blob/sha256", "blob/size" ]
+      }, {
+        "type" : "object",
+        "properties" : {
+          "external/model" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "external/key" : {
+            "type" : "string"
+          },
+          "external/sha256" : {
+            "type" : "string"
+          },
+          "external/last-seen" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "external/model", "external/key" ]
+      }, {
+        "type" : "array",
+        "items" : {
+          "$ref" : "#/definitions/knowledge.schema.core.value"
+        }
+      }, {
+        "type" : "object",
+        "additionalProperties" : {
+          "$ref" : "#/definitions/knowledge.schema.core.value"
+        }
+      } ]
+    }
+  }
+}

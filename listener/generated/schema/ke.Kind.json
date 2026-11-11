@@ -1,0 +1,4 @@
+{
+  "type" : "string",
+  "enum" : [ "created", "bound", "unbound", "field-set", "field-read", "resolved", "granted", "revoked", "sent", "delivered", "task-moved", "evaluated", "fired", "attached", "detached", "retired", "restored", "scratch-began", "scratch-ended", "pane-opened", "pane-input", "pane-output", "pane-edit", "pane-closed" ]
+}

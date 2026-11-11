@@ -1,0 +1,56 @@
+{
+  "type" : "object",
+  "properties" : {
+    "stream" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "after" : {
+      "type" : "integer",
+      "minimum" : 0
+    },
+    "limit" : {
+      "type" : "integer",
+      "minimum" : 1
+    },
+    "snapshot" : {
+      "type" : "boolean"
+    },
+    "cursor" : {
+      "type" : "string"
+    },
+    "next" : {
+      "anyOf" : [ {
+        "type" : "integer",
+        "minimum" : 0
+      }, {
+        "type" : "string"
+      } ]
+    },
+    "since-fork" : {
+      "type" : "boolean"
+    },
+    "conversations" : {
+      "type" : "boolean"
+    },
+    "principal" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "retired" : {
+      "type" : "boolean"
+    },
+    "before" : {
+      "type" : "integer",
+      "minimum" : 0
+    },
+    "last" : {
+      "type" : "integer",
+      "minimum" : 1
+    },
+    "thread" : {
+      "type" : "string",
+      "format" : "uuid"
+    }
+  }
+}

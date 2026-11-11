@@ -1,0 +1,1 @@
+{"id":"r4","op":"set-field","args":{"object":"5a1f7b0e-7d6b-4b1f-9a3e-2b2d9a5e0001","field":"notes/first","type":"string","value":"hello, world","reader":"both"}}

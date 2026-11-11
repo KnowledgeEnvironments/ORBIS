@@ -1,0 +1,39 @@
+{
+  "type" : "object",
+  "properties" : {
+    "sub" : {
+      "type" : "string"
+    },
+    "stream" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "streams" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "uniqueItems" : true
+    },
+    "kinds" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "enum" : [ "created", "bound", "unbound", "field-set", "field-read", "resolved", "granted", "revoked", "sent", "delivered", "task-moved", "evaluated", "fired", "attached", "detached", "retired", "restored", "scratch-began", "scratch-ended", "pane-opened", "pane-input", "pane-output", "pane-edit", "pane-closed" ]
+      },
+      "uniqueItems" : true
+    },
+    "after" : {
+      "type" : "integer",
+      "minimum" : 0
+    },
+    "window" : {
+      "type" : "integer",
+      "minimum" : 1,
+      "maximum" : 4096
+    },
+    "query" : { }
+  },
+  "required" : [ "sub" ]
+}

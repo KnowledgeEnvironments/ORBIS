@@ -1,0 +1,52 @@
+{
+  "type" : "object",
+  "properties" : {
+    "grantee" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "scope" : {
+      "anyOf" : [ {
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "uniqueItems" : true
+      }, {
+        "type" : "object",
+        "properties" : {
+          "prefix" : {
+            "type" : "string",
+            "minLength" : 1,
+            "maxLength" : 512
+          },
+          "class" : {
+            "type" : "string"
+          },
+          "field-prefix" : {
+            "type" : "string"
+          }
+        }
+      }, {
+        "const" : "everything"
+      } ]
+    },
+    "ops" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "enum" : [ "read", "reference", "transmit", "write", "delegate", "evaluate", "create" ]
+      },
+      "uniqueItems" : true
+    },
+    "delegable" : {
+      "type" : "boolean"
+    },
+    "until" : {
+      "type" : "string",
+      "format" : "date-time"
+    }
+  },
+  "required" : [ "grantee", "scope", "ops" ]
+}

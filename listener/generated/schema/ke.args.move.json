@@ -1,0 +1,22 @@
+{
+  "type" : "object",
+  "properties" : {
+    "task" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "to" : {
+      "type" : "string",
+      "enum" : [ "open", "active", "blocked", "done", "cancelled", "pending", "approved", "denied", "expired", "failed" ]
+    },
+    "evidence" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string",
+        "format" : "uuid"
+      },
+      "uniqueItems" : true
+    }
+  },
+  "required" : [ "task", "to" ]
+}

@@ -1,0 +1,21 @@
+{
+  "type" : "object",
+  "properties" : {
+    "class" : {
+      "type" : "string",
+      "enum" : [ "object", "principal", "field", "event", "serialization", "group", "message", "task", "evaluation", "trigger", "model", "route", "grant", "adapter" ]
+    },
+    "object" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "action" : {
+      "type" : "string"
+    },
+    "args" : {
+      "type" : "object",
+      "properties" : { }
+    }
+  },
+  "required" : [ "action", "args" ]
+}

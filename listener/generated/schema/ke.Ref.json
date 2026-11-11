@@ -1,0 +1,37 @@
+{
+  "title" : "Ref",
+  "type" : "object",
+  "properties" : {
+    "start" : {
+      "type" : "integer"
+    },
+    "end" : {
+      "type" : "integer"
+    },
+    "kind" : {
+      "type" : "string",
+      "enum" : [ "object", "field", "seq", "path" ]
+    },
+    "object" : {
+      "type" : "string",
+      "format" : "uuid"
+    },
+    "field" : {
+      "type" : "string"
+    },
+    "seq" : {
+      "type" : "integer",
+      "minimum" : 0
+    },
+    "path" : {
+      "type" : "string"
+    },
+    "line" : {
+      "type" : "integer"
+    },
+    "name" : {
+      "type" : "string"
+    }
+  },
+  "required" : [ "start", "end", "kind" ]
+}
