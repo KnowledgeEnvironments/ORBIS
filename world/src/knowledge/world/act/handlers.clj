@@ -1253,7 +1253,7 @@
   (let [db (act/db world)
         id (object-id db p object)
         {:keys [grant]} (when (and id (objects/exists? db id) (not (objects/retired? db id)))
-                          (resolve/resolve! world db p (act/id-name id) :write))]
+                          (resolve/resolve! world db p (if (->uuid object) (act/id-name id) (str object)) :write))]
     (cond
       (and id (objects/retired? db id)) (act/err :conflict "already retired")
       (not grant) act/unresolved
@@ -1279,16 +1279,23 @@
   [_ world p {:keys [object]} _]
   (let [db (act/db world)
         id (->uuid object)
+        retired-event (when id
+                        (->> (log/read-stream (:log world) id 0 100000)
+                             (filter #(= :retired (:event/kind %))) last))
+        names (:names (:event/body retired-event))
+        ;; Retirement removes the bindings, so authorize restoration against the names preserved
+        ;; on its event as well as the now-unbound Object id.
         grant (when (and id (objects/retired? db id))
-                (some-> (first (resolve/grants-for db p id (act/id-name id) :write (java.util.Date.))) :object/id))]
+                (some-> (or (first (resolve/grants-for db p id (act/id-name id) :write (java.util.Date.)))
+                            (some (fn [[_ n]]
+                                    (first (resolve/grants-for db p id n :write (java.util.Date.))))
+                                  names))
+                        :object/id))]
     (cond
       (and id (objects/exists? db id) (not (objects/retired? db id))) (act/err :conflict "that Object is not retired")
       (nil? grant) act/unresolved
       :else
-      (let [retired-event (->> (log/read-stream (:log world) id 0 100000)
-                               (filter #(= :retired (:event/kind %))) last)
-            names (:names (:event/body retired-event))
-            free (filterv (fn [[ns n]] (nil? (objects/lookup db ns n))) names)
+      (let [free (filterv (fn [[ns n]] (nil? (objects/lookup db ns n))) names)
             taken (filterv (fn [[ns n]] (some? (objects/lookup db ns n))) names)
             seq-no (act/append! world (log/pending :restored id p {:names free} :delegation grant))]
         (doseq [[ns n] free] (act/restore-name! world p grant ns id n))

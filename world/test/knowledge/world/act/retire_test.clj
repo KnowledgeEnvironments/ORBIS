@@ -63,6 +63,29 @@
           (is (= ["keep.me"] (:names-taken (res back))))
           (is (= other (resolve-as root "keep.me" :read))))))))
 
+(deftest a-prefix-scoped-writer-can-restore-what-it-retired
+  (fx/with-world [{:keys [root world witness]}]
+    (let [id (thing! root world "test/witness.keeps")
+          retire-action (resolve-as root "action/object.retire" :read)
+          restore-action (resolve-as root "action/object.restore" :read)
+          made (act! root "principal.create" {:name "stranger" :charter "test"
+                                               :grant {:scope {:prefix "unrelated"} :ops ["read" "write"]}})
+          stranger (:principal (res made))
+          _ (fx/grant! root (:id witness) {:prefix "test/witness"} #{:read :write})
+          _ (fx/grant! root (:id witness) #{retire-action restore-action} #{:read :evaluate})
+          _ (fx/grant! root stranger #{restore-action} #{:read :evaluate})
+          writer (fx/attach-as world (:token witness))
+          unrelated (fx/attach-as world (:token (res made)))]
+      (try
+        (let [r (act! writer "object.retire" {:object "test/witness.keeps"})]
+          (is (:ok r) (pr-str r)))
+        (is (= :unresolved (code (act! unrelated "object.restore" {:object (str id)})))
+            "an unrelated prefix Grant cannot restore it")
+        (let [r (act! writer "object.restore" {:object (str id)})]
+          (is (:ok r) (pr-str r))
+          (is (= id (resolve-as writer "test/witness.keeps" :read))))
+        (finally (ws/close! writer) (ws/close! unrelated))))))
+
 (deftest what-the-world-needs-is-refused
   (fx/with-world [{:keys [root world]}]
     (let [db (act/db world)]
