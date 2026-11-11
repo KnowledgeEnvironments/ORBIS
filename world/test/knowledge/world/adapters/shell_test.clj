@@ -46,6 +46,7 @@
       (is (not (str/includes? (:stdout r) "late")))
       (is (< (:duration-ms r) 8000)))))
 
+(defn- act! [c action args] (ws/request!! c :act {:action (keyword action) :args args}))
 (defn- resolve-as [c n] (get-in (ws/request!! c :resolve {:name n :op :read}) [:result :object]))
 (defn- v [r k] (get-in r [:result :object/fields k :field/value]))
 
@@ -91,6 +92,15 @@
           (is (= "cancelled" (get-in r [:result :result :state])))
           (is (= :cancelled (v t :task/state)))
           (is (true? (v t :task/timed-out)))))
+      (testing "a background run returns immediately, lists active, wakes once, and can be cancelled"
+        (let [r (act! root "task.run" {:adapter "shell.local" :cmd "sleep 10" :timeout-s 20 :background true})
+              task (get-in r [:result :result :task])]
+          (is (:ok r) (pr-str r))
+          (is (= "active" (get-in r [:result :result :state])))
+          (is (some #{task} (map :task (get-in (act! root "task.list" {:state "active"}) [:result :result :tasks]))))
+          (is (:ok (act! root "task.cancel" {:task (str task)})))
+          (Thread/sleep 100)
+          (is (= :cancelled (v (ws/request!! root :read {:object task}) :task/state)))))
       (testing "cwd must stay inside the Adapter's locator"
         (is (= :invalid (get-in (ws/request!! root :act {:object shell-id :action :run :args {:cmd "pwd" :cwd "../.."}}) [:err :code]))))
       (testing "a Principal without evaluate on the Adapter gets nothing, and cannot read the Task"

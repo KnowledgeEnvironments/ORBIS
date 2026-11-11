@@ -422,7 +422,10 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
         // Live progress from the log: the running Evaluation's start time, loop/iteration, and the
         // size of the previous call. The app ticks one frame a second while a loop runs.
         const double nowEpoch = std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::string line = model::progressLine(evals, tab.worker, principals.nameOf(tab.worker), workerInfo->loopIteration(), nowEpoch, workerInfo->loopTurnLimit());
+        const model::EvaluationInfo* currentEval = evals.running(tab.worker);
+        const std::string modelName = currentEval ? principals.nameOf(currentEval->model) : std::string();
+        std::string line = model::progressLine(evals, tab.worker, principals.nameOf(tab.worker), workerInfo->loopIteration(), nowEpoch,
+                                              workerInfo->loopTurnLimit(), workerInfo->loopQueued(), modelName);
         hazardSpinner(ImGui::GetFontSize() * 5.0f, ImGui::GetTime());
         ImGui::SameLine();
         // STOP stays put beside the spinner: after the progress line it moved with every count,

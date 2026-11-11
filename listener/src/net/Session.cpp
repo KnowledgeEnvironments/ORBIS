@@ -215,6 +215,12 @@ void Session::onHello(const Response& r) {
         world_.url = res.value("url", "");
         world_.head = res.contains("head") && res["head"].is_number_integer() ? res["head"].get<Seq>() : r.seq;
         world_.formats = res.contains("format-versions") ? res["format-versions"] : json();
+        if (res.contains("storage") && res["storage"].is_object()) {
+            const json& storage = res["storage"];
+            world_.worldBytes = storage.value("world-bytes", std::int64_t{-1});
+            world_.diskTotalBytes = storage.value("disk-total-bytes", std::int64_t{-1});
+            world_.diskFreeBytes = storage.value("disk-free-bytes", std::int64_t{-1});
+        }
         noteHead(world_.head);
         if (!world_.id.empty()) {
             if (!persisted_.world.empty() && persisted_.world != world_.id && !persisted_.session.empty()) {

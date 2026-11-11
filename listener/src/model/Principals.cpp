@@ -87,6 +87,11 @@ int PrincipalInfo::loopTurnLimit() const {
     return f && f->value.is_number() ? f->value.get<int>() : 0;
 }
 
+int PrincipalInfo::loopQueued() const {
+    const FieldState* f = field("loop/queue");
+    return f && f->value.is_array() ? static_cast<int>(f->value.size()) : 0;
+}
+
 std::string PrincipalInfo::loopStalled() const {
     const FieldState* f = field("loop/stalled");
     return f && f->value.is_string() ? f->value.get<std::string>() : std::string();

@@ -42,10 +42,10 @@
       (testing "evaluated events reach the Model's and the initiator's streams"
         (is (some #(= ev (get-in % [:event/body :evaluation])) (events root model)))
         (is (some #(= ev (get-in % [:event/body :evaluation])) (events root root-id))))
-      (testing "an external Model is refused with err residency; a Model the witness does not resolve is nothing"
-        (let [ext (get-in (ws/request!! root :act {:class :model :action :create :args {:kind :model :residency :external :base-url "http://x.test/v1"}}) [:result :object])
+      (testing "no policy admits external; a Model the witness does not resolve is nothing"
+        (let [ext (get-in (ws/request!! root :act {:class :model :action :create :args {:kind :model :residency :external :model-id "external-stub"}}) [:result :object])
               w (fx/attach-as world (:token witness))]
-          (is (= :residency (get-in (ws/request!! root :evaluate {:working-set #{root-id} :model ext}) [:err :code])))
+          (is (:ok (ws/request!! root :evaluate {:working-set #{root-id} :model ext})))
           (is (= :unresolved (get-in (ws/request!! w :evaluate {:working-set #{root-id} :model model}) [:err :code])))
           (is (= :unresolved (get-in (ws/request!! root :evaluate {:working-set #{root-id} :model root-id}) [:err :code])) "not a Model")
           (ws/close! w))))))

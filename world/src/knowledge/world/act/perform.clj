@@ -26,8 +26,12 @@
             [knowledge.world.fold.objects :as objects]
             [knowledge.world.log.core :as log]
             [knowledge.world.loop.steer :as steer]
-            [knowledge.world.resolve.core :as resolve])
-  (:import [java.util Date]))
+            [knowledge.world.resolve.core :as resolve]
+            [knowledge.world.route.core :as route])
+  (:import [java.util Date]
+           [java.lang Process]))
+
+(declare completion-message!)
 
 (def inline-cap 2048)
 
@@ -69,7 +73,7 @@
    that resolved the Adapter for :evaluate: the Task's Fields and moves are the kernel's record of
    the run, appended under it as the Principal (like loop/* bookkeeping and route/members), so a
    Principal that may run a command need not hold :write on the Task it creates."
-  [world p adapter-state {:keys [cmd cwd timeout-s]} via grant]
+  [world p adapter-state {:keys [cmd cwd timeout-s background]} via grant]
   (let [adapter (:object/id adapter-state)
         locator (field adapter-state :adapter/locator)
         dir (run-dir locator cwd)]
@@ -103,38 +107,97 @@
           (put! :task/started-at :instant (Date.))
           (move! :active)
           (let [box (:box (unsafe/box-for world adapter p))
-                {:keys [exit stdout stderr stdout-total stderr-total timed-out duration-ms]}
-                (shell/run! {:cmd cmd :cwd (.getPath ^java.io.File dir) :timeout-s timeout-s :box box})
-                [ot ov] (output-field stdout)
-                [et ev] (output-field stderr)
-                refused (shell/box-note stderr stdout box)]
-            (put! :task/exit :number exit)
-            (put! :task/stdout ot ov)
-            (put! :task/stderr et ev)
-            (put! :task/stdout-total :number stdout-total)
-            (put! :task/stderr-total :number stderr-total)
-            (put! :task/duration-ms :number duration-ms)
-            (put! :task/timed-out :boolean timed-out)
-            ;; over the blob threshold the output is bytes, and the next turn cannot quote bytes
-            (when-let [failing (and (not= 0 exit) (shell/failing-lines stderr stdout))]
-              (put! :task/failing :string failing))
-            (when-let [t (tail stdout inline-cap tail-cap)] (put! :task/stdout-tail :string t))
-            (when-let [t (tail stderr (quot inline-cap 2) (quot tail-cap 2))] (put! :task/stderr-tail :string t))
-            (when refused (put! :task/box :string refused))
-            (put! :task/ended-at :instant (Date.))
-            (let [{:keys [seq]} (move! (if timed-out :cancelled :done))]
-              {:ok {:result (cond-> {:task object :exit exit :state (if timed-out "cancelled" "done") :timed-out timed-out
-                                     :duration-ms duration-ms :stdout (clip stdout inline-cap) :stderr (clip stderr (quot inline-cap 2))
-                                     :stdout-total stdout-total :stderr-total stderr-total}
-                              (not= 0 exit) (assoc :outcome (str "FAILED, exit " exit))
-                              refused (assoc :box refused)
-                              (and (not= 0 exit) (shell/failing-lines stderr stdout))
-                              (assoc :failing (shell/failing-lines stderr stdout))
-                              (tail stdout inline-cap tail-cap) (assoc :stdout-tail (tail stdout inline-cap tail-cap))
-                              (tail stderr (quot inline-cap 2) (quot tail-cap 2)) (assoc :stderr-tail (tail stderr (quot inline-cap 2) (quot tail-cap 2))))
-                    :object object :seq seq}})))
+                cancelled (atom false)
+                finish! (fn []
+                          (let [{:keys [exit stdout stderr stdout-total stderr-total timed-out duration-ms]}
+                                (shell/run! {:cmd cmd :cwd (.getPath ^java.io.File dir) :timeout-s timeout-s :box box
+                                             :on-process #(swap! (:task-state world) assoc object {:process % :cancelled cancelled :grant grant})})
+                                [ot ov] (output-field stdout)
+                                [et ev] (output-field stderr)
+                                refused (shell/box-note stderr stdout box)]
+                            (swap! (:task-state world) dissoc object)
+                            (put! :task/exit :number exit)
+                            (put! :task/stdout ot ov)
+                            (put! :task/stderr et ev)
+                            (put! :task/stdout-total :number stdout-total)
+                            (put! :task/stderr-total :number stderr-total)
+                            (put! :task/duration-ms :number duration-ms)
+                            (put! :task/timed-out :boolean timed-out)
+                            (when-let [failing (and (not= 0 exit) (shell/failing-lines stderr stdout))]
+                              (put! :task/failing :string failing))
+                            (when-let [t (tail stdout inline-cap tail-cap)] (put! :task/stdout-tail :string t))
+                            (when-let [t (tail stderr (quot inline-cap 2) (quot tail-cap 2))] (put! :task/stderr-tail :string t))
+                            (when refused (put! :task/box :string refused))
+                            (put! :task/ended-at :instant (Date.))
+                            (let [cancelled? (or timed-out @cancelled)
+                                  {:keys [seq]} (when-not @cancelled (move! (if timed-out :cancelled :done)))]
+                              {:ok {:result (cond-> {:task object :exit exit :state (if cancelled? "cancelled" "done") :timed-out timed-out
+                                                     :duration-ms duration-ms :stdout (clip stdout inline-cap) :stderr (clip stderr (quot inline-cap 2))
+                                                     :stdout-total stdout-total :stderr-total stderr-total}
+                                              (not= 0 exit) (assoc :outcome (str "FAILED, exit " exit))
+                                              refused (assoc :box refused)
+                                              (and (not= 0 exit) (shell/failing-lines stderr stdout)) (assoc :failing (shell/failing-lines stderr stdout)))
+                                    :object object :seq seq}})))
+                wake! (fn [r]
+                        (when background
+                          (let [result (get-in r [:ok :result])]
+                            (completion-message! world p object cmd (:exit result) (:duration-ms result)))))]
+            (if background
+              (do (future (try (wake! (finish!)) (catch Exception _ (swap! (:task-state world) dissoc object))))
+                  {:ok {:result {:task object :state "active"} :object object}})
+              (finish!))))
         (catch clojure.lang.ExceptionInfo e
           (if-let [err (:err (ex-data e))] {:err err} (act/err :invalid (ex-message e))))))))
+
+(defn- completion-message!
+  "Send the owner exactly one durable completion wake for task."
+  [world owner task title exit duration-ms]
+  (let [db (act/db world)
+        already? (some (fn [m]
+                         (let [fs (objects/fields db m)]
+                           (and (= task (get-in fs [:message/task :field/value]))
+                                (= :task-result (get-in fs [:message/kind :field/value])))))
+                       (objects/objects-of-class db :message))
+        r-id (first (field (objects/state db owner) :principal/routes))]
+    (when (and (not already?) r-id)
+      (route/send! world owner {:to #{owner} :route r-id :kind :task-result :task task :via task :hop 1
+                                :text (str "Task " title " finished: exit " exit " in " duration-ms "ms")}))))
+
+(defn reconcile-background!
+  "At boot, finish Tasks left active by the stopped process and queue their completion once."
+  [world]
+  (let [db (act/db world)]
+    (doseq [task (objects/objects-of-class db :task)
+            :let [s (objects/state db task)
+                  owner (field s :task/owner)
+                  grant (:object/created-under (objects/entity db task))
+                  put! (fn [k type v] (act/append! world (log/pending :field-set task owner
+                                                                      {:name k :type type :value v :reader :both}
+                                                                      :delegation grant)))]
+            :when (and owner (= :active (field s :task/state)) (field s :task/started-at))]
+      (put! :task/exit :number -1)
+      (put! :task/ended-at :instant (Date.))
+      (put! :task/failing :string "world restarted while the background Task was active")
+      (act/append! world (log/pending :task-moved task owner {:task task :from :active :to :failed}
+                                      :streams #{owner} :delegation grant))
+      (completion-message! world owner task (or (field s :task/title) (field s :task/command) (str task)) -1 0))))
+
+(defn cancel-task!
+  "Stop one active background Task owned by p."
+  [world p task]
+  (let [db (act/db world)
+        s (objects/state db task)]
+    (cond
+      (not= :task (:object/class s)) act/unresolved
+      (not= p (field s :task/owner)) act/unresolved
+      (not= :active (field s :task/state)) (act/err :conflict "Task is not active")
+      :else (if-let [{:keys [^Process process cancelled grant]} (get @(:task-state world) task)]
+              (do (reset! cancelled true)
+                  (.destroyForcibly process)
+                  (let [seq (act/append! world (log/pending :task-moved task p {:task task :from :active :to :cancelled}
+                                                            :streams #{p} :delegation grant))]
+                    {:ok {:result {:task task :state "cancelled"} :object task :seq seq}}))
+              (act/err :conflict "Task is not running in this world process")))))
 
 (defn index!
   "The index action: harness/index and harness/head on p. Returns {:ok {:result {...} :seq}}."

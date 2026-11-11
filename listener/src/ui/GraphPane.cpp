@@ -177,7 +177,8 @@ GraphActions GraphPane::draw(const GraphInput& in) {
 }
 
 void GraphPane::rebuild(const GraphInput& in, float width) {
-    std::string key = std::to_string(in.principals.applied()) + "/" + std::to_string(in.tasks.applied()) + "/" +
+    std::string key = std::to_string(in.principals.applied()) + "/" + std::to_string(in.evals.applied()) + "/" +
+                       std::to_string(in.tasks.applied()) + "/" +
                       std::to_string(in.panes.size()) + "/" + in.session.principal().value_or("");
     for (const chat::UnsafeEntry& e : in.unsafe) {
         key += "/" + e.principal;
@@ -198,6 +199,16 @@ void GraphPane::rebuild(const GraphInput& in, float width) {
         }
         state.unread = in.unread;
         state.activity = in.activity;
+        state.wallClock = in.wallClock;
+        const double now = in.wallClock;
+        for (const model::PrincipalInfo* p : in.principals.ordered()) {
+            if (p->drivenBy == "process") {
+                const model::EvaluationInfo* running = in.evals.running(p->id);
+                const std::string modelName = running ? in.principals.nameOf(running->model) : std::string();
+                state.status[p->id] = model::progressLine(in.evals, p->id, "", p->loopIteration(), now,
+                                                         p->loopTurnLimit(), p->loopQueued(), modelName);
+            }
+        }
         map_ = model::buildMap(in.principals, in.tasks, in.panes, state);
         builtFor_ = key;
         welcome_ = in.session.attached() && !map_.actors.empty() && model::firstVisit(map_, in.principals, state.self);
@@ -478,7 +489,7 @@ void GraphPane::drawActor(const GraphInput& in, GraphActions& out, const model::
         } else if (a.loop == model::LoopState::Running) {
             const float tape = std::min(room, charW * 8.0f);
             hazardTape(dl, ImVec2(textX, y + 1.0f), ImVec2(textX + tape, y + ImGui::GetTextLineHeight() - 1.0f), in.anim.t);
-            dl->AddText(ImVec2(textX + tape + charW, y), Ink::primary, "working");
+            dl->AddText(ImVec2(textX + tape + charW, y), Ink::primary, fit(a.status.empty() ? "working" : a.status, room - tape - charW).c_str());
         } else if (a.loop == model::LoopState::Stalled) {
             dl->AddText(ImVec2(textX, y), Ink::inspected, fit("stalled: " + a.stalled, room).c_str());
         } else {

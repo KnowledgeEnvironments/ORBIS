@@ -49,7 +49,7 @@
         (is (uuid? (:grant res)))
         (is (= model (:model res)))
         (is (= "root.atlas" (:route-name res)))
-        (is (= ["task.run" "view.present" "view.table-of" "view.graph-of" "search.find" "cost.report"
+        (is (= ["task.run" "task.list" "task.cancel" "view.present" "view.table-of" "view.graph-of" "search.find" "cost.report"
                 "pane.open" "pane.list" "pane.close" "pane.resize" "pane.read" "pane.send" "pane.frob" "file.open"
                 "workspace.mount"] (:actions res)) "task.run, the view actions, search.find and cost.report by default, plus the one asked for")
         (is (string? (:token res)) "a session gets the token")
@@ -214,7 +214,7 @@
           [r] (lops/execute! world p nil 1 [{:op :read :args {:name "action/task.run"}}])
           text (#'ser/read-text (:result r) (:args r))]
       (is (:ok r) (pr-str r))
-      (is (str/includes? text "args: {adapter string, cmd string, cwd? string, timeout-s? int}") text)
+      (is (str/includes? text "args: {adapter string, cmd string, cwd? string, timeout-s? int, background? bool}") text)
       (is (str/includes? text "instructions/own") text)
       (let [[g] (lops/execute! world p nil 1 [{:op :read :args {:name "action/grant"}}])]
         (is (or (:ok g) (:err g)) "a name with no action answers, it does not throw")))

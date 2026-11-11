@@ -12,6 +12,7 @@
             [knowledge.world.log.core :as log]
             [knowledge.world.models :as models]
             [knowledge.world.resolve.core :as resolve]
+            [knowledge.world.system :as system]
             [knowledge.world.ws-client :as ws])
   (:import [com.sun.net.httpserver HttpExchange HttpHandler HttpServer]
            [java.net InetSocketAddress]))
@@ -63,6 +64,15 @@
         (is (= :residency (get-in (act! w "model.choose" {:principal (str root-id) :model (str a)}) [:err :code])))
         (is (nil? (models/for-wake (act/db world) (state) nil)) "no configured Model has tenant residency")
         (is (nil? (models/fallback-for (act/db world) (state) nil))))
+      (testing "local-only refuses external and admits local"
+        (let [external (get-in (ws/request!! root :act {:class :model :action :create
+                                                        :args {:kind :model :format :openai-chat :residency :external
+                                                               :name "external" :model-id "external"}})
+                               [:result :object])]
+          (is (:ok (ws/request!! w :set-field {:object root-id :field :policy/model-residencies
+                                               :type [:list :keyword] :value [:local]})))
+          (is (= :residency (get-in (act! w "model.choose" {:principal (str root-id) :model (str external)}) [:err :code])))
+          (is (:ok (act! w "model.choose" {:principal (str root-id) :model (str b)})))))
       (testing "clear goes back to the first eligible Model"
         (is (:ok (act! w "model.choose" {:principal (str root-id) :clear true})))
         (is (nil? (get-in (state) [:object/fields :principal/model-choice])))))))
@@ -89,6 +99,46 @@
     (fx/grant! root (:id witness) #{route} #{:transmit})
     (fx/grant! root (:id witness) :everything #{:read :write :evaluate})
     {:w w :ask (fn [t] (get-in (ws/request!! w :send {:to #{to} :route route :text t}) [:result :message]))}))
+
+(deftest a-fresh-configured-external-model-answers-with-no-policy
+  (let [dir (fx/temp-dir)
+        server (HttpServer/create (InetSocketAddress. "127.0.0.1" 0) 0)
+        line (fn [m] (str "data: " (j/write-value-as-string m) "\n\n"))]
+    (.createContext server "/v1/models"
+                    (reify HttpHandler
+                      (handle [_ x]
+                        (let [bs (.getBytes (j/write-value-as-string {:object "list" :data [{:id "configured"}]}) "UTF-8")]
+                          (.add (.getResponseHeaders x) "content-type" "application/json")
+                          (.sendResponseHeaders x 200 (alength bs))
+                          (with-open [o (.getResponseBody x)] (.write o bs))))))
+    (.createContext server "/v1/chat/completions"
+                    (reify HttpHandler
+                      (handle [_ x]
+                        (let [bs (.getBytes (str (line {:choices [{:delta {:content "configured answer"}}] :model "configured"})
+                                                 (line {:choices [{:delta {} :finish_reason "stop"}]
+                                                        :usage {:prompt_tokens 5 :completion_tokens 2} :model "configured"})
+                                                 "data: [DONE]\n\n") "UTF-8")]
+                          (.add (.getResponseHeaders x) "content-type" "text/event-stream")
+                          (.sendResponseHeaders x 200 (alength bs))
+                          (with-open [o (.getResponseBody x)] (.write o bs))))))
+    (.start server)
+    (let [url (str "http://127.0.0.1:" (.getPort (.getAddress server)) "/v1")
+          world (system/start (merge (fx/config dir 0) {:model-url url :model-id "configured"}))]
+      (try
+        (let [root (fx/attach-root world)
+              witness (fx/create-witness! root)
+              root-id (:principal root)
+              model (resolve-as root "root.model")
+              {:keys [w ask]} (say! world root witness root-id "x")
+              q (ask "answer through the configured Model")
+              reply (until #(reply-to world q) 15000)]
+          (is (= :external (get-in (objects/fields (act/db world) model) [:model/residency :field/value])))
+          (is (nil? (get-in (objects/fields (act/db world) root-id) [:policy/model-residencies :field/value])))
+          (is reply "the fresh world's external default Model answers without a residency policy")
+          (is (= "configured answer" (text-of world reply)))
+          (ws/close! w)
+          (ws/close! root))
+        (finally (system/stop world) (.stop server 0) (fx/delete-tree! dir))))))
 
 (deftest a-wake-moves-to-the-fallback-when-its-model-dies
   (fx/with-world [{:keys [world root witness]}]
@@ -130,7 +180,7 @@
       (try
         (let [url (str "http://127.0.0.1:" (.getPort (.getAddress server)) "/v1")
               m (get-in (ws/request!! root :act {:class :model :action :create
-                                                 :args {:kind :model :format :openai-chat :residency :local :name "plan"
+                                                 :args {:kind :model :format :openai-chat :residency :external :name "plan"
                                                         :model-id "gpt-a" :base-url url}})
                         [:result :object])
               {:keys [w ask]} (say! world root witness root-id "x")]
@@ -138,7 +188,10 @@
                                    {:client_id "c" :access_token "the-access-token" :refresh_token "r" :expires_in 3600
                                     :saved_at (str (java.time.Instant/now))})
           (log/append!! (:log world) (log/pending :field-set m (:world-id world) {:name :model/api :type :keyword :value :chatgpt-plan :reader :both}))
-          (is (:ok (act! w "model.choose" {:principal (str root-id) :model (str m) :id "gpt-a"})))
+          (is (nil? (get-in (objects/fields (act/db world) root-id) [:policy/model-residencies :field/value])))
+          (is (= :external (get-in (objects/fields (act/db world) m) [:model/residency :field/value])))
+          (is (:ok (act! w "model.choose" {:principal (str root-id) :model (str m) :id "gpt-a"}))
+              "a ChatGPT plan is usable when no residency policy is set")
           (let [q (ask "hello")
                 reply (until #(reply-to world q) 15000)
                 call (first @seen)]

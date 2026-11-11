@@ -14,6 +14,7 @@
 
 #include <filesystem>
 #include <functional>
+#include <cstdint>
 #include <map>
 #include <set>
 #include <optional>
@@ -54,6 +55,9 @@ struct WorldInfo {
     std::string url; // the URL the world believes it has (world/url), "" when it names none
     Seq head = 0;
     json formats;    // format-versions as sent
+    std::int64_t worldBytes = -1; // bytes held under the world's data directory, when reported
+    std::int64_t diskTotalBytes = -1;
+    std::int64_t diskFreeBytes = -1;
     bool operator==(const WorldInfo&) const = default;
 };
 

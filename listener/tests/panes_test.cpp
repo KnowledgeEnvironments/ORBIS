@@ -129,8 +129,11 @@ TEST_CASE("progress line: evaluating, thinking, thinking with chars, replying", 
 
     e.apply(created(20, kEval));
     e.apply(evaluated(21, kEval, {{"state", "running"}})); // at 15:18:21
-    CHECK(progressLine(e, kRoot, "root", 1, start + 31) == "root thinking · turn 1/8 · 31 s · last call 5.8K in");
+    CHECK(progressLine(e, kRoot, "root", 1, start + 31, 8, 0, "gpt-test") ==
+          "root thinking · gpt-test · turn 1/8 · 31 s · last call 5.8K in");
     CHECK(progressLine(e, kRoot, "root", 0, start + 31) == "root thinking · 31 s · last call 5.8K in");
+    CHECK(progressLine(e, kRoot, "root", 1, start + 31, 40, 2) ==
+          "root thinking · turn 1/40 · 31 s · last call 5.8K in · 2 messages queued");
 
     e.apply(evaluated(22, kEval, {{"state", "streaming"}, {"thinking-chars", 1234}, {"seq-in-stream", 1}}));
     CHECK(progressLine(e, kRoot, "root", 0, start + 31) == "root thinking · 1.2K chars · 31 s");

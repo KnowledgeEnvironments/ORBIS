@@ -593,7 +593,8 @@ json Drive::stateJson(FrameContext& ctx) const {
     {
         const WorldInfo& w = ctx.rt.session.world();
         s["world"] = json{{"id", w.id}, {"name", w.name}, {"url", w.url}, {"head", w.head},
-                          {"fresh_reason", ctx.rt.session.freshReason()}};
+                          {"world_bytes", w.worldBytes}, {"disk_total_bytes", w.diskTotalBytes},
+                          {"disk_free_bytes", w.diskFreeBytes}, {"fresh_reason", ctx.rt.session.freshReason()}};
     }
     s["head"] = ctx.rt.session.head();
     s["modeline"] = ctx.panes.modelineText;
@@ -798,7 +799,9 @@ json Drive::stateJson(FrameContext& ctx) const {
         }
         const double nowEpoch = std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
         ev["progress"] = model::progressLine(ctx.rt.evaluations, who, ctx.rt.principals.nameOf(who),
-                                             info ? info->loopIteration() : 0, nowEpoch);
+                                             info ? info->loopIteration() : 0, nowEpoch, info ? info->loopTurnLimit() : 0,
+                                              info ? info->loopQueued() : 0,
+                                              cur ? ctx.rt.principals.nameOf(cur->model) : std::string());
         ev["status"] = model::statusLine(ctx.rt.evaluations, who);
         ev["totals"] = model::totalsLine(ctx.rt.evaluations.totals(who));
         s["evaluation"] = ev;

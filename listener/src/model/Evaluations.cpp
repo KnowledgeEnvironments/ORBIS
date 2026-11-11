@@ -489,7 +489,7 @@ std::string opSummary(const json& ops) {
 }
 
 std::string progressLine(const Evaluations& all, std::string_view principal, std::string_view name, int iteration,
-                         double nowEpoch, int turnLimit) {
+                         double nowEpoch, int turnLimit, int queued, std::string_view modelName) {
     // The phase is read from the latest Evaluation: running with nothing received is thinking
     // (GLM reasons 25-50 s before its first content delta), content arriving is replying.
     const EvaluationInfo* cur = all.latest(principal);
@@ -497,6 +497,9 @@ std::string progressLine(const Evaluations& all, std::string_view principal, std
     const bool replying = live && cur->replying();
     const bool thinking = live && !replying;
     std::string s = std::string(name) + (replying ? " replying" : thinking ? " thinking" : " working");
+    if (thinking && !modelName.empty()) {
+        s += " · " + std::string(modelName);
+    }
     if (iteration > 0) {
         s += " · turn " + std::to_string(iteration) + "/" + std::to_string(turnLimit > 0 ? turnLimit : kLoopIterationCap);
     }
@@ -524,6 +527,9 @@ std::string progressLine(const Evaluations& all, std::string_view principal, std
         if (const EvaluationInfo* last = all.latestWithUsage(principal)) {
             s += " · last call " + kTokens(std::max(0LL, last->tokensIn)) + " in";
         }
+    }
+    if (queued > 0) {
+        s += " · " + std::to_string(queued) + (queued == 1 ? " message queued" : " messages queued");
     }
     return s;
 }

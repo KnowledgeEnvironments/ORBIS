@@ -6,6 +6,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [knowledge.world.boot.kernel-zero :as kz]
+            [knowledge.world.act.perform :as perform]
             [knowledge.world.config :as config]
             [knowledge.world.index.core :as index]
             [knowledge.world.log.core :as log]
@@ -61,6 +62,8 @@
                        :log log :blobs (log/blobs log) :index index :sessions sessions :scheduler scheduler
                        ;; the wakes waiting and running, per Principal (knowledge.world.loop.queue)
                        :loop-state (atom {}) :loop-hooks (atom {})
+                        ;; live background shell processes, keyed by Task; durable state stays on the Task
+                        :task-state (atom {})
                        ;; each Principal's notification window (knowledge.world.notify)
                        :notify-state (atom {})
                        ;; the port, delivered once the server is up, for handlers that closed over this map
@@ -83,6 +86,7 @@
         ;; what this instance runs, its mounts on it, and what the supervisor left to report
         _ (release/boot! world)
         resident-loop (rloop/start! world)
+        _ (perform/reconcile-background! world)
         wake-key (log/subscribe! log (fn [_batch] (subscription/wake-all! world)))
         reaper (.scheduleAtFixedRate ^ScheduledExecutorService scheduler ^Runnable (fn [] (session/expire! sessions)) 30 30 TimeUnit/SECONDS)
         ;; the scheduler: armed Triggers from the log, and the approval expiry sweep
@@ -109,6 +113,9 @@
   [{:keys [server ^ScheduledExecutorService scheduler log index wake-key sessions] :as world}]
   (when world
     (scratch/end-all! world :world-stop)
+    (doseq [[_ {:keys [^Process process]}] @(:task-state world)]
+      (.destroyForcibly process))
+    (reset! (:task-state world) {})
     (pane/stop-all! world)
     (server/stop! server)
     (schedule/stop! (:trigger-scheduler world) world)

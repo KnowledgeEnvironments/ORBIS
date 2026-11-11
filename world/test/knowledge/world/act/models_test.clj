@@ -12,6 +12,7 @@
             [knowledge.world.models :as models]
             [knowledge.world.fixtures :as fx]
             [knowledge.world.fold.objects :as objects]
+            [knowledge.world.log.core :as log]
             [knowledge.world.ws-client :as ws]
             [org.httpkit.server :as hk]))
 
@@ -59,6 +60,7 @@
               (is (= "test/alpha" (v fs :model/id)))
               (is (= "HOME" (v fs :model/key-env)))
               (is (= "alpha" (v fs :model/label)))
+              (is (= :external (v fs :model/residency)))
               (is (= 0.5 (double (v fs :model/price-in))))
               (is (= 1.5 (double (v fs :model/price-out))))
               (is (= 32000 (v fs :model/context-tokens)))
@@ -66,6 +68,12 @@
               (is (= ["test/alpha" "test/beta"] (v fs :model/available)))
               (is (inst? (v fs :model/probed-at)))
               (is (not-any? #(str/includes? (str (val %)) (System/getenv "HOME")) (dissoc fs :model/key-env)) "the key value is on no Field"))))
+        (testing "an owner-controlled endpoint is local only when the caller says so"
+          (let [r (act! root "model.create" {:name "lan" :url (str "http://127.0.0.1:" port "/v1")
+                                               :model-id "test/alpha" :residency "local"})
+                fs (fields root (:model (res-of r)))]
+            (is (:ok r) (pr-str r))
+            (is (= :local (v fs :model/residency)))))
         (testing "a Model whose key-env is unset probes unauthenticated; one whose port is closed unreachable"
           (let [r (act! root "model.create" {:name "noauth" :url (str "http://127.0.0.1:" port "/v1") :model-id "x" :key-env "KE_TEST_MISSING_KEY_VAR"})]
             (is (= :unauthenticated (:status (res-of r))) (pr-str r)))
@@ -98,6 +106,56 @@
       (is (= {:models {}} (kz/step! world :model-catalogue)) "idempotent")
       (is (= {:model/label "root.model" :model/status :unknown}
              (models/catalogue-defaults (act/db world) e))))))
+
+(defn- all-events [world]
+  (loop [from 1 acc []]
+    (let [batch (log/read-from (:log world) from 1000)]
+      (if (empty? batch) acc (recur (inc (long (:event/seq (last batch)))) (into acc batch))))))
+
+(deftest an-old-local-chatgpt-plan-is-relabelled-once-on-the-log
+  (fx/with-world [{:keys [world root witness]}]
+    (let [model (get-in (ws/request!! root :act {:class :model :action :create
+                                                 :args {:kind :model :format :openai-chat :residency :local
+                                                        :name "old-plan" :model-id "gpt-a"}})
+                        [:result :object])]
+      (log/append!! (:log world) (log/pending :field-set model (:world-id world)
+                                              {:name :model/api :type :keyword :value :chatgpt-plan :reader :both}))
+      (is (= [model] (kz/local-chatgpt-plans (act/db world))))
+      (let [before (count (all-events world))]
+        (is (= {:models [model]} (kz/step! world :chatgpt-residency)))
+        (is (= :external (get-in (objects/fields (act/db world) model) [:model/residency :field/value])))
+        (let [writes (filter #(and (= :field-set (:event/kind %))
+                                   (= model (:event/stream %))
+                                   (= :model/residency (get-in % [:event/body :name]))
+                                   (= :external (get-in % [:event/body :value])))
+                             (drop before (all-events world)))]
+          (is (= 1 (count writes)) "the relabel is a logged field-set"))
+        (testing "a local-only Principal refuses the relabelled plan and admits a local Model"
+          (let [w (fx/attach-as world (:token witness))
+                local (get-in (ws/request!! root :act {:class :model :action :create
+                                                       :args {:kind :model :format :openai-chat :residency :local
+                                                              :name "owned" :model-id "owned"}})
+                              [:result :object])]
+            (fx/grant! root (:id witness) :everything #{:read :write :evaluate})
+            (is (:ok (ws/request!! w :set-field {:object (:principal root) :field :policy/model-residencies
+                                                 :type [:list :keyword] :value [:local]})))
+            (is (= :residency (get-in (act! w "model.choose" {:principal (str (:principal root))
+                                                               :model (str model)}) [:err :code])))
+            (is (:ok (act! w "model.choose" {:principal (str (:principal root)) :model (str local)})))
+            (ws/close! w)))
+        (let [relabels-before (count (filter #(and (= :field-set (:event/kind %))
+                                                   (= model (:event/stream %))
+                                                   (= :model/residency (get-in % [:event/body :name]))
+                                                   (= :external (get-in % [:event/body :value])))
+                                             (all-events world)))]
+          (is (= {:models []} (kz/step! world :chatgpt-residency)))
+          (is (= relabels-before
+                 (count (filter #(and (= :field-set (:event/kind %))
+                                      (= model (:event/stream %))
+                                      (= :model/residency (get-in % [:event/body :name]))
+                                      (= :external (get-in % [:event/body :value])))
+                                (all-events world))))
+              "the second migration adds no relabel write"))))))
 
 (deftest secret-detection
   (is (models/secret-in-args? {:key "abc"}))

@@ -188,11 +188,11 @@
 
 (defn allowed-for-principal?
   "Whether model satisfies a Principal's enforceable residency allowlist. An absent or empty list
-   preserves the default refusal of external Models; otherwise model/residency must be named."
+   admits every residency; a non-empty policy restricts use to the residencies it names."
   [db p-state model]
   (let [allowed (set (get-in p-state [:object/fields :policy/model-residencies :field/value]))
         residency (field db model :model/residency)]
-    (if (seq allowed) (contains? allowed residency) (not= :external residency))))
+    (or (empty? allowed) (contains? allowed residency))))
 
 (defn fallback-for
   "The Principal's fallback, if it can be used and is not `not-this`."

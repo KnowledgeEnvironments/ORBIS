@@ -597,10 +597,21 @@
              [:adapter :string]
              [:cmd :string]
              [:cwd {:optional true} :string]
-             [:timeout-s {:optional true} :int]]
+             [:timeout-s {:optional true} :int]
+             [:background {:optional true} :boolean]]
     :instructions (str "Run a command through a shell Adapter (`adapter` is its id or bound name, e.g. shell.local "
-                       "or atlas.shell) as a Task you own: task/exit, task/stdout, task/stderr land on it and the "
-                       "result carries the first 2 KiB. Default timeout 120 s, cwd the Adapter's directory.")}
+                       "or atlas.shell) as a Task you own: task/exit, task/stdout, task/stderr land on it. With "
+                       "`background: true` it returns the active Task immediately and its completion wakes you; otherwise the result carries the first 2 KiB. Default timeout 120 s, cwd the Adapter's directory.")}
+    {:name "task.list"
+     :hint "list your Tasks, optionally only active ones"
+     :handler :task.list
+     :schema [:map [:state {:optional true} [:enum "active"]]]
+     :instructions "List Tasks you own; `state: active` returns only running background Tasks."}
+    {:name "task.cancel"
+     :hint "stop one of your active background Tasks"
+     :handler :task.cancel
+     :schema [:map [:task id-string]]
+     :instructions "Cancel an active background Task you own. Its process is stopped and the Task ends cancelled."}
    ;; the Model catalogue, cost accounting, search
    {:name "gateway.create"
     :hint "join a message service to this world; a person's own session"
@@ -692,6 +703,7 @@
              [:model-id :string]
              [:key-env {:optional true} :string]
              [:reasoning {:optional true} [:enum "off" "on" "auto"]]
+              [:residency {:optional true} [:enum "local" "tenant" "external"]]
              [:price-in {:optional true} [:or :int :double]]
              [:price-out {:optional true} [:or :int :double]]
              [:context-tokens {:optional true} :int]
@@ -704,7 +716,7 @@
                        "serving `model`, bound as `name`. The key is never an argument and never a Field: `key-env` "
                        "names the environment variable the world reads it from at call time (err secret-in-args for a "
                        "literal credential). `price-in`/`price-out` are per million tokens (0 by default), "
-                       "`context-tokens` the window. The Model is probed at once (model/status, model/available). "
+                       "`context-tokens` the window. `residency` says where inference runs; it defaults to `external`, and `local` must be chosen explicitly for owner-controlled hardware or LAN. The Model is probed at once (model/status, model/available). "
                        "A Principal uses it when its principal/models names it and it holds evaluate on it. "
                        "`stt` and `tts` name what the endpoint serves for speech, `voice` the voice.")}
    {:name "model.probe"

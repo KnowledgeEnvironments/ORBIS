@@ -84,7 +84,7 @@
     ;; the catalogue Fields, every Model born with them (label, prices 0, status unknown)
     :model (cond-> {:principal/driven-by :none :principal/namespace id
                      :model/kind (or (kw kind) :model) :model/format (or (kw format) :openai-chat)
-                     :model/residency (or (kw residency) :local) :model/capacity {} :model/pricing {}
+                     :model/residency (or (kw residency) :external) :model/capacity {} :model/pricing {}
                      :model/label (str (or label name model-id "model"))
                      :model/status :unknown}
               ;; no price Fields unless someone names them; absent means unpriced

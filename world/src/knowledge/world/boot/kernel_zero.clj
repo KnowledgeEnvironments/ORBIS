@@ -194,11 +194,12 @@
 (defn- root-name [world n] (objects/lookup (act/db world) (root-of world) n))
 
 (defn model-args
-  "The Model from KE_MODEL_URL / KE_MODEL_ID (spec 11.5): residency :tenant, the key read
-   from the environment variable model/key-env names, never stored. Without a url: a :stub Model."
-  [{:keys [model-url model-id]}]
+  "The Model from KE_MODEL_URL / KE_MODEL_ID (spec 11.5): residency from KE_MODEL_RESIDENCY,
+   default :external; the key is read from the environment variable model/key-env names, never stored.
+   Without a url: a :stub Model."
+  [{:keys [model-url model-id model-residency]}]
   (if model-url
-    {:kind :model :format :openai-chat :residency :tenant :base-url model-url
+    {:kind :model :format :openai-chat :residency (or (some-> model-residency str/lower-case keyword) :external) :base-url model-url
      :model-id (or model-id "default") :key-env "KE_MODEL_KEY" :name "root.model" :label "root.model"
      :timeout-s 600 :max-tokens 16384 :reasoning :auto}
     {:kind :model :format :openai-chat :residency :local :model-id "stub" :name "root.model" :label "root.model"
@@ -548,6 +549,24 @@
                    [e (vec (keys m))]))]
     {:models (into {} done)}))
 
+(defn local-chatgpt-plans
+  "ChatGPT plan Models created before hosted inference was honestly labelled external."
+  [db]
+  (vec (sort-by str (for [m (objects/objects-of-class db :model)
+                          :let [fs (objects/fields db m)]
+                          :when (and (= :chatgpt-plan (get-in fs [:model/api :field/value]))
+                                     (= :local (get-in fs [:model/residency :field/value])))]
+                      m))))
+
+(defmethod step! :chatgpt-residency [{:keys [log world-id] :as world} _]
+  ;; A hosted plan was formerly labelled local. Relabel each old record once, as an ordinary logged
+  ;; Field write by the world; from then on a Principal's [:local] policy correctly refuses it.
+  (let [models (local-chatgpt-plans (act/db world))]
+    (doseq [model models]
+      (log/append!! log (log/pending :field-set model world-id {:name :model/residency :type :keyword
+                                                                 :value :external :reader :both})))
+    {:models models}))
+
 (defmethod step! :token-objects [world _]
   ;; a token Object labelled legacy for every single hash that has none
   {:principals (tokens/migrate-legacy! world)})
@@ -577,6 +596,7 @@
    :memory-defaults (fn [world] (empty? (principals-without-memory (act/db world))))
    :approval-defaults (fn [world] (empty? (principals-without-policy (act/db world))))
    :model-catalogue (fn [world] (empty? (models/models-without-catalogue (act/db world))))
+   :chatgpt-residency (fn [world] (empty? (local-chatgpt-plans (act/db world))))
    :token-objects (fn [world] (empty? (tokens/legacy-without-object (act/db world))))
    :world-root (fn [world] (some? (get-in (objects/fields (act/db world) (:world-id world)) [:world/root :field/value])))
    :world-names (fn [world] (empty? (act/unbound-in-world (act/db world))))

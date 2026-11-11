@@ -9,6 +9,7 @@
    resident loop take the same path as a client. ctx is {:world world :conn conn} where conn
    is an atom {:channel :format :session}."
   (:require [clojure.string :as str]
+            [clojure.java.io :as io]
             [knowledge.world.act.actions :as actions]
             [knowledge.world.act.core :as act]
             [knowledge.world.authority :as authority]
@@ -40,7 +41,8 @@
             [knowledge.world.auth :as auth]
             [knowledge.world.view.core :as view]
             [taoensso.timbre :as timbre])
-  (:import [java.util Date]))
+  (:import [java.nio.file FileVisitOption LinkOption]
+           [java.util Date]))
 
 (def err act/err)
 (def unresolved act/unresolved)
@@ -105,6 +107,23 @@
 
 (defn- world-field [ctx k] (get-in (objects/fields (db ctx) (get-in ctx [:world :world-id])) [k :field/value]))
 
+(defn- directory-bytes [dir]
+  (with-open [paths (java.nio.file.Files/walk (.toPath (io/file dir)) (make-array FileVisitOption 0))]
+    (reduce (fn [total path]
+              (try
+                (if (java.nio.file.Files/isRegularFile path (make-array LinkOption 0))
+                  (+ total (java.nio.file.Files/size path))
+                  total)
+                (catch Exception _ total)))
+            0
+            (iterator-seq (.iterator paths)))))
+
+(defn- storage-facts [data-dir]
+  (let [dir (io/file data-dir)]
+    {:world-bytes (directory-bytes dir)
+     :disk-total-bytes (.getTotalSpace dir)
+     :disk-free-bytes (.getUsableSpace dir)}))
+
 (defmethod handle :hello [{:keys [world] :as ctx} _ _]
   ;; which world is this: id, name, URL, format versions, head; a client shows a picker and checks
   ;; that a saved session belongs here before it reattaches
@@ -116,7 +135,8 @@
         :format-versions {:log 1 :protocol "v0" :json 1 :transit 1}
         :head (log/head (:log world))
         :first-seq (log/first-seq (:log world))
-        :root (objects/root-id (db ctx))}})
+        :root (objects/root-id (db ctx))
+        :storage (storage-facts (:data-dir world))}})
 
 (def pair-max-failures 5)
 (def pair-window-ms 60000)

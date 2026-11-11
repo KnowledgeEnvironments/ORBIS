@@ -1,4 +1,5 @@
 #include "model/WorldMap.hpp"
+#include "model/Evaluations.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -106,6 +107,10 @@ WorldMap buildMap(const Principals& principals, const Tasks& tasks, const PaneFo
         a.created = p->created;
         a.loop = loopState(*p);
         a.stalled = p->loopStalled();
+        if (auto it = state.status.find(p->id); it != state.status.end()) {
+            a.status = it->second;
+            while (!a.status.empty() && a.status.front() == ' ') a.status.erase(a.status.begin());
+        }
         a.unsafe = state.unsafe.count(p->id) != 0;
         if (auto it = state.unread.find(p->id); it != state.unread.end()) {
             a.unread = it->second;
@@ -118,6 +123,24 @@ WorldMap buildMap(const Principals& principals, const Tasks& tasks, const PaneFo
             a.modelStatus = fieldText(*p, "model/status");
         }
         map.actors.push_back(std::move(a));
+    }
+
+    // Active background Tasks are a real phase even while the owner's loop is free.
+    std::map<std::string, std::vector<const TaskInfo*>> active;
+    for (const TaskInfo* t : tasks.ordered()) {
+        if (t->state == "active" && !t->owner.empty()) active[t->owner].push_back(t);
+    }
+    for (MapActor& a : map.actors) {
+        auto it = active.find(a.id);
+        if (it == active.end() || it->second.empty()) continue;
+        const TaskInfo* t = it->second.front();
+        std::string line = "running " + oneLine(t->summary);
+        if (const FieldState* started = t->field("task/started-at"); started && started->value.is_string()) {
+            const double at = epochSeconds(started->value.get<std::string>());
+            if (at >= 0 && state.wallClock >= at) line += " · " + std::to_string(static_cast<long long>(state.wallClock - at)) + "s";
+        }
+        if (it->second.size() > 1) line += " +" + std::to_string(it->second.size() - 1);
+        a.status = std::move(line);
     }
 
     // The tree: an agent hangs under the agent that made it.

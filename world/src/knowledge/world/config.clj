@@ -1,8 +1,8 @@
 (ns knowledge.world.config
   "Configuration from the environment. No framework: a map.
    KE_PORT (7777), KE_DATA (../data relative to world/, or absolute), KE_FSYNC (batch|always|never),
-   KE_FORMAT (transit|json, the default wire form), KE_MODEL_URL / KE_MODEL_KEY / KE_MODEL_ID for the
-   model adapter (spec 17.1, 18.5 item 3), KE_LOG for the timbre level, KE_HARNESS_ROOT for the
+   KE_FORMAT (transit|json, the default wire form), KE_MODEL_URL / KE_MODEL_KEY / KE_MODEL_ID and
+   KE_MODEL_RESIDENCY (local|tenant|external) for the model adapter (spec 17.1, 18.5 item 3), KE_LOG for the timbre level, KE_HARNESS_ROOT for the
    repository root root mounts as `harness` (else found by walking up from the working directory),
    KE_WORLD_NAME and KE_PUBLIC_URL for the world's name and the ws URL it tells clients (hello),
    KE_RETENTION_GB for the disk limit until a person sets one: a number, or infinite. KE_BIND is the
@@ -19,6 +19,7 @@
    :model-url nil
    :model-key nil
    :model-id nil
+   :model-residency nil
    :harness-root nil
    ;; a supervised instance: the running release's commit, and its working copy
    :release nil
@@ -63,6 +64,7 @@
                :model-url (env "KE_MODEL_URL")
                :model-key (env "KE_MODEL_KEY")
                :model-id (env "KE_MODEL_ID")
+               :model-residency (env "KE_MODEL_RESIDENCY")
                :harness-root (env "KE_HARNESS_ROOT")
                :root-leash (not (#{"0" "false" "off"} (some-> (env "KE_ROOT_LEASH") str/lower-case)))
                :release (env "KE_RELEASE")

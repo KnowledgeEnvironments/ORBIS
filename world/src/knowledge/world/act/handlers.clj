@@ -240,7 +240,7 @@
         _ (schema-grant! world p new :task until)
         _ (schema-grant! world p new :serialization until)
         action-objects (actions/action-objects (act/db world))
-        wanted (distinct (into ["task.run" "view.present" "view.table-of" "view.graph-of" "search.find" "cost.report"
+        wanted (distinct (into ["task.run" "task.list" "task.cancel" "view.present" "view.table-of" "view.graph-of" "search.find" "cost.report"
                                  "pane.open" "pane.list" "pane.close" "pane.resize" "pane.read" "pane.send" "pane.frob" "file.open"]
                                 (:actions args)))
         granted (vec (for [n wanted
@@ -595,11 +595,32 @@
     (perform/perform! world p {:object a :action :index :args {} :via via})))
 
 (defmethod actions/handle! :task.run
-  [_ world p {:keys [adapter cmd cwd timeout-s]} {:keys [via]}]
+  [_ world p {:keys [adapter cmd cwd timeout-s background]} {:keys [via]}]
   (let [db (act/db world)
         a (adapter-by db p adapter)]
     (when-not a (fail! :unresolved (str "no Adapter " adapter)))
-    (perform/perform! world p {:object a :action :run :args (cond-> {:cmd cmd} cwd (assoc :cwd cwd) timeout-s (assoc :timeout-s timeout-s)) :via via})))
+    (perform/perform! world p {:object a :action :run
+                               :args (cond-> {:cmd cmd} cwd (assoc :cwd cwd) timeout-s (assoc :timeout-s timeout-s)
+                                       background (assoc :background true))
+                               :via via})))
+
+(defmethod actions/handle! :task.list
+  [_ world p {:keys [state]} _]
+  (let [db (act/db world)
+        wanted (some-> state keyword)
+        tasks (vec (for [t (sort-by #(get-in (objects/entity db %) [:object/created-seq])
+                                     (objects/objects-of-class db :task))
+                         :let [fs (objects/fields db t)
+                               v #(get-in fs [% :field/value])]
+                         :when (= p (v :task/owner))
+                         :when (or (nil? wanted) (= wanted (v :task/state)))]
+                     {:task t :title (v :task/title) :state (some-> (v :task/state) name)
+                      :started-at (v :task/started-at) :exit (v :task/exit)}))]
+    {:ok {:result {:tasks tasks}}}))
+
+(defmethod actions/handle! :task.cancel
+  [_ world p {:keys [task]} _]
+  (perform/cancel-task! world p (->uuid task)))
 
 ;; ---------------------------------------------------------------- views
 
@@ -994,7 +1015,7 @@
         (fail! :sign-in-failed "that is a different ChatGPT account from this Model's: add it as a new Model"))
       (let [nm (when-not existing (plan-model-name db (objects/world-id db)))
             model (or existing
-                      (let [{:keys [object]} (ok! (act/create! world p :model {:kind :model :format :openai-chat :residency :local
+                      (let [{:keys [object]} (ok! (act/create! world p :model {:kind :model :format :openai-chat :residency :external
                                                                                :base-url chatgpt/api-base :model-id "chatgpt"
                                                                                :name nm :label "ChatGPT plan" :timeout-s 600
                                                                                :reasoning "off"}))]
@@ -1019,11 +1040,11 @@
       {:ok {:result (assoc (or r {:revoked false}) :model m) :object m}})))
 
 (defmethod actions/handle! :model.create
-  [_ world p {:keys [name url model-id key-env reasoning price-in price-out context-tokens label images stt tts voice] :as args} _]
+  [_ world p {:keys [name url model-id key-env reasoning residency price-in price-out context-tokens label images stt tts voice] :as args} _]
   (when (models/secret-in-args? args)
     (fail! :secret-in-args "never put a credential in args: key-env names the environment variable that holds it"))
   (when-not (re-find #"^https?://" (str url)) (fail! :invalid-args "url is an http(s) base url ending in /v1"))
-  (let [{:keys [object seq]} (ok! (act/create! world p :model (cond-> {:kind :model :format :openai-chat :residency :tenant
+  (let [{:keys [object seq]} (ok! (act/create! world p :model (cond-> {:kind :model :format :openai-chat :residency (or (act/kw residency) :external)
                                                                          :base-url url :model-id model-id :name name
                                                                          :label (or label name) :timeout-s 600 :max-tokens 16384
                                                                          :reasoning (or reasoning "auto")}

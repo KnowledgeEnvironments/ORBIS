@@ -108,15 +108,29 @@ TabBarResult tabBar(const char* id, const std::vector<TabItem>& tabs, int active
             const bool clicked = ImGui::InvisibleButton("tab", ImVec2(std::max(1.0f, clippedW), h),
                                                         ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight |
                                                             ImGuiButtonFlags_MouseButtonMiddle);
+            // A driven click can move the pointer between frames; activation is still an unambiguous
+            // left pick. Keep release for right/middle and ordinary pointer clicks.
+            const bool leftActivated = ImGui::IsItemActivated() && ImGui::IsMouseDown(ImGuiMouseButton_Left);
+            const float closeW = closeWidth();
+            const ImVec2 closeA(b.x - closeW - 2.0f, y0 + 2.0f), closeB(b.x - 2.0f, y1 - 1.0f);
+            const bool overClose = t.closable && ImGui::IsMouseHoveringRect(closeA, closeB);
             // the x sits on top, and holds the press: the tab must stay hovered under both, or the x goes
             const bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlappedByItem |
                                                       ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-            drive::hit("tab:" + (t.target.empty() ? t.label : t.target), ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+            // The tab target means pick the tab, never its overlapping close button. If clipping
+            // leaves only the close end visible, omit it so automation (and accessibility tooling)
+            // uses the overflow list instead of issuing an ambiguous click.
+            const ImVec2 tabA = ImGui::GetItemRectMin();
+            const ImVec2 tabB(std::min(ImGui::GetItemRectMax().x, closeA.x), ImGui::GetItemRectMax().y);
+            if (!t.closable || tabB.x > tabA.x + 1.0f) {
+                drive::hit("tab:" + (t.target.empty() ? t.label : t.target), tabA, t.closable ? tabB : ImGui::GetItemRectMax());
+            }
             if (clicked && ImGui::IsMouseReleased(ImGuiMouseButton_Middle) && t.closable) {
                 res.closed = i;
             } else if (clicked && ImGui::IsMouseReleased(ImGuiMouseButton_Right)) {
                 res.menu = i;
-            } else if (clicked) {
+            } else if (!overClose && (clicked || leftActivated ||
+                                      (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsMouseHoveringRect(a, b)))) {
                 res.picked = i;
             }
             if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
@@ -165,24 +179,21 @@ TabBarResult tabBar(const char* id, const std::vector<TabItem>& tabs, int active
                 dl->AddRectFilled(ImVec2(a.x + 2.0f, y0 + 4.0f), ImVec2(a.x + 6.0f, y0 + 8.0f), Ink::unsafe);
             }
             if (t.closable && (hovered || isActive)) {
-                const float cw = closeWidth();
-                const ImVec2 ca(b.x - cw - 2.0f, y0 + 2.0f), cb(b.x - 2.0f, y1 - 1.0f);
-                ImGui::SetCursorScreenPos(ca);
-                const bool closing = ImGui::InvisibleButton("close", ImVec2(cb.x - ca.x, cb.y - ca.y));
+                ImGui::SetCursorScreenPos(closeA);
+                const bool closing = ImGui::InvisibleButton("close", ImVec2(closeB.x - closeA.x, closeB.y - closeA.y));
                 const bool closeHover = ImGui::IsItemHovered();
                 drive::hit("close:" + (t.target.empty() ? t.label : t.target), ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
                 if (closeHover) {
-                    dl->AddRectFilled(ca, cb, Surface::selection);
+                    dl->AddRectFilled(closeA, closeB, Surface::selection);
                 }
-                dl->AddText(ImVec2(ca.x + 3.0f, ty), closeHover ? Ink::onSelection : Ink::secondary, "x");
+                dl->AddText(ImVec2(closeA.x + 3.0f, ty), closeHover ? Ink::onSelection : Ink::secondary, "x");
                 if (closing) {
                     res.closed = i;
                     res.picked = -1;
                 }
             } else if (t.closable && drive::active()) {
                 // A test closes what a person can: register where the `x` would appear.
-                const float cw = closeWidth();
-                drive::hit("close:" + (t.target.empty() ? t.label : t.target), ImVec2(b.x - cw - 2.0f, y0 + 2.0f), ImVec2(b.x - 2.0f, y1 - 1.0f));
+                drive::hit("close:" + (t.target.empty() ? t.label : t.target), closeA, closeB);
             }
             ImGui::PopID();
             dl->PopClipRect();

@@ -132,6 +132,9 @@
         (is (string? (get-in r [:result :name])))
         (is (str/starts-with? (get-in r [:result :url]) "ws://"))
         (is (number? (get-in r [:result :head])))
+        (is (number? (get-in r [:result :storage :world-bytes])))
+        (is (pos? (get-in r [:result :storage :disk-total-bytes])))
+        (is (not (neg? (get-in r [:result :storage :disk-free-bytes]))))
         (ws/close! c)))
     (testing "pair.begin is session only"
       (let [{:keys [err]} (actions/perform-action! world (:principal root) "pair.begin" {:principal "test/witness" :label "phone"} {:session? false})]

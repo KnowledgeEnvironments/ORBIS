@@ -86,13 +86,17 @@ TEST_CASE("hello names the world; a changed id under the url starts a fresh sess
         REQUIRE(requests().size() == 1);
         CHECK(requests()[0].op == "hello");
         s.onFrame(Response{requests()[0].id, true,
-                           json{{"world", "w-aaaaaaaa-1"}, {"name", "hostone"}, {"url", "ws://hostone:7777/ws"}, {"head", 40}},
+                           json{{"world", "w-aaaaaaaa-1"}, {"name", "hostone"}, {"url", "ws://hostone:7777/ws"}, {"head", 40},
+                                {"storage", {{"world-bytes", 12582912}, {"disk-total-bytes", 1000000000}, {"disk-free-bytes", 400000000}}}},
                            std::nullopt, 40});
         REQUIRE(requests().size() == 2);
         CHECK(requests()[1].op == "attach");
         CHECK_FALSE(requests()[1].args.contains("session")); // first time: fresh
         CHECK(s.world().name == "hostone");
         CHECK(s.world().head == 40);
+        CHECK(s.world().worldBytes == 12582912);
+        CHECK(s.world().diskTotalBytes == 1000000000);
+        CHECK(s.world().diskFreeBytes == 400000000);
         s.onFrame(Response{requests()[1].id, true, json{{"session", "s-1"}, {"principal", "p-1"}, {"resumed", false}, {"seq", 41}},
                            std::nullopt, 41});
         REQUIRE(store.value.has_value());

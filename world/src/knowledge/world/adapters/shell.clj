@@ -62,7 +62,7 @@
   "{:cmd :cwd :timeout-s} -> {:exit :stdout :stderr :stdout-total :stderr-total :timed-out
    :duration-ms}. stdout and stderr are strings of at most output-cap bytes (UTF-8, lossy).
    box is a confine spec, or nil only when a person has lifted confinement for this Adapter."
-  [{:keys [cmd cwd timeout-s box]}]
+  [{:keys [cmd cwd timeout-s box on-process]}]
   (let [timeout (long (min max-timeout-s (max 1 (or timeout-s default-timeout-s))))
         argv ["/bin/zsh" "-lc" (str "set -o pipefail\n" cmd)] ; `make | tail` fails when make does
         pb (doto (ProcessBuilder. ^java.util.List (if box (confine/command box argv) argv))
@@ -73,6 +73,7 @@
         _ (.putAll env (confine/environment box))
         started (System/currentTimeMillis)
         proc (.start pb)
+        _ (when on-process (on-process proc))
         _ (.close (.getOutputStream proc))
         out (drain (.getInputStream proc) output-cap)
         err (drain (.getErrorStream proc) output-cap)

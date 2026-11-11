@@ -407,11 +407,11 @@ std::string PrincipalsPane::drawBody(const model::Principals& principals, const 
                 ImGui::TableNextColumn();
                 text(Ink::secondary, r.cls);
                 ImGui::TableNextColumn();
-                if (bracketButtonNamed("restore", "restore:" + (r.name.empty() ? id.substr(0, 8) : r.name))) {
-                    LinkRequest q;
-                    q.kind = LinkRequest::Restore;
-                    q.object = id;
-                    symbolUi().ask(std::move(q));
+                const std::string restoreName = "restore:" + (r.name.empty() ? id.substr(0, 8) : r.name);
+                const bool restore = ImGui::SmallButton("RESTORE");
+                drive::hit("button:" + restoreName, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+                if (restore) {
+                    restoreRequested_ = id;
                 }
                 ImGui::PopID();
             }

@@ -17,6 +17,10 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <iomanip>
+#include <sstream>
 #include <utility>
 
 #include "app/Runtime.hpp"
@@ -32,6 +36,20 @@
 
 
 namespace {
+
+std::string storageSize(std::int64_t bytes) {
+    if (bytes < 0) return "?";
+    constexpr const char* units[] = {"B", "KiB", "MiB", "GiB", "TiB"};
+    double value = static_cast<double>(bytes);
+    std::size_t unit = 0;
+    while (value >= 1024.0 && unit + 1 < std::size(units)) {
+        value /= 1024.0;
+        ++unit;
+    }
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(unit == 0 || value >= 100.0 ? 0 : value >= 10.0 ? 1 : 2) << value << ' ' << units[unit];
+    return out.str();
+}
 
 // Search wiring (sprint 1 MVP item): the HISTORY pane asks, the app issues `search {text limit 50}`
 // to the world and, when the world has no such op (`not-implemented`, an unknown op, or no
@@ -813,7 +831,14 @@ void DesktopFrame::draw(FrameInputs& in) {
                 ImGui::OpenPopup("world-picker");
             }
             if (ImGui::IsItemHovered()) {
-                ke::ui::tip("the worlds this machine knows; attach to another, or add one");
+                const WorldInfo& world = rt.session.world();
+                std::string tip = "the worlds this machine knows; attach to another, or add one";
+                if (world.worldBytes >= 0 || world.diskFreeBytes >= 0) {
+                    tip += "\nworld " + storageSize(world.worldBytes);
+                    if (world.diskFreeBytes >= 0) tip += " · " + storageSize(world.diskFreeBytes) + " free";
+                    if (world.diskTotalBytes >= 0) tip += " of " + storageSize(world.diskTotalBytes);
+                }
+                ke::ui::tip("%s", tip.c_str());
             }
             if (opts && ImGui::BeginPopup("world-picker")) {
                 worlds.drawBody(rt, *opts);
@@ -847,6 +872,17 @@ void DesktopFrame::draw(FrameInputs& in) {
         }
         if (ImGui::IsItemHovered()) {
             ke::ui::tip("search Fields, names and Messages (Cmd-F); the box opens above HISTORY");
+        }
+        {
+            const WorldInfo& world = rt.session.world();
+            if (world.worldBytes >= 0 && world.diskFreeBytes >= 0) {
+                const std::string storage = storageSize(world.worldBytes) + " / " + storageSize(world.diskFreeBytes) + " FREE";
+                ImGui::SameLine();
+                ui::text(ui::Ink::secondary, storage);
+                if (ImGui::IsItemHovered()) {
+                    ke::ui::tip("world size / free space on the world disk\ndisk total %s", storageSize(world.diskTotalBytes).c_str());
+                }
+            }
         }
         {
             // narrow window: the left column is hidden; [ PANES ] brings it back at its minimum width
@@ -1003,6 +1039,14 @@ void DesktopFrame::draw(FrameInputs& in) {
     }
     if (p.principals.takeNewRequested()) {
         p.openAction(rt, "principal.create");
+    }
+    if (const std::string id = p.principals.takeRestoreRequested(); !id.empty()) {
+        rt.chat.actNamed("object.restore", json{{"object", id}}, [&p](const Response& r) {
+            if (!r.ok) {
+                p.modelineError = r.err ? r.err->code + " " + r.err->message : "restore refused";
+                p.modelineErrorSince = ImGui::GetTime();
+            }
+        });
     }
     {
         timing::Scope s("pane.terminal");
@@ -1406,6 +1450,9 @@ bool PhoneFrame::draw(FrameInputs& in, Options& opts, SDL_Window* window) {
         }
         if (p.principals.takeNewRequested()) {
             p.openAction(rt, "principal.create");
+        }
+        if (const std::string id = p.principals.takeRestoreRequested(); !id.empty()) {
+            rt.chat.actNamed("object.restore", json{{"object", id}}, [](const Response&) {});
         }
     } else if (activeTab == 3) {
         wireSearch(in);

@@ -82,7 +82,7 @@ double epochSeconds(const std::string& iso);
 std::string opSummary(const json& ops);
 
 std::string progressLine(const Evaluations& all, std::string_view principal, std::string_view name, int iteration,
-                         double nowEpoch, int turnLimit = 0);
+                         double nowEpoch, int turnLimit = 0, int queued = 0, std::string_view modelName = {});
 constexpr int kLoopIterationCap = 8;
 
 struct Totals {

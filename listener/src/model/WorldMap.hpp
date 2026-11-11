@@ -40,6 +40,7 @@ struct MapActor {
     int depth = 0;
     LoopState loop = LoopState::None;
     std::string stalled;
+    std::string status; // truthful current phase, supplied by the live client fold
     std::string modelStatus;
     std::string detail; // a Model's model
     bool unsafe = false;
@@ -94,6 +95,8 @@ struct MapState {
     std::set<std::string> unsafe;      // world/unsafe
     std::map<std::string, int> unread; // by actor
     std::map<std::string, Activity> activity; // by agent
+    std::map<std::string, std::string> status; // live phase line by agent
+    double wallClock = 0.0;
 };
 
 inline constexpr int kMaxPorts = 3;

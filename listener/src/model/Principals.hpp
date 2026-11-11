@@ -49,6 +49,7 @@ struct PrincipalInfo {
     std::vector<std::string> members() const;    // group/members (groups only)
     int loopIteration() const;                // loop/iteration, 0 when idle
     int loopTurnLimit() const;                // loop/turn-limit, the turns this wake has now, 0 when unknown
+    int loopQueued() const;                   // loop/queue entries waiting behind the current wake
     std::string loopStalled() const;          // loop/stalled, "" when clean
 };
 

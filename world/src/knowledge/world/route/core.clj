@@ -149,7 +149,7 @@
                        (#{:on :off} (some-> reasoning name keyword)) (assoc :message/reasoning (keyword (name reasoning)))
                        (and via (number? hop)) (assoc :message/hop (long hop))
                        ;; approval gates (decisions 2026-10-30): a card or a decision about a Task
-                       (#{:approval :approval-result :trigger :view :status :request :directive :steer :gateway} (some-> kind name keyword)) (assoc :message/kind (keyword (name kind)))
+                       (#{:approval :approval-result :task-result :trigger :view :status :request :directive :steer :gateway} (some-> kind name keyword)) (assoc :message/kind (keyword (name kind)))
                        directive (assoc :message/directive (:name directive))
                        ;; where a text from outside came from: who it claims, never who it is
                        (map? gateway) (assoc :message/gateway gateway)
