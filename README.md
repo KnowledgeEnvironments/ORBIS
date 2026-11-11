@@ -201,6 +201,8 @@ docs/      the contract and the working documents
 
 ## Known limits
 
+ORBIS is an exploration, and a synthesis of ideas its author holds dear: a demonstrative alpha, not a proven thesis. The loop closes, the record is real, and the claims above are the bet; what follows is where the bet is still open.
+
 - Real work inside ORBIS holds on a strong hosted model (the demo above, on gpt-5.6-sol) and not yet on a small local one: agents can read, write and run in a box, but a local model writes against APIs it has not read.
 - Expect to lose worlds. Upgrading one in place works through root's releases, and the log only moves forward, but the log format can still change.
 - macOS on Apple Silicon is the only tested host. Linux and the phone builds get far less use.
