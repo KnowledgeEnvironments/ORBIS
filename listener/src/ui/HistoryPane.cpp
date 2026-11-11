@@ -281,12 +281,14 @@ void HistoryPane::drawBody(const EventStore& store, const chat::Chat& chat, cons
     const ImGuiTableFlags flags = ImGuiTableFlags_PadOuterX | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_ScrollY |
                                   ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingFixedFit |
                                   ImGuiTableFlags_NoPadOuterX;
+    // At phone width the time column goes and the kind column narrows, so the body keeps a share.
+    const bool narrow = ImGui::GetContentRegionAvail().x < ImGui::CalcTextSize("0").x * 60.0f;
     if (ImGui::BeginTable("history", 4, flags)) {
         const float ch = ImGui::CalcTextSize("0").x;
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableSetupColumn("SEQ", ImGuiTableColumnFlags_WidthFixed, ch * 6);
-        ImGui::TableSetupColumn("AT", ImGuiTableColumnFlags_WidthFixed, ch * 13);
-        ImGui::TableSetupColumn("KIND", ImGuiTableColumnFlags_WidthFixed, ch * 13);
+        ImGui::TableSetupColumn("AT", ImGuiTableColumnFlags_WidthFixed | (narrow ? ImGuiTableColumnFlags_Disabled : 0), ch * 13);
+        ImGui::TableSetupColumn("KIND", ImGuiTableColumnFlags_WidthFixed, ch * (narrow ? 11 : 13));
         ImGui::TableSetupColumn("STREAM | ACTOR | BODY", ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
         for (int c = 0; c < 4; ++c) {

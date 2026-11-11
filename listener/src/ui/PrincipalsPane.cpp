@@ -389,7 +389,8 @@ std::string PrincipalsPane::drawBody(const model::Principals& principals, const 
         } else {
             ImGui::TableSetupColumn("NAME", ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableSetupColumn("ROLE", ImGuiTableColumnFlags_WidthFixed, ch * 6);
-            ImGui::TableSetupColumn("LOOP", ImGuiTableColumnFlags_WidthFixed, ch * 22);
+            // at phone width the loop column keeps its mark and gives the name the rest
+            ImGui::TableSetupColumn("LOOP", ImGuiTableColumnFlags_WidthFixed, ch * (ImGui::GetWindowWidth() < ch * 60.0f ? 5 : 22));
         }
         touchDragScroll();
         int index = 0;

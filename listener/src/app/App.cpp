@@ -1,6 +1,10 @@
 #include "platform/Platform.hpp"
 #include "ui/TextMenu.hpp"
 #include "app/App.hpp"
+
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
 #include "ui/SymbolUi.hpp"
 
 #include "app/DebugHooks.hpp"
@@ -123,8 +127,8 @@ int runApp(const Options& optsIn) {
     const auto started = Clock::now();
     auto seconds = [&](Clock::time_point t) { return std::chrono::duration<double>(t - started).count(); };
     DebugHooks debug(started);
-    drive::Drive drive; // --drive: the UX drive API (desktop only; a no-op without the flag)
-#if !LISTENER_PHONE
+    drive::Drive drive; // --drive: the UX drive API (the desktop, and a phone build on the simulator)
+#if !LISTENER_PHONE || (defined(TARGET_OS_SIMULATOR) && TARGET_OS_SIMULATOR)
     if (!opts.driveSocket.empty() && !drive.start(opts.driveSocket, gpu.window)) {
         log::error("drive: could not open {}", opts.driveSocket);
     }
@@ -184,6 +188,9 @@ int runApp(const Options& optsIn) {
             framesToRender = std::max(framesToRender, 3);
         }
         bool paused = (SDL_GetWindowFlags(gpu.window) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_OCCLUDED)) != 0;
+#if defined(TARGET_OS_SIMULATOR) && TARGET_OS_SIMULATOR
+        paused = false; // a headless simulator counts as occluded, and the drive still needs frames
+#endif
         if (!paused && (debug.keepDrawing(Clock::now()) || timing::spin() || drive.wantsFrames())) {
             framesToRender = 3;
         }
@@ -209,6 +216,18 @@ int runApp(const Options& optsIn) {
         }
         while (got) {
             ImGui_ImplSDL3_ProcessEvent(&ev);
+#if LISTENER_PHONE
+            // A fold, an unfold or a rotation: the screen changes under the window. Logged so a
+            // phone's console says what SDL saw (iPhone Duo, 2026-11-11).
+            if (ev.type == SDL_EVENT_WINDOW_RESIZED || ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ||
+                ev.type == SDL_EVENT_WINDOW_SAFE_AREA_CHANGED || ev.type == SDL_EVENT_DISPLAY_ORIENTATION ||
+                ev.type == SDL_EVENT_WINDOW_DISPLAY_CHANGED) {
+                int w = 0, h = 0, pw = 0, ph = 0;
+                SDL_GetWindowSize(gpu.window, &w, &h);
+                SDL_GetWindowSizeInPixels(gpu.window, &pw, &ph);
+                log::info("screen: event {} window {}x{} ({}x{} px)", static_cast<int>(ev.type), w, h, pw, ph);
+            }
+#endif
             if (ev.type == SDL_EVENT_QUIT || ev.type == SDL_EVENT_TERMINATING ||
                 (ev.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && ev.window.windowID == SDL_GetWindowID(gpu.window))) {
                 done = true;
@@ -304,6 +323,15 @@ int runApp(const Options& optsIn) {
             ownTerminalOpened = false;
             framesToRender = 3;
         }
+#if defined(TARGET_OS_SIMULATOR) && TARGET_OS_SIMULATOR
+        if (drive.enabled()) { // the simulator's drive answers after the frame, as the desktop's does
+            drive::FrameContext dctx{gpu, *rt, panes, gpu.uiScale};
+            if (drive.afterFrame(dctx)) {
+                done = true;
+                continue;
+            }
+        }
+#endif
 #else
         frame.graphInFront = debug.graphInFront(Clock::now()) || sweepPass == 3;
         frame.opts = &opts;

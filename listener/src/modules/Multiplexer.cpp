@@ -770,7 +770,13 @@ void Multiplexer::draw() {
     const ImVec2 avail = ImGui::GetContentRegionAvail();
     const model::LayoutRect area{at.x, at.y, avail.x, avail.y};
     if (layout_.empty()) {
+#if LISTENER_PHONE
+        ImGui::PushTextWrapPos(0.0f); // a phone has no right-click, and no room for one line
+        ui::dimText("no panes open: [+] opens a terminal; a shell or a directory in PRINCIPALS opens here too");
+        ImGui::PopTextWrapPos();
+#else
         ui::dimText("no panes open: right-click a shell or directory object, or +");
+#endif
         ImGui::PopID();
         return;
     }

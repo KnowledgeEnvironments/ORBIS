@@ -268,13 +268,16 @@ void Drive::handleClient(int fd) {
                 continue;
             }
             Command c{j.value("id", json(nullptr)), j["cmd"].get<std::string>(), j};
+            log::info("drive: queued {}", c.cmd);
             {
                 std::lock_guard<std::mutex> lock(mu_);
                 pending_.push_back(std::move(c));
             }
             SDL_Event ev{};
             ev.type = wakeEvent_;
-            SDL_PushEvent(&ev);
+            if (!SDL_PushEvent(&ev)) {
+                log::warn("drive: wake not queued: {}", SDL_GetError());
+            }
         }
     }
 }
