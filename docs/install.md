@@ -124,6 +124,8 @@ forward: an older release that cannot read the log is refused.
 
 ## When something does not start
 
+`./start.sh` at the top of the checkout starts the world if it is down (after a reboot, a crash of the supervisor), `./start.sh --restart` stops and starts it (after a change to `data/world.env`), and either way it prints the state: the release and the last good one, the supervisor's last line, the address clients dial, your token, and the devices paired. `./start.sh --status` only prints.
+
 - **The world does not answer on its port.** `tail <data>/logs/world.log`. A first start resolves
   dependencies and needs the network; a port in use is named there.
 - **"No route to host" to the Model, while `curl` works.** Local Network permission: start the world
