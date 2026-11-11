@@ -12,8 +12,8 @@ serialization caches it and replays it. The rules that set permissions set conte
 
 ## Richness is affordable because the agent does the setup
 
-Genera, Smalltalk, and Plan 9 lost to Unix and files because their richness had a price
-paid in human attention: name everything, declare types, write presentations, mount
+The Lisp machines, Smalltalk, and Apollo's Domain/AEGIS lost to Unix and files because their
+richness had a price paid in human attention: name everything, declare types, write presentations, mount
 namespaces, document inside the system, keep grants current. People will not do that, so
 the lazy system won. An agent will do all of it, cheaply, and the product of the ceremony
 is exactly what the agent needs to work: its own context. Setup produces instruction
