@@ -73,8 +73,11 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
     float footer = ImGui::GetFrameHeightWithSpacing() + style.ItemSpacing.y;
     const float wrapW = ImGui::GetContentRegionAvail().x;
     const bool hasReasoning = info != nullptr && info->drivenBy != "person"; // a person's tab has no model
-    if (hasReasoning) {
+    if (hasReasoning && !bare) {
         footer += reasoningRowHeight(wrapW, true);
+        if (wrapW < ImGui::CalcTextSize("0").x * 72.0f) {
+            footer += ImGui::GetFrameHeightWithSpacing(); // the model picker's own row at phone width
+        }
     }
     if (running) {
         footer += ImGui::GetFrameHeightWithSpacing(); // the progress line with STOP
@@ -728,7 +731,11 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             tab.lastThread = view.rails.back().thread;
         }
         drawReasoning(tab, info, principals, chat);
-        ImGui::SameLine();
+        // At phone width the picker takes a row of its own, else MODEL sits past the edge and a
+        // tap on it lands nowhere (seen on the iPhone Duo, 2026-11-11).
+        if (ImGui::GetContentRegionAvail().x + ImGui::GetCursorPosX() >= ImGui::CalcTextSize("0").x * 72.0f) {
+            ImGui::SameLine();
+        }
         drawModelPicker(tab, info, principals, chat);
         drawContextBar(tab, evals);
     }
