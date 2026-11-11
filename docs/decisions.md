@@ -16,7 +16,7 @@ Decisions are binding until superseded by a later row. Open questions block noth
 | 2026-09-25 | The log is the truth; no image | One image is not extensible. Streams federate; images do not. |
 | 2026-09-25 | Clojure for the backend | State as a fold, EDN, REPL into the world. |
 | 2026-09-30 | Memory fields carry authorship | A note by ada on a task is ada's; the task's truth is its stream. Shared objects do not rot. |
-| 2026-09-30 | The listener is the one human surface, Genera-style | The transcript is the inspector. Notebook and patcher are projections of it. |
+| 2026-09-30 | The listener is the one human surface, Lisp-machine style | The transcript is the inspector. Notebook and patcher are projections of it. |
 | 2026-09-30 | First proof is self-hosting; the demo is a relatable task | Kernel-zero tests every primitive; the demo convinces people outside the team. |
 | 2026-09-30 | Serializations are objects with model affinity | Cache, fit, residency, replay, metering hang on them. |
 | 2026-09-30 | Client-server; the world persists, clients attach | Many clients, one record; detach loses nothing. |
