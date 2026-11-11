@@ -108,7 +108,6 @@ ORBIS runs agents that read and write files and run commands on the machine that
 - **Tokens are the only authentication, and there is no TLS.** `person.token` and `root.token` in the data directory are passwords; they are `0600`, keep them so. A world listens in the clear on its port: keep it on a network you trust, or behind a VPN, and set `KE_PUBLIC_URL` to the one address it should be dialled at.
 - **Secrets stay out of the record.** Model keys are read from the environment variable `key-env` names, never stored as Fields; ChatGPT sign-in tokens live under `credentials/`, which the box denies. `.envrc` is git-ignored. The log is exported, forked and backed up whole, so treat the data directory as sensitive.
 - **Cards are the control.** A new Principal starts with every command gated; a person decides each card or writes a rule for a class of commands. A new release of the kernel always waits for a person's own card, and nothing an agent writes can lift that. If a card surprises you, deny it and ask.
-- **Found something?** Write to `src@lispm.net` before you post it.
 
 ## ORBIS IS SELF HOSTING
 
