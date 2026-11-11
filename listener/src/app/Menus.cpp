@@ -337,7 +337,18 @@ std::vector<Item> items(MenuHost h) {
     add("WORLD", "RULES", "", "the current Principal's standing rules", view(5), noTerminal);
     add("WORLD", "CONVERSATIONS", "", "the current Principal's conversations", view(6), noTerminal);
     add("WORLD", "DEVICES", "", "tokens and devices", view(4), noTerminal);
-    add("WORLD", "PAIR A DEVICE", "", "a code or link for a phone", view(4), noTerminal);
+    // Pairing from the menu is always for you: it opens your own page, so a phone paired here is never an
+    // agent's device (a phone paired from CYAN's page spoke as CYAN, 2026-11-11).
+    add("WORLD", "PAIR A DEVICE", "", "a code and a QR for your phone: it pairs as you", [&p, &rt] {
+        const std::string self = rt.session.principal().value_or("");
+        if (!self.empty()) {
+            p.open(rt, self, 4);
+        }
+#if !LISTENER_PHONE
+        bringDockWindowFront("CHAT");
+#endif
+        p.terminal.openPairing();
+    }, notAttached);
     add("WORLD", "COMPRESS", "", "compress the current conversation now", [&] { p.terminal.compressCurrent(rt.principals, rt.chat, rt.session); },
         noTerminal.empty() ? notAttached : noTerminal);
     // HELP

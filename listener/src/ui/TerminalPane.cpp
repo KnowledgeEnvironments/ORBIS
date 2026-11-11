@@ -82,6 +82,13 @@ std::string TerminalPane::currentWorker() const {
     return t.worker.empty() ? t.principal : t.worker;
 }
 
+void TerminalPane::openPairing() {
+    setView(4);
+    if (current_ >= 0 && current_ < static_cast<int>(tabs_.size())) {
+        tabs_[static_cast<std::size_t>(current_)].pairOpen = true;
+    }
+}
+
 void TerminalPane::setView(int view) {
     if (current_ >= 0 && current_ < static_cast<int>(tabs_.size())) {
         tabs_[static_cast<std::size_t>(current_)].view = std::clamp(view, 0, 6);
