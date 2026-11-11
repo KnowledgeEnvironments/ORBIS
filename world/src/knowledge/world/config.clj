@@ -5,7 +5,8 @@
    model adapter (spec 17.1, 18.5 item 3), KE_LOG for the timbre level, KE_HARNESS_ROOT for the
    repository root root mounts as `harness` (else found by walking up from the working directory),
    KE_WORLD_NAME and KE_PUBLIC_URL for the world's name and the ws URL it tells clients (hello),
-   KE_RETENTION_GB for the disk limit until a person sets one: a number, or infinite."
+   KE_RETENTION_GB for the disk limit until a person sets one: a number, or infinite. KE_BIND is the
+   address the server listens on: 127.0.0.1 unless set, 0.0.0.0 for clients on other machines."
   (:require [clojure.java.io :as io]
             [clojure.string :as str]))
 
@@ -54,6 +55,7 @@
         format (some-> (env "KE_FORMAT") str/lower-case keyword)]
     (-> defaults
         (assoc :port (or (some-> (env "KE_PORT") parse-long) (:port defaults))
+               :bind (or (not-empty (env "KE_BIND")) "127.0.0.1")
                :data (or (env "KE_DATA") (:data defaults))
                :fsync (if (#{:batch :always :never} fsync) fsync :batch)
                :format (if (#{:transit :json} format) format :transit)

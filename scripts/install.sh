@@ -7,11 +7,12 @@
 #   scripts/install.sh --port 7777 --name home
 #   scripts/install.sh --no-listener         build but do not open the client window
 #   scripts/install.sh --brew                install what is missing with Homebrew without asking
+#   scripts/install.sh --lan                 listen on every interface, for listeners on other machines (default: this machine only)
 # Run it from Terminal.app (`open -a Terminal scripts/install.sh`) when the Model is on another machine:
 # the world needs macOS Local Network permission, which belongs to the app that launched it.
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DATA="$ROOT/data"; PORT=7777; NAME=home; LISTENER=1; CHECK=""; BREW=""
+DATA="$ROOT/data"; PORT=7777; NAME=home; LISTENER=1; CHECK=""; BREW=""; LAN=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --data) DATA="$2"; shift 2 ;;
@@ -20,6 +21,7 @@ while [ $# -gt 0 ]; do
     --no-listener) LISTENER=""; shift ;;
     --check) CHECK=1; shift ;;
     --brew) BREW=1; shift ;;
+    --lan) LAN=1; shift ;;
     *) echo "unknown argument $1" >&2; exit 2 ;;
   esac
 done
@@ -98,10 +100,10 @@ if [ ! -f "$DATA/world.env" ]; then
   ( umask 077; {
       echo "export KE_WORLD_NAME=$NAME"
       echo "export KE_PORT=$PORT"
-      echo "export KE_PUBLIC_URL=ws://$(hostname -s 2>/dev/null || hostname):$PORT/ws"
+      if [ -n "$LAN" ]; then echo "export KE_BIND=0.0.0.0"; echo "export KE_PUBLIC_URL=ws://$(hostname -s 2>/dev/null || hostname):$PORT/ws"; else echo "export KE_PUBLIC_URL=ws://127.0.0.1:$PORT/ws"; fi
       grep '^export KE_' "$ROOT/.envrc" | grep -v '^export KE_PORT=\|^export KE_DATA='
     } > "$DATA/world.env" )
-  ok "$DATA/world.env written: name $NAME, port $PORT"
+  ok "$DATA/world.env written: name $NAME, port $PORT$([ -n "$LAN" ] && echo ", every interface" || echo ", this machine only: --lan or KE_BIND=0.0.0.0 for others")"
 fi
 if [ -f "$DATA/supervisor.pid" ] && kill -0 "$(cat "$DATA/supervisor.pid")" 2>/dev/null; then
   ok "the world already runs (supervisor $(cat "$DATA/supervisor.pid"))"

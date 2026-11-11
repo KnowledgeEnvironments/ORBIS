@@ -23,6 +23,6 @@ export KE_DATA="${KE_DATA:-$ROOT/data}"
 if [ "$1" = "--fresh" ]; then setopt null_glob; rm -rf "$KE_DATA"/log "$KE_DATA"/blobs "$KE_DATA"/snapshots "$KE_DATA"/world.edn "$KE_DATA"/*.token; fi
 mkdir -p "$KE_DATA" "$ROOT/logs"
 cd "$ROOT/world"
-echo "world -> ws://0.0.0.0:$KE_PORT/ws  data=$KE_DATA  model=$KE_MODEL_ID @ $KE_MODEL_URL  log=$ROOT/logs/world.log"
+echo "world -> ws://${KE_BIND:-127.0.0.1}:$KE_PORT/ws  data=$KE_DATA  model=$KE_MODEL_ID @ $KE_MODEL_URL  log=$ROOT/logs/world.log"
 nohup clojure -M:run > "$ROOT/logs/world.log" 2>&1 &
 sleep 20; tail -3 "$ROOT/logs/world.log"

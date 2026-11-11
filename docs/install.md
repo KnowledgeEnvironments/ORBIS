@@ -58,6 +58,7 @@ and `PATH` is sourced by every script when `JAVA_HOME` is unset (the README's va
    ```
    export KE_WORLD_NAME=home
    export KE_PORT=7777
+   export KE_BIND=0.0.0.0                       # only for listeners on other machines; the default is 127.0.0.1
    export KE_PUBLIC_URL=ws://<this host>:7777/ws
    export KE_MODEL_URL=...   KE_MODEL_ID=...   KE_MODEL_KEY=...
    ```

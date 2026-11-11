@@ -71,10 +71,11 @@
       {:status 404 :headers {"content-type" "text/plain"} :body "ws endpoint is /ws"})))
 
 (defn start!
-  "Run the server; port 0 picks a free one. Returns the server; (port server) tells which."
-  [world {:keys [port format] :or {format :transit}}]
+  "Run the server on bind (127.0.0.1 unless KE_BIND says otherwise); port 0 picks a free one. Returns
+   the server; (port server) tells which."
+  [world {:keys [port bind format] :or {format :transit bind "127.0.0.1"}}]
   (hk/run-server (ws-handler world format)
-                 {:port port :max-ws max-message :legacy-return-value? false :server-header "knowledge-world"}))
+                 {:ip bind :port port :max-ws max-message :legacy-return-value? false :server-header "knowledge-world"}))
 
 (defn port [server] (hk/server-port server))
 

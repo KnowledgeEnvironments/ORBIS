@@ -89,7 +89,7 @@ A supervised world, the kind root can change and restart: write `<dir>/world.env
 shows it), then `scripts/world.sh <dir>`; `scripts/supervise.sh --stop <dir>` stops it. A plain world:
 `cp .env.example .envrc`, set the model URL, id and key, `scripts/run-world.sh`. The first start
 creates the data directory with `root.token` and `person.token`: treat those as passwords. A world
-listens on its port with no TLS, so keep it on a network you trust.
+listens on `127.0.0.1` by default; `KE_BIND=0.0.0.0` opens it to the network, with no TLS, so only one you trust.
 
 On macOS the JVM needs Local Network permission to reach a model on another machine, and that
 permission belongs to the app that started it. If the world gets "No route to host" while `curl`
@@ -105,7 +105,7 @@ ORBIS runs agents that read and write files and run commands on the machine that
 
 - **Root's shell is yours.** Root is the operator: its commands run as the user who started the world, outside the box, so it can do what you can do there. Every other Principal's commands run in a confinement box (`sandbox-exec` on macOS, `bwrap` on Linux) that keeps them inside their mounts. The box has not been reviewed as a security boundary. Run a world under its own user account on a machine you can afford to rebuild.
 - **The Model sees the prompt.** What you type to a Principal, and what it reads to answer, goes to that Principal's Model: your own endpoint on the LAN, or OpenAI if you signed in with ChatGPT. Never type a password or a key into a chat; a Message is on the log for good and in the next prompt.
-- **Tokens are the only authentication, and there is no TLS.** `person.token` and `root.token` in the data directory are passwords; they are `0600`, keep them so. A world listens in the clear on its port: keep it on a network you trust, or behind a VPN, and set `KE_PUBLIC_URL` to the one address it should be dialled at.
+- **Tokens are the only authentication, and there is no TLS.** `person.token` and `root.token` in the data directory are passwords; they are `0600`, keep them so. A world listens on `127.0.0.1` only unless `KE_BIND=0.0.0.0` says otherwise (`scripts/install.sh --lan`), and then in the clear: keep it on a network you trust, or behind a VPN, and set `KE_PUBLIC_URL` to the one address it should be dialled at.
 - **Secrets stay out of the record.** Model keys are read from the environment variable `key-env` names, never stored as Fields; ChatGPT sign-in tokens live under `credentials/`, which the box denies. `.envrc` is git-ignored. The log is exported, forked and backed up whole, so treat the data directory as sensitive.
 - **Cards are the control.** A new Principal starts with every command gated; a person decides each card or writes a rule for a class of commands. A new release of the kernel always waits for a person's own card, and nothing an agent writes can lift that. If a card surprises you, deny it and ask.
 
