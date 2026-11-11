@@ -120,6 +120,8 @@ class TerminalPane {
     AttachStatus attachStatus() const;
     // The current tab's view (0 transcript, 1 prompt, 2 fields); the id sweep walks them.
     void setView(int view);
+    // DEVICES with the pairing panel open, on the current tab: WORLD, PAIR A DEVICE lands here after opening your own page.
+    void openPairing();
     // /compress on the current tab, as the status bar's button does.
     void compressCurrent(model::Principals& principals, chat::Chat& chat, const Session& session);
     const std::string& current() const;
