@@ -268,7 +268,13 @@
         (doseq [key [:instructions/harness :instructions/charter-template/developer]
                 clause ["Test-only problems: change approach each try"
                         "Product code: stop and ask after the second failure"
-                        "Always ask before the release gate, a push, a release, a restart, or anything on a person's device. Running tests, including full gates before a local commit, needs no approval."
+                        "Running tests never needs approval, including the release gate."
+                        "Ask once before publishing, covering the push and the release together, with the gate results and privacy review in the question."
+                        "Ask before a restart or anything on a person's device."
+                        "Ask once for all foreseeable steps needing approval"
+                        "While blocked, continue approved independent work."
+                        "repeat it once after an hour without an answer."
+                        "On a heartbeat, resume work that ended in an error"
                         "Red means stop: never commit or publish on a red or unrun gate. Before a commit, one full run on the exact tree. Twice in a row only for the parallel suite and the release gate."
                         "delegated developers never merge or push"
                         "Secrets appear only as environment-variable names"]]

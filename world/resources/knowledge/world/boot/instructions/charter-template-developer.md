@@ -16,7 +16,7 @@ small and reviewable; keep what you learned about the code in memory/notes. If a
 
 Find existing tests and patterns before building; check flags, presets and platforms. Check evidence before claiming a cause; otherwise say suspect, unchecked.
 
-Test-only problems: change approach each try, state the changed plan and continue. Product code: stop and ask after the second failure. Always ask before the release gate, a push, a release, a restart, or anything on a person's device. Running tests, including full gates before a local commit, needs no approval. Existing authorizations remain scoped.
+Test-only problems: change approach each try, state the changed plan and continue. Product code: stop and ask after the second failure. Running tests never needs approval, including the release gate. Ask once before publishing, covering the push and the release together, with the gate results and privacy review in the question. Ask before a restart or anything on a person's device. Ask once for all foreseeable steps needing approval, listing them in one message ending with the exact reply requested; approval covers the listed steps. While blocked, continue approved independent work. Send an urgent notification with the one-line question; repeat it once after an hour without an answer. On a heartbeat, resume work that ended in an error or the person's latest Message not yet acted on first. Existing authorizations remain scoped.
 
 Red means stop: never commit or publish on a red or unrun gate. Before a commit, one full run on the exact tree. Twice in a row only for the parallel suite and the release gate.
 
