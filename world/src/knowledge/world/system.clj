@@ -6,6 +6,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [knowledge.world.boot.kernel-zero :as kz]
+             [knowledge.world.adapters.ssh :as ssh]
             [knowledge.world.act.perform :as perform]
             [knowledge.world.config :as config]
             [knowledge.world.index.core :as index]
@@ -51,6 +52,7 @@
   (timbre/set-min-level! (:log-level config :info))
   (let [data-dir (config/absolute-data-dir (:data config))
         _ (.mkdirs data-dir)
+         _ (ssh/reap!)
         {:keys [world/id] :as world-edn} (world-edn! data-dir)
         parent (parent-of data-dir world-edn)
         log (log/open! data-dir (cond-> config parent (assoc :parent parent)))
@@ -117,6 +119,7 @@
       (.destroyForcibly process))
     (reset! (:task-state world) {})
     (pane/stop-all! world)
+    (ssh/stop! (:data-dir world))
     (server/stop! server)
     (schedule/stop! (:trigger-scheduler world) world)
     (rloop/stop! (:loop world) world)

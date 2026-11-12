@@ -176,6 +176,13 @@ class PrivateWorld:
         self.model = None
 
     def __enter__(self):
+        try:
+            return self._start()
+        except BaseException:
+            self.__exit__(None, None, None)
+            raise
+
+    def _start(self):
         clojure = shutil.which("clojure") or ("/opt/homebrew/bin/clojure" if os.path.exists("/opt/homebrew/bin/clojure") else None)
         if not clojure:
             raise Skip("no clojure")
@@ -241,6 +248,9 @@ class PrivateWorld:
                 self.proc.wait(20)
             except subprocess.TimeoutExpired:
                 os.killpg(self.proc.pid, signal.SIGKILL)
+                self.proc.wait()
+        if getattr(self, "log", None):
+            self.log.close()
         if self.model:
             self.model.shutdown()
             self.model.server_close()
