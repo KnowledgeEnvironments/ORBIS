@@ -481,7 +481,7 @@ class TerminalPane {
     void drawNewField(Tab& tab, NewField& nf, const model::PrincipalInfo* info, chat::Chat& chat, const char* prefix,
                       const char* scope);
     void drawContextBar(Tab& tab, const model::Evaluations& evals);
-    void drawQueue(Tab& tab, const std::vector<chat::QueueRow>& queue, const model::Principals& principals, chat::Chat& chat);
+    void drawQueue(Tab& tab, const std::vector<chat::QueueRow>& queue, const model::Principals& principals, chat::Chat& chat, const std::string& self);
     void drawHintCell(Tab& tab, const model::PrincipalInfo* info, chat::Chat& chat, const std::string& base, float width);
     // The comment thread of a Field or the object: `<base>/comment`, a list of {by at text},
     // each line with the author's name and time, and a reply box that appends and writes back.

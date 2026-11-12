@@ -85,6 +85,7 @@ class Chat {
     void submitTo(const std::vector<std::string>& to, const std::string& route, const std::string& line,
                   SendResult onResult = {}, Clock::time_point now = Clock::now(), std::vector<std::string> tags = {},
                   bool steer = false);
+    void promoteQueued(const std::string& principal, const std::string& message, Session::ResponseHandler handler);
     // Who the session principal's own line (submit / probeSend) addresses on a Route: set by the
     // runtime from the Principals fold; without it, or when it answers nothing, the line goes to
     // self as in sprint 0 (the world delivers it to the sender, which is a loop poke for root).

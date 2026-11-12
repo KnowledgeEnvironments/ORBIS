@@ -164,3 +164,19 @@
     (boolean (get-in old [p :active]))))
 
 (defn wake-cancelled [world p] (get-in @(state world) [p :active :cancelled-by]))
+
+(defn promote!
+  "Atomically move a waiting Message into steering, or to the head if idle."
+  [world db p message]
+  (let [[old new] (swap-vals! (state world)
+                             (fn [s]
+                               (if-let [e (some #(when (= message (:message %)) %) (get-in s [p :items]))]
+                                 (let [items (vec (remove #(= message (:message %)) (get-in s [p :items])))]
+                                   (if (get-in s [p :active])
+                                     (-> s (assoc-in [p :items] items)
+                                         (update-in [p :active :pending] conj e))
+                                     (assoc-in s [p :items] (into [e] items))))
+                                 s)))]
+    (when (some #(= message (:message %)) (get-in old [p :items]))
+      (sync! world p db)
+      {:steered (some? (get-in old [p :active])) :active (get-in new [p :active])})))

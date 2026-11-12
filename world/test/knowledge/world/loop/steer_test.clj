@@ -10,6 +10,7 @@
             [knowledge.world.fold.objects :as objects]
             [knowledge.world.loop.queue :as queue]
             [knowledge.world.serialize.core :as ser]
+            [knowledge.world.system :as system]
             [knowledge.world.ws-client :as ws]))
 
 (defn- resolve-as [c n] (get-in (ws/request!! c :resolve {:name n :op :read}) [:result :object]))
@@ -325,3 +326,78 @@
     (is (false? (queue/pending? child p)))
     (is (nil? (queue/wake-cancelled child p)))
     (is (nil? (queue/running! child p (random-uuid))))))
+
+(deftest queued-promotion-preserves-the-original-and-refuses-foreign-authorship
+  (fx/with-world [{:keys [world root witness]}]
+    (let [root-id (:principal root)
+          {:keys [route model w]} (setup root witness world)
+          _ (pace! root model 300)
+          ask (say! w root-id route "hold the lane")
+          _ (running-after world ask 1)
+          own (say! w root-id route "original queued words")
+          foreign (say! root root-id route "other sender queued words")
+          _ (until #(= 2 (count (queue/waiting world root-id))) 5000)
+          before (objects/fields (act/db world) own)]
+      ;; Give the witness exactly the read needed for promotion, not Principal write.
+      (fx/grant! root (:id witness) #{own foreign} #{:read})
+      (testing "foreign id and copied foreign text are refused immediately"
+        (let [by-id (ws/request!! w :send {:to #{root-id} :route route :text "" :steer true :message foreign})
+              by-copy (steer! w root-id route "other sender queued words")]
+          (is (= :not-allowed (get-in by-id [:err :code])) (pr-str by-id))
+          (is (= :not-allowed (get-in by-copy [:err :code])) (pr-str by-copy))))
+      (testing "promotion returns the same id without rewriting its Fields"
+        (let [r (ws/request!! w :send {:to #{root-id} :route route :text "" :steer true :message own})]
+          (is (:ok r) (pr-str r))
+          (is (= own (get-in r [:result :message])))
+          (is (true? (get-in r [:result :steered])))
+          (doseq [k [:message/from :message/route :message/text :message/kind]]
+            (is (= (get before k) (get (objects/fields (act/db world) own) k)) (str k)))))
+      (pace! root model 0)
+      (is (until #(field root own :message/steer-applied) 15000))
+      (is (empty? (evaluations-for world own)) "the promoted Message has no duplicate wake"))))
+
+(deftest an-applied-promoted-message-does-not-return-after-restart
+  (let [dir (fx/temp-dir)]
+    (try
+      (let [world (fx/start-world dir 0)
+            root (fx/attach-root world)
+            p (:principal root)
+            route (resolve-as root "root.route")
+            model (resolve-as root "root.model")
+            witness (fx/create-witness! root)
+            w (fx/attach-as world (:token witness))]
+        (try
+          (fx/grant! root (:id witness) #{route} #{:transmit})
+          (pace! root model 200)
+          (let [ask (say! w p route "a paced opening wake")
+                _ (is (some? (running-after world ask 1)))
+                queued (say! w p route "promote this original message")
+                _ (is (until #(some (fn [e] (= (str queued) (:message e)))
+                                    (field root p :loop/queue)) 5000))
+                _ (fx/grant! root (:id witness) #{queued} #{:read})
+                promoted (ws/request!! w :send {:to #{p} :route route :text "" :message queued :steer true})]
+            (is (:ok promoted) (pr-str promoted))
+            (is (= queued (get-in promoted [:result :message])))
+            (pace! root model 0)
+            (is (until #(field root queued :message/steer-applied) 15000))
+            (is (until #(reply-to world ask) 15000))
+            (is (empty? (evaluations-for world queued)))
+            (is (empty? (field root p :loop/queue)))
+            (ws/close! root)
+            (system/stop world)
+            (let [world2 (fx/start-world dir 0)
+                  root2 (fx/attach-root world2)]
+              (try
+                (is (some? (field root2 queued :message/steer-applied)))
+                (is (empty? (field root2 p :loop/queue)))
+                ;; A completed sentinel proves that recovery has had a chance to run.
+                (let [sentinel (say! root2 p route "after restart")]
+                  (is (until #(reply-to world2 sentinel) 15000)))
+                (is (empty? (evaluations-for world2 queued))
+                    "the applied original never becomes an independent wake")
+                (is (= (:id witness) (field root2 queued :message/from)))
+                (is (= route (field root2 queued :message/route)))
+                (is (= "promote this original message" (field root2 queued :message/text)))
+                (finally (ws/close! root2) (system/stop world2)))))
+          (finally (ws/close! w) (ws/close! root) (system/stop world))))
+      (finally (fx/delete-tree! dir)))))

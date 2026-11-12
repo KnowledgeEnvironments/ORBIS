@@ -105,6 +105,7 @@
                  [:kind {:optional true} [:enum :view]] [:view {:optional true} c/Id]
                  ;; steering (decisions 2026-10-31): join the recipient's running wake instead of queueing
                  [:steer {:optional true} :boolean]
+                  [:message {:optional true} c/Id] ;; promote this queued Message; never copy its text
                  ;; images already stored, by sha256 or attachment; the world reads their type from the bytes
                  [:images {:optional true} [:vector [:or :string cls/ImageAttachment]]]]
    :move        [:map [:task c/Id] [:to cls/TaskState] [:evidence {:optional true} [:set c/Id]]]

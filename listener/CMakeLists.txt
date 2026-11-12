@@ -414,4 +414,9 @@ if(Python3_Interpreter_FOUND)
                 --listener $<TARGET_FILE:listener> --url {url} --token-file {token}
                 --shots ${CMAKE_CURRENT_BINARY_DIR}/ui-world)
     set_tests_properties(listener_ui_world PROPERTIES TIMEOUT 420 LABELS "ux;window;private-world" SKIP_RETURN_CODE 77)
+    add_test(NAME listener_queue_world
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7853 --
+                ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/queue_world.py
+                --listener $<TARGET_FILE:listener> --url {url} --token-file {token} --root-token {root})
+    set_tests_properties(listener_queue_world PROPERTIES TIMEOUT 240 LABELS "ux;window;private-world" SKIP_RETURN_CODE 77)
 endif()

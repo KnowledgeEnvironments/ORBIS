@@ -81,6 +81,25 @@
     (cond
       (not= 1 (count to)) (act/err :invalid "a steer names one recipient")
       (= p target) (act/err :not-allowed "a Principal does not steer itself")
+      (:message args)
+      (let [message (:message args)
+            original (some #(when (= message (:message %)) %) (queue/waiting world target))]
+        (cond
+          (nil? original) (act/err :conflict "that Message is not waiting")
+          (not= p (:from original)) (act/err :not-allowed "only the original sender may promote a queued Message")
+          (not (resolve/resolves? db p (act/id-name message) :read)) (act/err :unresolved "Message does not resolve")
+          (not (resolve/resolves? db p (act/id-name route) :transmit)) (act/err :unresolved "Route does not resolve")
+          (not= route (:route original)) (act/err :invalid "use the original Message's Route")
+          (and active (not (allowed? db p target active))) (act/err :not-allowed "you may not steer this wake")
+          :else
+          (if-let [{:keys [steered active]} (queue/promote! world db target message)]
+            (do (when-let [e (and steered (:evaluation active))] (interrupt-soon! world target e p))
+                (when-not steered ((:pump! @(:loop-hooks world)) target))
+                {:ok {:message message :steered steered}})
+            (act/err :conflict "that Message has already started"))))
+      (some #(and (not= p (:from %)) (= (:text args) (f db (:message %) :message/text)))
+            (queue/waiting world target))
+      (act/err :not-allowed "steering must not copy another sender's queued Message")
       (nil? active) (ordinary)
       (not (allowed? db p target active))
       (act/err :not-allowed "you neither asked this wake nor can evaluate or write its Principal; send without steer to queue")

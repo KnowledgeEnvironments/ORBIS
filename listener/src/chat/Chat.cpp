@@ -497,6 +497,15 @@ void Chat::submitTo(const std::vector<std::string>& to, const std::string& route
     });
 }
 
+void Chat::promoteQueued(const std::string& principal, const std::string& message, Session::ResponseHandler handler) {
+    const MessageRow* m = messages_.get(message);
+    if (!m || !session_.principal() || m->from != *session_.principal()) {
+        return;
+    }
+    session_.request("send", json{{"to", json::array({principal})}, {"route", m->route},
+                                  {"text", ""}, {"steer", true}, {"message", message}}, std::move(handler));
+}
+
 std::string Chat::setField(const std::string& object, const std::string& field, const json& type, const json& value,
                            const std::string& reader, Session::ResponseHandler handler) {
     json args = {{"object", object}, {"field", field}, {"type", type}, {"value", value}};

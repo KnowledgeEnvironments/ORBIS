@@ -65,7 +65,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
     // the Principal it addresses, since a person never runs anything itself.
     const model::PrincipalInfo* workerInfo = principals.get(tab.worker);
     const std::string stalled = workerInfo ? workerInfo->loopStalled() : std::string();
-    const bool running = workerInfo && workerInfo->loopIteration() > 0;
+    const bool running = (workerInfo && workerInfo->loopIteration() > 0) || evals.running(tab.worker);
     // A cancel that landed (the Evaluation is done) or that nothing runs for any more clears itself.
     if (!tab.cancelling.empty() && !evals.running(tab.worker)) {
         tab.cancelling.clear();
@@ -80,7 +80,8 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
         }
     }
     if (running) {
-        footer += ImGui::GetFrameHeightWithSpacing(); // the progress line with STOP
+        footer += (bare ? std::max(44.0f, ImGui::GetFrameHeight()) + style.ItemSpacing.y
+                        : ImGui::GetFrameHeightWithSpacing()); // the progress line with STOP
     } else if (!stalled.empty()) {
         footer += ImGui::GetFrameHeightWithSpacing(); // the RETRY row
         // The whole reason, wrapped: the user has to read it ("evaluation failed: request timed out").
@@ -98,7 +99,8 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
         tab.queuePending.clear(); // nothing is working any more: the world has them or sent them
     }
     if (!queue.empty()) {
-        footer += ImGui::GetTextLineHeightWithSpacing() + ImGui::GetFrameHeightWithSpacing() * static_cast<float>(queue.size());
+        footer += ImGui::GetTextLineHeightWithSpacing() +
+                  std::min(3.0f, static_cast<float>(queue.size())) * (std::max(44.0f, ImGui::GetFrameHeight()) + style.ItemSpacing.y);
     }
     if (running) {
         footer += ImGui::GetTextLineHeightWithSpacing(); // RETURN queues · SHIFT-RETURN steers
@@ -430,7 +432,18 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
         ImGui::SameLine();
         // STOP stays put beside the spinner: after the progress line it moved with every count,
         // out from under the pointer.
-        if (bracketButton("stop", tab.cancelling.empty() && session.attached())) {
+        const bool canStop = tab.cancelling.empty() && session.attached();
+        bool stopClicked = false;
+        if (bare) {
+            ImGui::BeginDisabled(!canStop);
+            stopClicked = ImGui::Button("STOP", ImVec2(std::max(72.0f, ImGui::CalcTextSize("STOP").x + 16.0f),
+                                                     std::max(44.0f, ImGui::GetFrameHeight())));
+            drive::hit("button:stop", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+            ImGui::EndDisabled();
+        } else {
+            stopClicked = bracketButton("stop", canStop);
+        }
+        if (stopClicked) {
             cancel(tab, evals, chat);
         }
         if (ImGui::IsItemHovered()) {
@@ -486,7 +499,7 @@ void TerminalPane::drawTranscript(Tab& tab, const model::PrincipalInfo* info, mo
             tab.steerError.clear();
         }
     }
-    drawQueue(tab, queue, principals, chat);
+    drawQueue(tab, queue, principals, chat, session.principal().value_or(""));
     if (running) {
         text(Ink::secondary, "RETURN queues \u00b7 SHIFT-RETURN steers");
     }
@@ -891,17 +904,76 @@ void TerminalPane::drawContextBar(Tab& tab, const model::Evaluations& evals) {
 }
 
 void TerminalPane::drawQueue(Tab& tab, const std::vector<chat::QueueRow>& queue, const model::Principals& principals,
-                             chat::Chat& chat) {
+                             chat::Chat& chat, const std::string& self) {
     if (queue.empty()) {
         return;
     }
-    text(Ink::inspected, "QUEUED " + std::to_string(queue.size()));
+    const auto strip = chat::queueStripLayout(queue.size(), ImGui::GetFrameHeight(), ImGui::GetStyle().ItemSpacing.y, false);
+    text(Ink::inspected, strip.heading);
     const std::string owner = tab.worker;
     const float ch = ImGui::CalcTextSize("0").x;
+    const float rowHeight = strip.targetHeight;
+    const float listHeight = strip.listHeight;
+    drive::hit("queue:heading", ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+    ImGui::BeginChild("queue-rows", ImVec2(0, listHeight));
+    touchDragScroll();
+    const bool compact = ImGui::GetContentRegionAvail().x < ch * 72.0f;
     for (std::size_t i = 0; i < queue.size(); ++i) {
         const chat::QueueRow& r = queue[i];
         const std::string id8 = r.pending ? "pending" + std::to_string(i) : chat::idPrefix(r.message);
         ImGui::PushID(static_cast<int>(i));
+        if (compact) {
+            const bool own = !r.pending && !self.empty() && r.from == self;
+            auto button = [&](const char* label, const std::string& target) {
+                const bool clicked = ImGui::Button(label, ImVec2(44.0f, rowHeight));
+                drive::hit("button:" + target + ":" + id8, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+                ImGui::SameLine();
+                return clicked;
+            };
+            if (button("x", r.pending ? "dismiss" : "dequeue")) {
+                if (r.pending) {
+                    if (r.pendingIndex < tab.queuePending.size()) {
+                        tab.queuePending.erase(tab.queuePending.begin() + static_cast<std::ptrdiff_t>(r.pendingIndex));
+                    }
+                } else {
+                    chat.actNamed("loop.dequeue", json{{"principal", owner}, {"message", r.message}}, [](const Response&) {});
+                }
+            }
+            if (own && button("steer", "steer")) {
+                std::string* error = &tab.steerError;
+                chat.promoteQueued(owner, r.message, [error](const Response& resp) {
+                    if (!resp.ok) {
+                        *error = "[ STEER: " + (resp.err ? upper(resp.err->code) : std::string("?")) + " ]";
+                    }
+                });
+            }
+            const std::string sender = r.pending ? "pending" : principals.nameOf(r.from);
+            const std::string tag = chat::firstLine(sender, 8);
+            ImGui::AlignTextToFramePadding();
+            text(Ink::secondary, tag);
+            ImGui::SameLine();
+            const float room = std::max(1.0f, ImGui::GetContentRegionAvail().x);
+            const std::string line = chat::queueStripText(r.text.empty() ? "<reading>" : r.text, room,
+                [](const std::string& s) { return ImGui::CalcTextSize(s.c_str()).x; });
+            const ImVec2 at = ImGui::GetCursorScreenPos();
+            if (ImGui::InvisibleButton("queue-text", ImVec2(room, rowHeight))) {
+                ImGui::OpenPopup("queue-detail");
+            }
+            drive::hit("queue:text:" + id8, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+            ImGui::GetWindowDrawList()->PushClipRect(at, ImVec2(at.x + room, at.y + rowHeight), true);
+            ImGui::GetWindowDrawList()->AddText(at, Ink::primary, line.c_str());
+            ImGui::GetWindowDrawList()->PopClipRect();
+            if (ImGui::BeginPopup("queue-detail")) {
+                ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + std::min(320.0f, ImGui::GetIO().DisplaySize.x - 48.0f));
+                ImGui::TextUnformatted(sender.c_str());
+                ImGui::Separator();
+                ImGui::TextUnformatted(r.text.c_str());
+                ImGui::PopTextWrapPos();
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+            continue;
+        }
         if (r.pending) {
             if (bracketButtonNamed("x", "dismiss:" + id8)) {
                 if (r.pendingIndex < tab.queuePending.size()) {
@@ -920,11 +992,12 @@ void TerminalPane::drawQueue(Tab& tab, const std::vector<chat::QueueRow>& queue,
                 chat.actNamed("loop.reorder", json{{"principal", owner}, {"message", r.message}, {"position", position}},
                               [](const Response&) {});
             };
-            if (bracketButtonNamed("^", "up:" + id8, canUp)) {
+            const bool own = !self.empty() && r.from == self;
+            if (own && bracketButtonNamed("^", "up:" + id8, canUp)) {
                 move(static_cast<long>(i) - 1);
             }
             ImGui::SameLine();
-            if (bracketButtonNamed("v", "down:" + id8, canDown)) {
+            if (own && bracketButtonNamed("v", "down:" + id8, canDown)) {
                 move(static_cast<long>(i) + 1);
             }
             ImGui::SameLine();
@@ -932,24 +1005,13 @@ void TerminalPane::drawQueue(Tab& tab, const std::vector<chat::QueueRow>& queue,
                 chat.actNamed("loop.dequeue", json{{"principal", owner}, {"message", r.message}}, [](const Response&) {});
             }
             ImGui::SameLine();
-            if (bracketButtonNamed("steer", "steer:" + id8)) {
+            if (own && bracketButtonNamed("steer", "steer:" + id8)) {
                 std::string* steerError = &tab.steerError;
-                const std::string line = r.text;
-                const std::vector<std::string> to{owner};
-                const std::vector<std::string> routes = principals.get(owner) ? principals.get(owner)->routes() : std::vector<std::string>{};
-                const std::string route = routes.empty() ? std::string() : routes.front();
-                chat.actNamed("loop.dequeue", json{{"principal", owner}, {"message", r.message}},
-                              [&chat, to, route, line, steerError](const Response& resp) {
-                                  if (!resp.ok) {
-                                      *steerError = "[ DEQUEUE: " + (resp.err ? upper(resp.err->code) : std::string("?")) + " ]";
-                                      return;
-                                  }
-                                  chat.submitTo(to, route, line, [steerError](const std::string& code, const std::string& message) {
-                                      if (!code.empty()) {
-                                          *steerError = "[ STEER: " + upper(code) + " ] " + message;
-                                      }
-                                  }, chat::Clock::now(), {}, true);
-                              });
+                chat.promoteQueued(owner, r.message, [steerError](const Response& resp) {
+                    if (!resp.ok) {
+                        *steerError = "[ STEER: " + (resp.err ? upper(resp.err->code) : std::string("?")) + " ]";
+                    }
+                });
             }
             ImGui::SameLine();
         }
@@ -976,6 +1038,7 @@ void TerminalPane::drawQueue(Tab& tab, const std::vector<chat::QueueRow>& queue,
         }
         ImGui::PopID();
     }
+    ImGui::EndChild();
 }
 
 } // namespace ke::ui

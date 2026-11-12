@@ -49,6 +49,19 @@ std::vector<QueueRow> queueRows(const json& loopQueue, const MessageCache& cache
     return rows;
 }
 
+std::string queueStripText(const std::string& text, float room,
+                           const std::function<float(const std::string&)>& measure) {
+    std::string line = text.substr(0, text.find_first_of("\r\n"));
+    const std::string ellipsis = "…";
+    if (measure(line) <= room) return line;
+    while (!line.empty() && measure(line + ellipsis) > room) {
+        std::size_t start = line.size() - 1;
+        while (start > 0 && (static_cast<unsigned char>(line[start]) & 0xC0) == 0x80) --start;
+        line.resize(start);
+    }
+    return measure(ellipsis) <= room ? line + ellipsis : std::string();
+}
+
 std::string firstLine(const std::string& text, std::size_t limit) {
     std::string s = text.substr(0, text.find('\n'));
     if (s.size() > limit) {

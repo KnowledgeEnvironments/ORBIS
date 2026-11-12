@@ -7,6 +7,7 @@
             [knowledge.world.evaluate.core-test :refer [until]]
             [knowledge.world.fixtures :as fx]
             [knowledge.world.fold.objects :as objects]
+            [knowledge.world.loop.queue :as queue]
             [knowledge.world.system :as system]
             [knowledge.world.ws-client :as ws]))
 
@@ -94,3 +95,36 @@
             (is (until #(empty? (queue-of root2 root-id)) 5000) "and the queue drained")
             (finally (ws/close! root2) (system/stop world2)))))
       (finally (fx/delete-tree! dir)))))
+
+(deftest promotion-rechecks-the-winning-queue-state
+  ;; Use protocol-created Messages and the real queue log writes. The person's
+  ;; fixture lane has no resident process, so only this test drives its transitions.
+  (fx/with-world [{:keys [world root witness]}]
+    (doseq [transition [:consume :end]]
+      (let [p (:id witness)
+            route (resolve-as root "root.route")
+            running (say! root p route "running race fixture")
+            m (say! root p route "waiting race fixture")
+            db (act/db world)
+            lane-world (assoc world :loop-state (atom {}))
+            _ (queue/enqueue! lane-world db {:principal p :message running :route route})
+            _ (queue/take-next! lane-world db p)
+            _ (queue/enqueue! lane-world db {:principal p :message m :route route})
+            real-swap clojure.core/swap-vals!
+            once (atom false)
+            result (with-redefs [clojure.core/swap-vals!
+                                 (fn [a f & args]
+                                   (when (and (identical? a (:loop-state lane-world))
+                                              (compare-and-set! once false true))
+                                     (case transition
+                                       :consume (queue/take-next! lane-world db p)
+                                       :end (queue/end! lane-world db p)))
+                                   (apply real-swap a f args))]
+                     (queue/promote! lane-world db p m))]
+        (case transition
+          :consume (do (is (nil? result) "a Message already taken cannot become its own steer")
+                       (is (= m (:message (queue/active lane-world p))))
+                       (is (empty? (:pending (queue/active lane-world p)))))
+          :end (do (is (false? (:steered result)) "an ended lane keeps the original waiting wake")
+                   (is (nil? (queue/active lane-world p)))
+                   (is (= [m] (mapv :message (queue/waiting lane-world p))))))))))

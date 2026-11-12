@@ -116,3 +116,48 @@ TEST_CASE("off the record folds from a pushed sequence, with the terminal's own 
     CHECK(fold.lines().empty());
     CHECK(fold.tokensIn() == 0);
 }
+
+TEST_CASE("phone queue strip bounds rows independently and retains count and busy STOP") {
+    const auto empty = queueStripLayout(0, 18, 4, false);
+    CHECK(empty.listHeight == 0);
+    CHECK_FALSE(empty.stop);
+    const auto many = queueStripLayout(9, 18, 4, true);
+    CHECK(many.targetHeight == 44);
+    CHECK(many.listHeight == 144);
+    CHECK(many.scroll);
+    CHECK(many.stop);
+    CHECK(many.heading == "QUEUED 9");
+    CHECK(queueStripLayout(2, 18, 4, false).listHeight == 96);
+    CHECK_FALSE(queueStripLayout(3, 18, 4, false).scroll);
+    CHECK(queueStripLayout(9, 60, 4, true).targetHeight == 60);
+}
+
+TEST_CASE("phone queue text stays one line and ellipsizes at measured width without splitting UTF8") {
+    auto width = [](const std::string& s) { return static_cast<float>(s.size()); };
+    CHECK(queueStripText("hello\nsecond", 20, width) == "hello");
+    CHECK(queueStripText("hello\r\nsecond", 20, width) == "hello");
+    CHECK(queueStripText("abcdefgh", 6, width) == "abc…");
+    CHECK(queueStripText("ééé", 5, width) == "é…");
+    CHECK(queueStripText("hello", 1, width).empty());
+    CHECK(queueStripText("hello", 5, width) == "hello");
+}
+
+TEST_CASE("mixed-author queue rows retain each original id sender and full text") {
+    MessageCache cache;
+    cache.onRead("own-original", json{{"message/from", "person"}, {"message/text", "own text\nfull detail"}});
+    cache.onRead("other-original", json{{"message/from", "worker"}, {"message/text", "other text"}});
+    std::vector<PendingLine> pending;
+    const auto rows = queueRows(json::array({
+        json{{"message", "own-original"}, {"from", "person"}},
+        json{{"message", "other-original"}, {"from", "worker"}}
+    }), cache, pending);
+    REQUIRE(rows.size() == 2);
+    CHECK(rows[0].message == "own-original");
+    CHECK(rows[0].from == "person");
+    CHECK(rows[0].text == "own text\nfull detail");
+    CHECK(rows[1].message == "other-original");
+    CHECK(rows[1].from == "worker");
+    CHECK(rows[1].text == "other text");
+    CHECK_FALSE(rows[0].pending);
+    CHECK_FALSE(rows[1].pending);
+}
