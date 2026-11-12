@@ -266,12 +266,18 @@ set_tests_properties(listener_smoke PROPERTIES TIMEOUT 60 LABELS e2e)
 add_test(NAME listener_idsweep
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/idsweep.sh
             $<TARGET_FILE:listener_mockworld> $<TARGET_FILE:listener> 7786 16)
-set_tests_properties(listener_idsweep PROPERTIES TIMEOUT 400 LABELS "e2e;window")
+set_tests_properties(listener_idsweep PROPERTIES TIMEOUT 400 LABELS "e2e;window" RESOURCE_LOCK listener_window)
 
 # UX through the drive API, always on a throwaway world (tests/ux/privateworld.py): its own port,
 # its own data, a scripted model. Nothing here can reach the main world on 7777.
 find_package(Python3 COMPONENTS Interpreter)
 if(Python3_Interpreter_FOUND)
+    add_test(NAME listener_portcheck_test
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/portcheck_test.py)
+    add_test(NAME listener_port_preflight
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/portcheck.py
+                --cmake ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt)
+    set_tests_properties(listener_port_preflight PROPERTIES FIXTURES_SETUP listener_ports TIMEOUT 15)
     add_test(NAME listener_ux
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7820 --
                 ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/smoke_drive.py
@@ -282,7 +288,7 @@ if(Python3_Interpreter_FOUND)
     add_test(NAME listener_panes_ux
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/panes_drive.py
                 --listener $<TARGET_FILE:listener> --mock $<TARGET_FILE:listener_mockworld> --port 7931)
-    set_tests_properties(listener_panes_ux PROPERTIES TIMEOUT 180 LABELS ux)
+    set_tests_properties(listener_panes_ux PROPERTIES TIMEOUT 180 LABELS "ux;window" RESOURCE_LOCK listener_window)
     # One tree of views and panes, saved on the person.
     add_test(NAME listener_layout_world
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7846 --
@@ -299,7 +305,7 @@ if(Python3_Interpreter_FOUND)
     set_tests_properties(listener_map_world PROPERTIES TIMEOUT 300 LABELS "ux;window;private-world" SKIP_RETURN_CODE 77)
     # One door per agent, a person's own page, inspectors, pane names.
     add_test(NAME listener_marks_world
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7836 --
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7847 --
                 ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/marks_world.py
                 --listener $<TARGET_FILE:listener> --url {url} --token-file {token}
                 --shots ${CMAKE_CURRENT_BINARY_DIR}/ux/marks)
@@ -329,7 +335,7 @@ if(Python3_Interpreter_FOUND)
                 --shots ${CMAKE_CURRENT_BINARY_DIR}/ux/jump)
     set_tests_properties(listener_jump_world PROPERTIES TIMEOUT 300 LABELS "ux;window;private-world" SKIP_RETURN_CODE 77)
     add_test(NAME listener_polish_world
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7836 --
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7848 --
                 ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/polish_world.py
                 --listener $<TARGET_FILE:listener> --url {url} --token-file {token}
                 --shots ${CMAKE_CURRENT_BINARY_DIR}/ux/polish)
@@ -380,14 +386,14 @@ if(Python3_Interpreter_FOUND)
     set_tests_properties(listener_panes_world PROPERTIES TIMEOUT 420 LABELS "ux;window;private-world" SKIP_RETURN_CODE 77)
     # The same terminals in a real holder process: skipped until `make holder` has built one.
     add_test(NAME listener_panes_holder
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7826 --holder --
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7851 --holder --
                 ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/panes_world.py
                 --listener $<TARGET_FILE:listener> --url {url} --token-file {token}
                 --shots ${CMAKE_CURRENT_BINARY_DIR}/panes-holder)
     set_tests_properties(listener_panes_holder PROPERTIES TIMEOUT 420 LABELS "ux;window;private-world" SKIP_RETURN_CODE 77)
     # A long Field in the editor, from the row to the next prompt, on a real wake.
     add_test(NAME listener_field_editor
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7838 --
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7849 --
                 ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/field_editor.py
                 --listener $<TARGET_FILE:listener> --url {url} --token-file {token} --root-token {root}
                 --shots ${CMAKE_CURRENT_BINARY_DIR}/ux/field-editor)
@@ -401,11 +407,12 @@ if(Python3_Interpreter_FOUND)
     set_tests_properties(listener_manual_world PROPERTIES TIMEOUT 300 LABELS "ux;window;private-world" SKIP_RETURN_CODE 77)
     # The Model control and Sign in with ChatGPT, against a stub of OpenAI's documented endpoints.
     add_test(NAME listener_model_world
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7839 --
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/privateworld.py --port 7850 --
                 ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/model_world.py
                 --listener $<TARGET_FILE:listener> --url {url} --token-file {token} --stub-port 7897
                 --shots ${CMAKE_CURRENT_BINARY_DIR}/ux/model)
     set_tests_properties(listener_model_world PROPERTIES TIMEOUT 300 LABELS "ux;window;private-world"
+        SKIP_RETURN_CODE 77
         ENVIRONMENT "KE_OPENAI_AUTH=http://127.0.0.1:7897;KE_OPENAI_API=http://127.0.0.1:7897/v1")
     # Unsafe mode, APPROVE ALL, every menu item, the tree and nicknames, on real wakes.
     add_test(NAME listener_ui_world
@@ -419,4 +426,15 @@ if(Python3_Interpreter_FOUND)
                 ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ux/queue_world.py
                 --listener $<TARGET_FILE:listener> --url {url} --token-file {token} --root-token {root})
     set_tests_properties(listener_queue_world PROPERTIES TIMEOUT 240 LABELS "ux;window;private-world" SKIP_RETURN_CODE 77)
+    get_property(listener_suite DIRECTORY PROPERTY TESTS)
+    foreach(test IN LISTS listener_suite)
+        if(NOT test STREQUAL "listener_port_preflight")
+            set_tests_properties("${test}" PROPERTIES FIXTURES_REQUIRED listener_ports)
+        endif()
+    endforeach()
+    # These two UI journeys are load-sensitive during initial target discovery.
+    # Keep their assertions intact and isolate them while the remaining suite runs in parallel.
+    set_tests_properties(listener_ui_world listener_jump_world PROPERTIES RUN_SERIAL TRUE)
+    # Drive input is injected into each process, so covered private-world windows can overlap.
+    # Keep listener_window only on tests that depend on the shared desktop (such as idsweep).
 endif()

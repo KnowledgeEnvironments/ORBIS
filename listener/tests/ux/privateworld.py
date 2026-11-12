@@ -24,6 +24,7 @@ import tempfile
 import threading
 import time
 import uuid
+from portcheck import require_idle
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 _spec = importlib.util.spec_from_file_location(
@@ -178,20 +179,16 @@ class PrivateWorld:
         clojure = shutil.which("clojure") or ("/opt/homebrew/bin/clojure" if os.path.exists("/opt/homebrew/bin/clojure") else None)
         if not clojure:
             raise Skip("no clojure")
-        try:
-            socket.create_connection(("127.0.0.1", self.port), timeout=0.5).close()
-            raise SystemExit(f"privateworld: something already answers on {self.port}")
-        except OSError:
-            pass
+        require_idle([self.port])
         self.data = self.keep or tempfile.mkdtemp(prefix="orbis-world-")
         os.makedirs(self.data, exist_ok=True)
         self.token = os.path.join(self.data, "person.token")
         self.root = os.path.join(self.data, "root.token")
         Model.prompts = os.path.join(self.data, "last-prompt.json")
-        self.model = ThreadingHTTPServer(("127.0.0.1", self.port + 1), Model)
+        self.model = ThreadingHTTPServer(("127.0.0.1", 0), Model)
         threading.Thread(target=self.model.serve_forever, daemon=True).start()
         env = dict(os.environ, KE_PORT=str(self.port), KE_DATA=self.data, KE_FSYNC="never",
-                   KE_MODEL_URL=f"http://127.0.0.1:{self.port + 1}/v1", KE_MODEL_KEY="x", KE_MODEL_ID="scripted",
+                   KE_MODEL_URL=f"http://127.0.0.1:{self.model.server_port}/v1", KE_MODEL_KEY="x", KE_MODEL_ID="scripted",
                    KE_WORLD_NAME="private", KE_PUBLIC_URL=self.url,
                    KE_ROOT_LEASH=os.environ.get("KE_ROOT_LEASH", "0"))
         if self.holder_wanted:

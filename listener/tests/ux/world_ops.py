@@ -18,7 +18,7 @@ import time
 from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools"))
-from drive import Drive  # noqa: E402
+from drive import Drive, DriveError  # noqa: E402
 
 
 class Ops:
@@ -227,11 +227,25 @@ def steer(o, agent):
     o.d.key("Return", mods=["shift"])
     e = o.event(since, "evaluated", lambda e: e["body"].get("state") == "cancelled" and e["body"].get("reason") == "steer", seconds=25.0)
     o.check("SHIFT-RETURN steers", e is not None, "no cancelled evaluation with reason steer")
-    if o.target("button:stop", 8.0):
-        o.click("button:stop")
-    end = time.time() + 30.0  # it has stopped when the button has gone
-    while time.time() < end and "button:stop" in o.d.state()["targets"]:
+    end = time.monotonic() + 30.0
+    while time.monotonic() < end:
+        state = o.d.state()
+        # The map's actor state tracks the world's running Evaluation, not a
+        # transient STOP target from the cancelled generation's UI frame.
+        asker = next(a for a in state["map"]["actors"] if a["name"] == agent)
+        if not asker["running"]:
+            break
+        if "button:stop" in state["targets"]:
+            try:
+                o.d.click("button:stop")
+            except DriveError as exc:
+                if "unknown target button:stop" not in str(exc):
+                    raise
+                # A steered Message can replace the Evaluation between frames.
+                # Retry even when the next generation already has STOP again.
         time.sleep(0.1)
+    else:
+        raise AssertionError(f"{agent} still has a running Evaluation after 30 s")
 
 
 def ask_for_run(o, agent, tag):

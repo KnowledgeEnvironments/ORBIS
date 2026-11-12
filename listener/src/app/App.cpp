@@ -188,7 +188,9 @@ int runApp(const Options& optsIn) {
             uiFont = gpu.fonts.ui;
             framesToRender = std::max(framesToRender, 3);
         }
-        bool paused = (SDL_GetWindowFlags(gpu.window) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_OCCLUDED)) != 0;
+        // Drive input belongs to this window, not the desktop focus. Covered test windows
+        // still need frames to consume commands and answer waits and captures.
+        bool paused = !drive.enabled() && (SDL_GetWindowFlags(gpu.window) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_OCCLUDED)) != 0;
 #if defined(TARGET_OS_SIMULATOR) && TARGET_OS_SIMULATOR
         paused = false; // a headless simulator counts as occluded, and the drive still needs frames
 #endif

@@ -253,3 +253,7 @@ PolyForm Noncommercial 1.0.0: use it, change it, share it for personal, research
 nonprofit and government purposes, free. Commercial use needs a license from the author; ask.
 It comes as is, without warranty, and nobody who wrote it is liable for what you do with it; the
 license says so in full. See `LICENSE`. Third-party components keep their own licences: `THIRD_PARTY_NOTICES`.
+
+### Parallel listener checks
+
+Run `cd listener && ctest --preset macos-debug --parallel "$(python3 -c 'import os; print(os.cpu_count() or 1)')"` to use the host CPU count. The suite checks for listening and connected test ports before starting; private worlds use distinct ports and ephemeral Model ports. Driven windows render even when covered. Only shared-desktop tests take the desktop lock; two load-sensitive discovery journeys run serially. A skipped holder test means the optional holder binary is not built.

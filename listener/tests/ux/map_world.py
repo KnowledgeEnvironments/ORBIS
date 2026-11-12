@@ -181,9 +181,11 @@ def main():
         settle(d)
         d.click("button:notices-read")
         until("all read", lambda: d.state()["notices"]["unread"] == 0)
-        wire = person.act("notify.list", {})
-        res = wire["result"].get("result", wire["result"])
-        assert res["unread"] == 0, wire
+        def persisted_all_read():
+            wire = person.act("notify.list", {})
+            res = wire["result"].get("result", wire["result"])
+            return res["unread"] == 0
+        until("all reads persisted on the world", persisted_all_read)
         d.click("button:notices")
         settle(d)
 
