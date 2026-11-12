@@ -83,7 +83,7 @@ def main():
 
         # NEW PANE offers what each Adapter can be
         d.click("tab:panes")
-        settle(d)
+        until("new pane available", lambda: "button:new-pane" in d.targets())
         d.click("button:new-pane")
         settle(d)
         offered = {t for t in d.targets() if t.startswith("menu:") and t not in TOPS}
