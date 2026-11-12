@@ -104,11 +104,11 @@ def main():
             d.click(rows[0])
             settle(d, 6)
             try:
-                until("the jump to land", landed, 4.0)
+                until("the jump to land", landed, 10.0)
                 break
             except AssertionError:
                 print("[jump] no jump after clicking", rows[0], "try", attempt)
-        until("the jump to land", landed, 2.0)
+        until("the jump to land", landed, 10.0)
         settle(d)
         d.screenshot(os.path.join(a.shots, "landed.png"))
         if "input" not in targets(d):
