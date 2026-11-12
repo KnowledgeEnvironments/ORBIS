@@ -57,6 +57,7 @@ def main():
         d = Drive(sock)
         until("attach", lambda: d.state().get("attached"))
         settle(d)
+        until("root listed", lambda: "principal:root" in targets(d))
         d.click("principal:root")
         until("input", lambda: "input" in targets(d))
         settle(d)
