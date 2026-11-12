@@ -104,6 +104,8 @@ std::string withSeparators(long long n);
 // The terminal's status bar for one Principal:
 // `CTX last 12.4 KiB · 2287 in / 1016 out  ·  TOTAL 48 evals · 61.2K in / 19.4K out`; "" when none.
 std::string statusLine(const Evaluations& all, std::string_view principal);
+// True only on the first recorded call of a wake, never inferred from a token drop.
+bool newWakeContext(const EvaluationInfo& evaluation);
 // The PRINCIPALS column: `48 ev · 61.2K/19.4K`; "" when none.
 std::string totalsShort(const Totals& t);
 

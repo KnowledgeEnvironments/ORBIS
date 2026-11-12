@@ -864,7 +864,8 @@ void TerminalPane::drawContextBar(Tab& tab, const model::Evaluations& evals) {
     const std::string figure = g.known ? std::to_string(g.used * 100 / g.window) + "% of " + thousands(g.window) : thousands(g.used);
     const float cw = ImGui::CalcTextSize("0").x;
     const float gap = ImGui::GetStyle().ItemSpacing.x;
-    const float words = ImGui::CalcTextSize("CTX").x + ImGui::CalcTextSize(figure.c_str()).x + gap * 2.0f;
+    const char* label = model::newWakeContext(*last) ? "CTX · new wake" : "CTX";
+    const float words = ImGui::CalcTextSize(label).x + ImGui::CalcTextSize(figure.c_str()).x + gap * 2.0f;
     // One row, always: the input line's height is reserved below it. The bar gives way, then the whole gauge.
     ImGui::SameLine();
     const float avail = ImGui::GetContentRegionAvail().x;
@@ -877,7 +878,11 @@ void TerminalPane::drawContextBar(Tab& tab, const model::Evaluations& evals) {
     }
     ImGui::SameLine(ImGui::GetCursorPosX() + avail - words - barW);
     const ImU32 ink = g.near ? Ink::inspected : Ink::secondary;
-    text(ink, "CTX");
+    text(ink, label);
+    if (ImGui::IsItemHovered()) {
+        ke::ui::tip("The last prompt%s. A new wake leaves prior turns on the log, not automatically inline; this is not compression.",
+                    model::newWakeContext(*last) ? " started a new wake" : " belongs to the current wake");
+    }
     if (g.known) {
         ImGui::SameLine();
         const float h = ImGui::GetTextLineHeight();

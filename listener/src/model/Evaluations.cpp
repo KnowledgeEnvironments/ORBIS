@@ -42,6 +42,10 @@ long long num(const json& j, const char* key, long long fallback = -1) {
 
 } // namespace
 
+bool newWakeContext(const EvaluationInfo& evaluation) {
+    return !evaluation.wake.empty() && evaluation.iteration == 1;
+}
+
 bool Evaluations::apply(const Event& e) {
     if (e.seq <= applied_) {
         return false;

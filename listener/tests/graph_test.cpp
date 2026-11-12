@@ -314,3 +314,17 @@ TEST_CASE("graph: a Model node carries its model id and status", "[graph]") {
     CHECK(g.node(kModel)->status == "unreachable");
     CHECK(g.node(kRoot)->sub.empty()); // only models carry one
 }
+
+TEST_CASE("context gauge marks a recorded first wake call, not a token drop", "[evaluations]") {
+    EvaluationInfo e;
+    e.iteration = 1;
+    CHECK_FALSE(newWakeContext(e));
+    e.wake = "wake-a";
+    CHECK(newWakeContext(e));
+    e.iteration = 2;
+    e.ctxIn = 100;
+    CHECK_FALSE(newWakeContext(e));
+    e.wake = "wake-b";
+    e.iteration = 1;
+    CHECK(newWakeContext(e));
+}
