@@ -5,7 +5,7 @@
 set -eu
 DATA="${1:?a world's data directory}"
 NAME="$(basename "$DATA")"
-DEST="${2:-${KE_BACKUPS:-$(dirname "$D")/backups}}/$NAME"
+DEST="${2:-${KE_BACKUPS:-$(dirname "$DATA")/backups}}/$NAME"
 KEEP=3
 mkdir -p "$DEST"
 # at most one a day, however often a self-hosting world restarts
