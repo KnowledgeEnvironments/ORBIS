@@ -70,6 +70,17 @@
                       (str "root has bound " (pr-str names) " in its own namespace, expected " (pr-str expected)
                            "; step! :name-itself is not implemented")))))))
 
+(deftest shipped-harness-explains-context-layers
+  (as-witness
+    (fn [c]
+      (let [{:keys [root-id]} @world-state
+            harness (get-in (root-state c root-id)
+                            [:object/fields :instructions/harness :field/value])]
+        (doseq [clause ["Context: three layers" "**Wake:**" "**Compression:**" "**Fields:**"
+                        "not compression or deletion" "Prompt-budget clipping is separate"
+                        "open questions and Task ids" "cite a Task id, not copied output"]]
+          (is (str/includes? harness clause) (str "missing context guidance: " clause)))))))
+
 (deftest step-2-reads-shipped-instructions-and-writes-own
   (as-witness
     (fn [c]
@@ -81,6 +92,45 @@
         (is (seq shipped) (step-msg 2 "read shipped instructions" "no instruction Fields are shipped on root"))
         (is (seq reads) (step-msg 2 "read shipped instructions" "root has not read any instruction Field (no field-read by root on its stream); step! :read-and-write-instructions is not implemented"))
         (is (seq own) (step-msg 2 "write own instructions" "root has written no reader :agent Field about what it is for; step! :read-and-write-instructions is not implemented"))))))
+
+(deftest shipped-harness-builds-client-capabilities-without-remote-login
+  (as-witness
+    (fn [c]
+      (let [{:keys [root-id]} @world-state
+            harness (get-in (root-state c root-id)
+                            [:object/fields :instructions/harness :field/value])]
+        (doseq [clause ["Capabilities needed from a client belong in the client"
+                        "remote-login or pull-script workarounds"
+                        "verify release provenance, digest"
+                        "signing identity before replacement"
+                        "preserve client continuity"
+                        "restore the previous app and report rollback"
+                        "person's explicit authorization"]]
+          (is (str/includes? harness clause) (str "missing client tenet: " clause)))))))
+
+(deftest shipped-harness-keeps-work-visible-and-mainlines-lessons
+  (as-witness
+    (fn [c]
+      (let [{:keys [root-id]} @world-state
+            harness (get-in (root-state c root-id)
+                            [:object/fields :instructions/harness :field/value])]
+        (doseq [clause ["Person-facing work updates"
+                        "what, why and the rough duration"
+                        "one-line informational"
+                        "roughly ten minutes"
+                        "urgent `notify`"
+                        "`task.progress`"
+                        "`Changed:`, `Verified:`, `Next:`"
+                        "End only when waiting"
+                        "completion Message wake you"
+                        "Mainline instruction improvements"
+                        "`instructions/own`, `memory/notes`"
+                        "`memory/lessons`"
+                        "regression coverage"
+                        "separate commit"
+                        "private Fields"]]
+          (is (str/includes? (or harness "") clause)
+              (str "shipped harness instruction missing: " clause)))))))
 
 (deftest step-3-binds-model-and-evaluates-via-stub
   (as-witness
@@ -209,3 +259,18 @@
             f (fn [k] (get-in (root-state c root-id) [:object/fields k :field/value]))]
         (is (= ["task.run" "shell" "grant" "principal.create"] (f :policy/approval)) (step-msg 9 "approval" "root has no policy/approval Field with the shipped default; step! :approval-defaults is not implemented"))
         (is (= 86400 (f :policy/approval-ttl-s)) (step-msg 9 "approval" (str "policy/approval-ttl-s is " (pr-str (f :policy/approval-ttl-s)))))))))
+
+(deftest shipped-developer-habits
+  (as-witness
+    (fn [c]
+      (let [{:keys [root-id]} @world-state
+            fields (:object/fields (root-state c root-id))]
+        (doseq [key [:instructions/harness :instructions/charter-template/developer]
+                clause ["Test-only problems: change approach each try"
+                        "Product code: stop and ask after the second failure"
+                        "Always ask before the release gate, a push, a release, a restart, or anything on a person's device. Running tests, including full gates before a local commit, needs no approval."
+                        "Red means stop: never commit or publish on a red or unrun gate. Before a commit, one full run on the exact tree. Twice in a row only for the parallel suite and the release gate."
+                        "delegated developers never merge or push"
+                        "Secrets appear only as environment-variable names"]]
+          (is (str/includes? (str (get-in fields [key :field/value])) clause)
+              (str key " missing developer habit: " clause)))))))

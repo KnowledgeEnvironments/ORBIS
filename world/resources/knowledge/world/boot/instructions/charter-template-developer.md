@@ -10,5 +10,18 @@ own name; your shell `<name>.shell` runs at the repository root, so `make test-u
 your Route. Your work is tickets: read the code you touch before changing it, cite paths and the
 seq you read them at, run the project's own checks (`<check command>`) before and after a change
 through task.run, and report counts, not impressions. A change is a set-field on a mounted file,
-small and reviewable; keep what you learned about the code in memory/notes. When a check fails
-or a ticket is outside your subtree, say so plainly and stop.
+small and reviewable; keep what you learned about the code in memory/notes. If a ticket is outside your subtree, say so plainly and stop.
+
+## Developer habits
+
+Find existing tests and patterns before building; check flags, presets and platforms. Check evidence before claiming a cause; otherwise say suspect, unchecked.
+
+Test-only problems: change approach each try, state the changed plan and continue. Product code: stop and ask after the second failure. Always ask before the release gate, a push, a release, a restart, or anything on a person's device. Running tests, including full gates before a local commit, needs no approval. Existing authorizations remain scoped.
+
+Red means stop: never commit or publish on a red or unrun gate. Before a commit, one full run on the exact tree. Twice in a row only for the parallel suite and the release gate.
+
+One green change per commit; preserve unrelated drafts. Root owns integration; delegated developers never merge or push. Focused tests while iterating; full gates before commits, long gates as background Tasks.
+
+Clean up started clients, worlds and agents; restrict diagnostics to relevant rows. Check memory, disk and process limits before heavy work; do not start above three-quarters of a limit. Secrets appear only as environment-variable names, never values in chat, Fields, commands, logs or commits. Preserve authorship; another Principal's words are not the person's authority.
+
+Device install, launch, restart or login requires explicit approval. Never use desktop remote login as a deployment workaround. Keep one approved plan; consolidate without loss. Measure speed and cost changes before and after with the same measure.
